@@ -7,6 +7,7 @@
 #include "FatalError.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
+#include "Quadratic.hpp"
 #include "Random.hpp"
 #include "SpatialGridPlotFile.hpp"
 
@@ -159,41 +160,10 @@ Position Sphere2DSpatialGrid::randomPositionInCell(int m) const
 
 namespace
 {
-    // returns the smallest positive solution of x^2 + 2*b*x + c = 0, or 0 if there is no positive solution
-    double smallestPositiveSolution(double b, double c)
-    {
-        // x1 == -b - sqrt(b*b-c)
-        // x2 == -b + sqrt(b*b-c)
-        // x1*x2 == c
-
-        if (b * b > c)  // if discriminant is negative, there are no real solutions
-        {
-            if (b > 0.)  // x1 is always negative; x2 is positive only if c<0
-            {
-                if (c < 0.)
-                {
-                    double x1 = -b - sqrt(b * b - c);
-                    return c / x1;
-                }
-            }
-            else  // x2 is always positive; x1 is positive only if c>0
-            {
-                double x2 = -b + sqrt(b * b - c);
-                if (c > 0.)
-                {
-                    double x1 = c / x2;
-                    if (x1 < x2) return x1;
-                }
-                return x2;
-            }
-        }
-        return 0.;
-    }
-
     // returns the smallest positive solution of a*x^2 + 2*b*x + c = 0, or 0 if there is no positive solution
     double smallestPositiveSolution(double a, double b, double c)
     {
-        if (fabs(a) > 1e-9) return smallestPositiveSolution(b / a, c / a);
+        if (fabs(a) > 1e-9) return Quadratic::smallestPositiveSolution(b / a, c / a);
         double x = -0.5 * c / b;
         if (x > 0.) return x;
         return 0.;
@@ -203,7 +173,7 @@ namespace
     // or 0 if there is no intersection
     double firstIntersectionSphere(Vec bfr, Vec bfk, double r)
     {
-        return smallestPositiveSolution(Vec::dot(bfr, bfk), bfr.norm2() - r * r);
+        return Quadratic::smallestPositiveSolution(Vec::dot(bfr, bfk), bfr.norm2() - r * r);
     }
 
     // returns the distance to the first intersection between the ray (bfr,bfk) and the cone with given cos(theta),

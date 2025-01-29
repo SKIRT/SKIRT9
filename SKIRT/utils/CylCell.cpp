@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "CylCell.hpp"
+#include "Quadratic.hpp"
 #include <array>
 
 //////////////////////////////////////////////////////////////////////
@@ -78,39 +79,10 @@ Box CylCell::boundingBox() const
 
 //////////////////////////////////////////////////////////////////////
 
-namespace
-{
-    // this function determines the solutions of x^2 + 2*b*x + c = 0
-    // - if there are two distinct real solutions, they are stored in x1,x2
-    // - otherwise, x1 and x2 remain unchanged
-    void solutions(double b, double c, double& x1, double& x2)
-    {
-        // x1 == -b - sqrt(b*b-c)
-        // x2 == -b + sqrt(b*b-c)
-        // x1*x2 == c
-
-        if (b * b > c)  // if discriminant is strictly positive, there are two distinct real solutions
-        {
-            if (b > 0)  // x1 is always negative
-            {
-                x1 = -b - sqrt(b * b - c);
-                x2 = c / x1;
-            }
-            else  // x2 is always positive
-            {
-                x2 = -b + sqrt(b * b - c);
-                x1 = c / x2;
-            }
-        }
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-
 double CylCell::intersection(Vec r, const Vec k) const
 {
     // small value used to check for parallel directions
-    constexpr double eps = 1e-9;
+    constexpr double eps = 1e-12;
 
     // allocate room for the 8 possible intersections (1 per plane and 2 per cylinder)
     // plus the starting position (which starts the first segment).
@@ -153,11 +125,11 @@ double CylCell::intersection(Vec r, const Vec k) const
             double b = (r.x() * k.x() + r.y() * k.y()) / a;
             {
                 double c = (r.x() * r.x() + r.y() * r.y() - _Rmin * _Rmin) / a;
-                solutions(b, c, sv[RMIN1], sv[RMIN2]);
+                Quadratic::distinctSolutions(b, c, sv[RMIN1], sv[RMIN2]);
             }
             {
                 double c = (r.x() * r.x() + r.y() * r.y() - _Rmax * _Rmax) / a;
-                solutions(b, c, sv[RMAX1], sv[RMAX2]);
+                Quadratic::distinctSolutions(b, c, sv[RMAX1], sv[RMAX2]);
             }
         }
     }
