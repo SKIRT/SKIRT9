@@ -206,7 +206,7 @@ public:
         {
             case State::Unknown:
             {
-                // try moving the photon packet inside the grid; if this is impossible, return an empty path
+                // try moving the path inside the grid; if this is impossible, return an empty path
                 if (!moveInside()) return false;
 
                 // determine the grid cell we are in
