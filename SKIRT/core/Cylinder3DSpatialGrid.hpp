@@ -136,6 +136,8 @@ private:
     Array _Rv;
     Array _phiv;
     Array _zv;
+    Array _sinv;
+    Array _cosv;
 
     // allow our path segment generator to access our private data members
     class MySegmentGenerator;

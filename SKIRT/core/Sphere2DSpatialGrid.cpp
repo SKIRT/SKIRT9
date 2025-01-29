@@ -191,11 +191,11 @@ namespace
 class Sphere2DSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
 {
     const Sphere2DSpatialGrid* _grid{nullptr};
-    double _eps{0.};
-    int _i{-1}, _j{-1};
+    double _eps{0.};     // small value relative to domain size
+    int _i{-1}, _j{-1};  // bin indices
 
 public:
-    MySegmentGenerator(const Sphere2DSpatialGrid* grid) : _grid(grid) {}
+    MySegmentGenerator(const Sphere2DSpatialGrid* grid) : _grid(grid), _eps(1e-11 * grid->maxRadius()) {}
 
     // determine the indices i and j of the cell containing the current position
     //   i is set to -1 if the position is inside rmin and to Nr if the position is outside rmax
@@ -223,9 +223,6 @@ public:
         {
             case State::Unknown:
             {
-                // small value relative to domain size
-                _eps = 1e-11 * _grid->maxRadius();
-
                 // if necessary, try moving the path inside the grid
                 if (r().norm() > _grid->maxRadius())
                 {
