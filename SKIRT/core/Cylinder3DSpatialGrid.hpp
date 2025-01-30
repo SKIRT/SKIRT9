@@ -20,7 +20,9 @@
     R_0\f$, \f$R_i<R_{i+1}\f$, and \f$R_{N_R} = R_\text{max}\f$.
 
     - \f$N_\varphi+1\f$ azimuthal grid points \f$\varphi_j, \,j=0,\ldots,N_\varphi\f$, with
-    \f$-\pi=\varphi_0\f$, \f$\varphi_j<\varphi_{j+1}\f$, and \f$\varphi_{N_\varphi}=\pi\f$.
+    \f$-\pi=\varphi_0\f$, \f$0<\varphi_{j+1}-\varphi_j\le2\pi/3\f$, and
+    \f$\varphi_{N_\varphi}=\pi\f$. The maximum limit on azimuth bin width is imposed to avoid
+    confusion between the meridional half-planes when detecting cell border limits.
 
     - \f$N_z+1\f$ vertical grid points \f$z_k, \,k=0,\ldots,N_z\f$, with \f$z_\text{min} = z_0\f$,
     \f$z_i<z_{i+1}\f$, and \f$z_{N_z} = z_\text{max}\f$.
@@ -90,7 +92,32 @@ public:
 
     /** This function creates and hands over ownership of a path segment generator (an instance of
         a PathSegmentGenerator subclass) appropriate for a 3D cylindrical grid, implemented as a
-        private PathSegmentGenerator subclass. */
+        private PathSegmentGenerator subclass.
+
+        The ray equation of the path can be written as \f[\begin{cases} x = r_\text{x} +
+        k_\text{x}s \\ y = r_\text{y} + k_\text{y}s \\ z = r_\text{z} + k_\text{z}s \\ \end{cases}
+        \quad \text{with} \;s>0.\f]
+
+        Intersection with a vertical cylinder centered on the origin with equation \f$x^2 +y^2 =
+        R_*^2\f$ yields a quadratic equation of the form \f$s^2+2bs+c=0\f$ with \f[\begin{aligned}
+        b &= \frac{r_\text{x}k_\text{x} + r_\text{y}k_\text{y}} {k_\text{x}^2 + k_\text{y}^2} \\ c
+        &= \frac{r_\text{x}^2 + r_\text{y}^2 - R_*^2} {k_\text{x}^2 + k_\text{y}^2} \\
+        \end{aligned}\f]
+
+        Intersection with a meridional plane with equation \f$\sin\varphi_* x = \cos\varphi_* y\f$
+        yields \f[ s = -\;\frac{r_\text{x}\sin\varphi_* - r_\text{y}\cos\varphi_*}
+        {k_\text{x}\sin\varphi_* - k_\text{y}\cos\varphi_*} \f] The requirement that
+        \f$\varphi_{j+1}-\varphi_j\le2\pi/3\f$ ensures that the intersection point with the
+        reflected half-plane is always more distant than the other cell boundaries thus that
+        phantom point is automatically ignored.
+
+        Intersection with a horizontal plane with equation \f$z=z_*\f$ easily yields \f$s =
+        (z_*-r_\text{z})/k_\text{z}\f$.
+
+        The segment generator progresses the starting point of the path through the grid along the
+        path's direction. For each step along the way, it calculates the distances to the
+        intersections with all candidate borders of the current cell, and then selects the nearest
+        intersection point. */
     std::unique_ptr<PathSegmentGenerator> createPathSegmentGenerator() const override;
 
 protected:
