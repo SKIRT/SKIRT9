@@ -197,7 +197,7 @@ class Sphere2DSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
 public:
     MySegmentGenerator(const Sphere2DSpatialGrid* grid) : _grid(grid), _eps(1e-11 * grid->maxRadius()) {}
 
-    // determine the indices i and j of the cell containing the current position
+    // determines and sets the indices i and j of the cell containing the current position
     //   i is set to -1 if the position is inside rmin and to Nr if the position is outside rmax
     //   j is clipped to the range 0..Ntheta-1
     // returns true if the position is inside rmax, false if it is outside rmax
@@ -210,7 +210,7 @@ public:
         return _i < _grid->_Nr;
     }
 
-    // set the state to outside and return false
+    // sets the state to outside and returns false
     bool abortPath()
     {
         setState(State::Outside);

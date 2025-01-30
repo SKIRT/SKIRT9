@@ -144,7 +144,7 @@ class Cylinder3DSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
 public:
     MySegmentGenerator(const Cylinder3DSpatialGrid* grid) : _grid(grid), _eps(EPS * grid->maxRadius()) {}
 
-    // determine the indices i, j and k of the cell containing the current position
+    // determines and sets the indices i, j and k of the cell containing the current position
     //   i is set to -1 if the position is inside Rmin and to NR if the position is outside Rmax
     //   j is clipped to the range 0..Nphi-1
     //   k is set to -1 if the position is below zmin or above zmax
@@ -159,7 +159,7 @@ public:
         return _i < _grid->_NR && _k >= 0;
     }
 
-    // set the state to outside and return false
+    // sets the state to outside and returns false
     bool abortPath()
     {
         setState(State::Outside);
@@ -199,7 +199,7 @@ public:
         {
             case State::Unknown:
             {
-                // initialize cylindrical path direction
+                // initialize radial path direction
                 _kq2 = kx() * kx() + ky() * ky();
 
                 // try moving the path inside the grid; if this is impossible, return an empty path
@@ -292,7 +292,7 @@ public:
                         }
                     }
 
-                    // lower azimuthal boundary
+                    // clockwise azimuthal boundary
                     {
                         double s = intersectionMeridionalPlane(jcur);
                         if (s > 0. && s < ds)
@@ -304,7 +304,7 @@ public:
                         }
                     }
 
-                    // upper azimuthal boundary
+                    // anticlockwise azimuthal boundary
                     {
                         double s = intersectionMeridionalPlane(jcur + 1);  //scroll from pi to -pi
                         if (s > 0. && s < ds)
