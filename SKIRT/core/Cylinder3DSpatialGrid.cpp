@@ -13,6 +13,14 @@
 
 //////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // small value used to check for parallel directions
+    constexpr double EPS = 1e-12;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 void Cylinder3DSpatialGrid::setupSelfAfter()
 {
     CylinderSpatialGrid::setupSelfAfter();
@@ -26,7 +34,13 @@ void Cylinder3DSpatialGrid::setupSelfAfter()
     _phiv = _meshAzimuthal->mesh() * (2. * M_PI) - M_PI;
     _zv = _meshZ->mesh() * (maxZ() - minZ()) + minZ();
 
-    // verify that the azimuth bins are smaller than 120 degrees, with some leeway
+    // make sure that the innermost radial bin border is always larger than the epsilon we use for progressing the path
+    // so that the segment generator has a chance to reset the phi bin index when crossing the origin
+    _eps = EPS * maxRadius();
+    _Rv[0] = max(_Rv[0], 2. * _eps);
+
+    // verify that the azimuth bins are smaller than 120 degrees, with some leeway,
+    // so that the segment generator never inadvertently intersects the path with the reflected phi bin border
     constexpr double maxPhi = 0.7 * M_PI;
     for (int j = 0; j != _Nphi; ++j)
         if (_phiv[j + 1] - _phiv[j] > maxPhi) throw FATALERROR("Azimuth bin is wider than 120 deg");
@@ -138,11 +152,8 @@ class Cylinder3DSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
     double _kq2{0.};             // cylindrical path direction, squared
     int _i{-1}, _j{-1}, _k{-1};  // current bin indices
 
-    // small value used to check for parallel directions
-    constexpr static double EPS = 1e-12;
-
 public:
-    MySegmentGenerator(const Cylinder3DSpatialGrid* grid) : _grid(grid), _eps(EPS * grid->maxRadius()) {}
+    MySegmentGenerator(const Cylinder3DSpatialGrid* grid) : _grid(grid), _eps(grid->_eps) {}
 
     // determines and sets the indices i, j and k of the cell containing the current position
     //   i is set to -1 if the position is inside Rmin and to NR if the position is outside Rmax
@@ -206,6 +217,16 @@ public:
                 // keep track of cumulative length of all subsegments
                 double cumds = 0.;
 
+                // --> R direction
+                double R = sqrt(rx() * rx() + ry() * ry());
+                if (R > _grid->maxRadius())
+                {
+                    double ds = firstIntersectionCylinder(_grid->_NR);
+                    if (ds <= 0.) return abortPath();
+                    propagater(ds + _eps);
+                    cumds += ds;
+                }
+
                 // --> z direction
                 if (rz() < _grid->_zv[0])
                 {
@@ -220,22 +241,6 @@ public:
                     if (ds <= 0.) return abortPath();
                     propagater(ds + _eps);
                     cumds += ds;
-                }
-
-                // --> R direction
-                double R = sqrt(rx() * rx() + ry() * ry());
-                if (R > _grid->maxRadius())
-                {
-                    double ds = firstIntersectionCylinder(_grid->_NR);
-                    if (ds <= 0.) return abortPath();
-                    propagater(ds + _eps);
-                    cumds += ds;
-                }
-                else if (R < _eps)
-                {
-                    // move the position away from the origin so that it has a meaningful phi bin index
-                    propagaterx(_eps);
-                    propagatery(_eps);
                 }
 
                 // determine the grid cell we are in; abort in case of numerical inaccuracies
@@ -257,96 +262,109 @@ public:
             {
                 while (true)  // the loop is executed more than once only if no exit point is found
                 {
-                    // remember the indices of the current cell
-                    int icur = _i;
-                    int jcur = _j;
-                    int kcur = _k;
-
-                    // calculate the distance travelled inside the cell by considering
-                    // the potential exit points for each of the six cell boundaries;
-                    // the smallest positive intersection "distance" wins.
-                    double ds = DBL_MAX;  // very large, but not infinity (so that infinite values are discarded)
-
-                    // inner radial boundary (not applicable to innermost cell if its radius is zero)
-                    if (_grid->_Rv[icur] > 0.)
+                    // if we're inside the innermost radius, skip to that radius in one step
+                    // and recalculate the bin indices (the phi bin index changes when crossing the origin)
+                    if (_i < 0)
                     {
-                        double s = firstIntersectionCylinder(icur);
-                        if (s > 0. && s < ds)
-                        {
-                            ds = s;
-                            _i = icur - 1;  // may be decremented to -1 (inside the innermost boundary)
-                            _j = jcur;
-                            _k = kcur;
-                        }
-                    }
-
-                    // outer radial boundary
-                    {
-                        double s = firstIntersectionCylinder(icur + 1);
-                        if (s > 0. && s < ds)
-                        {
-                            ds = s;
-                            _i = icur + 1;  // may be incremented to NR (beyond the outermost boundary)
-                            _j = jcur;
-                            _k = kcur;
-                        }
-                    }
-
-                    // clockwise azimuthal boundary
-                    {
-                        double s = intersectionMeridionalPlane(jcur);
-                        if (s > 0. && s < ds)
-                        {
-                            ds = s;
-                            _i = icur;
-                            _j = jcur > 0 ? jcur - 1 : _grid->_Nphi - 1;  //scroll from -pi to pi
-                            _k = kcur;
-                        }
-                    }
-
-                    // anticlockwise azimuthal boundary
-                    {
-                        double s = intersectionMeridionalPlane(jcur + 1);  //scroll from pi to -pi
-                        if (s > 0. && s < ds)
-                        {
-                            ds = s;
-                            _i = icur;
-                            _j = (jcur + 1) % _grid->_Nphi;
-                            _k = kcur;
-                        }
-                    }
-
-                    // lower horizontal boundary
-                    {
-                        double s = intersectionHorizontalPlane(kcur);
-                        if (s > 0 && s < ds)
-                        {
-                            ds = s;
-                            _i = icur;
-                            _j = jcur;
-                            _k = kcur - 1;  // may be decremented to -1 (beyond the lower boundary)
-                        }
-                    }
-
-                    // upper horizontal boundary
-                    {
-                        double s = intersectionHorizontalPlane(kcur + 1);
-                        if (s > 0. && s < ds)
-                        {
-                            ds = s;
-                            _i = icur;
-                            _j = jcur;
-                            _k = kcur + 1;  // may be decremented to Nz (beyond the upper boundary)
-                        }
-                    }
-
-                    // if an exit point was found, add a segment to the path
-                    if (_i != icur || _j != jcur || _k != kcur)
-                    {
-                        setSegment(_grid->index(icur, jcur, kcur), ds);
+                        double ds = firstIntersectionCylinder(0);
+                        if (ds <= 0.) return abortPath();
+                        setSegment(-1, ds);
                         propagater(ds + _eps);
-                        if (_i >= _grid->_NR || _k < 0 || _k >= _grid->_Nz) setState(State::Outside);
+                        if (!setCellIndices()) return abortPath();
                         return true;
+                    }
+                    else
+                    {
+                        // remember the indices of the current cell
+                        int icur = _i;
+                        int jcur = _j;
+                        int kcur = _k;
+
+                        // calculate the distance travelled inside the cell by considering
+                        // the potential exit points for each of the six cell boundaries;
+                        // the smallest positive intersection "distance" wins.
+                        double ds = DBL_MAX;  // very large, but not infinity (so that infinite values are discarded)
+
+                        // inner radial boundary (always nonzero)
+                        {
+                            double s = firstIntersectionCylinder(icur);
+                            if (s > 0. && s < ds)
+                            {
+                                ds = s;
+                                _i = icur - 1;  // may be decremented to -1 (inside the innermost boundary)
+                                _j = jcur;
+                                _k = kcur;
+                            }
+                        }
+
+                        // outer radial boundary
+                        {
+                            double s = firstIntersectionCylinder(icur + 1);
+                            if (s > 0. && s < ds)
+                            {
+                                ds = s;
+                                _i = icur + 1;  // may be incremented to NR (beyond the outermost boundary)
+                                _j = jcur;
+                                _k = kcur;
+                            }
+                        }
+
+                        // clockwise azimuthal boundary
+                        {
+                            double s = intersectionMeridionalPlane(jcur);
+                            if (s > 0. && s < ds)
+                            {
+                                ds = s;
+                                _i = icur;
+                                _j = jcur > 0 ? jcur - 1 : _grid->_Nphi - 1;  //scroll from -pi to pi
+                                _k = kcur;
+                            }
+                        }
+
+                        // anticlockwise azimuthal boundary
+                        {
+                            double s = intersectionMeridionalPlane(jcur + 1);  //scroll from pi to -pi
+                            if (s > 0. && s < ds)
+                            {
+                                ds = s;
+                                _i = icur;
+                                _j = (jcur + 1) % _grid->_Nphi;
+                                _k = kcur;
+                            }
+                        }
+
+                        // lower horizontal boundary
+                        {
+                            double s = intersectionHorizontalPlane(kcur);
+                            if (s > 0 && s < ds)
+                            {
+                                ds = s;
+                                _i = icur;
+                                _j = jcur;
+                                _k = kcur - 1;  // may be decremented to -1 (beyond the lower boundary)
+                            }
+                        }
+
+                        // upper horizontal boundary
+                        {
+                            double s = intersectionHorizontalPlane(kcur + 1);
+                            if (s > 0. && s < ds)
+                            {
+                                ds = s;
+                                _i = icur;
+                                _j = jcur;
+                                _k = kcur + 1;  // may be decremented to Nz (beyond the upper boundary)
+                            }
+                        }
+
+                        // if an exit point was found, add a segment to the path
+                        if (_i != icur || _j != jcur || _k != kcur)
+                        {
+                            setSegment(_grid->index(icur, jcur, kcur), ds);
+                            propagater(ds + _eps);
+                            if (_i >= _grid->_NR || _k < 0 || _k >= _grid->_Nz) setState(State::Outside);
+                            return true;
+                        }
                     }
 
                     // otherwise, move a tiny bit along the path and reset the current cell indices
@@ -440,7 +458,6 @@ void Cylinder3DSpatialGrid::write_xyz(SpatialGridPlotFile* outfile) const
 
 int Cylinder3DSpatialGrid::index(int i, int j, int k) const
 {
-    if (i < 0) return -1;
     return k + (j + i * _Nphi) * _Nz;
 }
 
