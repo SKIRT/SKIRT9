@@ -142,13 +142,13 @@ class Cylinder3DSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
     constexpr static double EPS = 1e-12;
 
 public:
-    MySegmentGenerator(const Cylinder3DSpatialGrid* grid) : _grid(grid), _eps(1e-11 * grid->maxRadius()) {}
+    MySegmentGenerator(const Cylinder3DSpatialGrid* grid) : _grid(grid), _eps(EPS * grid->maxRadius()) {}
 
     // determine the indices i, j and k of the cell containing the current position
     //   i is set to -1 if the position is inside Rmin and to NR if the position is outside Rmax
     //   j is clipped to the range 0..Nphi-1
     //   k is set to -1 if the position is below zmin or above zmax
-    // returns true if the position is inside the cylinder, false if it is outside
+    // returns true if the position is inside the grid, false if it is outside
     bool setCellIndices()
     {
         double R, phi, z;
@@ -156,7 +156,7 @@ public:
         _i = NR::locate(_grid->_Rv, R);
         _j = NR::locateClip(_grid->_phiv, phi);
         _k = NR::locateFail(_grid->_zv, z);
-        return _i < _grid->_NR || _k < 0;
+        return _i < _grid->_NR && _k >= 0;
     }
 
     // set the state to outside and return false
@@ -167,7 +167,7 @@ public:
     }
 
     // returns the distance to the first intersection (or 0 if there is no intersection)
-    // between the current path and the cylinder with the given mesh index
+    // between the current path and the cylinder with the given bin index
     double firstIntersectionCylinder(int i)
     {
         if (abs(_kq2) < EPS) return 0.;
@@ -177,7 +177,7 @@ public:
     }
 
     // returns the distance to the intersection (or 0 if there is no intersection)
-    // between the current path and the meridional plane with the given mesh index
+    // between the current path and the meridional plane with the given bin index
     double intersectionMeridionalPlane(int j)
     {
         double q = kx() * _grid->_sinv[j] - ky() * _grid->_cosv[j];
@@ -186,7 +186,7 @@ public:
     }
 
     // returns the distance to the intersection (or 0 if there is no intersection)
-    // between the current path and the horizontal plane with the given mesh index
+    // between the current path and the horizontal plane with the given bin index
     double intersectionHorizontalPlane(int k)
     {
         if (abs(kz()) < EPS) return 0.;
@@ -233,7 +233,7 @@ public:
                 }
                 else if (R < _eps)
                 {
-                    // move the position away from the origin so that it has a meaningful phi index
+                    // move the position away from the origin so that it has a meaningful phi bin index
                     propagaterx(_eps);
                     propagatery(_eps);
                 }
@@ -283,7 +283,7 @@ public:
                     // outer radial boundary
                     {
                         double s = firstIntersectionCylinder(icur + 1);
-                        if (s > 0 && s < ds)
+                        if (s > 0. && s < ds)
                         {
                             ds = s;
                             _i = icur + 1;  // may be incremented to NR (beyond the outermost boundary)
@@ -295,19 +295,19 @@ public:
                     // lower azimuthal boundary
                     {
                         double s = intersectionMeridionalPlane(jcur);
-                        if (s > 0 && s < ds)
+                        if (s > 0. && s < ds)
                         {
                             ds = s;
                             _i = icur;
-                            _j = jcur > 0 ? jcur - 1 : _grid->_Nphi - 1;
+                            _j = jcur > 0 ? jcur - 1 : _grid->_Nphi - 1;  //scroll from -pi to pi
                             _k = kcur;
                         }
                     }
 
                     // upper azimuthal boundary
                     {
-                        double s = intersectionMeridionalPlane(jcur + 1);
-                        if (s > 0 && s < ds)
+                        double s = intersectionMeridionalPlane(jcur + 1);  //scroll from pi to -pi
+                        if (s > 0. && s < ds)
                         {
                             ds = s;
                             _i = icur;
@@ -331,7 +331,7 @@ public:
                     // upper horizontal boundary
                     {
                         double s = intersectionHorizontalPlane(kcur + 1);
-                        if (s > 0 && s < ds)
+                        if (s > 0. && s < ds)
                         {
                             ds = s;
                             _i = icur;
