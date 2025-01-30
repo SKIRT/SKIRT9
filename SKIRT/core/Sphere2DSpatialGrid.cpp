@@ -264,7 +264,7 @@ public:
                     double ds = DBL_MAX;  // very large, but not infinity (so that infinite values are discarded)
 
                     // inner radial boundary (not applicable to innermost cell if its radius is zero)
-                    if (_grid->_rv[icur] > 0.)
+                    if (icur>0 || (icur==0 && _grid->_rv[0] > 0.))
                     {
                         double s = firstIntersectionSphere(r(), k(), _grid->_rv[icur]);
                         if (s > 0 && s < ds)
