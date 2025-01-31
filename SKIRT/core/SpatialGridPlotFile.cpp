@@ -130,6 +130,25 @@ void SpatialGridPlotFile::writeCircle(double radius, double z)
 
 ////////////////////////////////////////////////////////////////////
 
+void SpatialGridPlotFile::writeMeridionalHalfCircle(double radius, double phi)
+{
+    if (!_out.is_open()) return;
+
+    radius = _units->olength(radius);
+
+    for (int l = 0; l <= 180; l++)
+    {
+        double theta = l * M_PI / 180;
+        double x = radius * cos(phi) * sin(theta);
+        double y = radius * sin(phi) * sin(theta);
+        double z = radius * cos(theta);
+        _out << x << '\t' << y << '\t' << z << '\n';
+    }
+    _out << '\n';
+}
+
+////////////////////////////////////////////////////////////////////
+
 void SpatialGridPlotFile::writePolyhedron(const vector<double>& coords, const vector<int>& indices)
 {
     if (!_out.is_open()) return;

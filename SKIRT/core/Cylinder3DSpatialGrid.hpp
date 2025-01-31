@@ -47,7 +47,8 @@ class Cylinder3DSpatialGrid : public CylinderSpatialGrid
 
 public:
     /** This function sets up a number of data members that depend on the Mesh objects configured
-        for this grid. */
+        for this grid. It precomputes and stores sine and cosine values for the azimuthal grid
+        points, and verifies that the azimuth bins are not too wide. */
     void setupSelfAfter() override;
 
     //======================== Other Functions =======================

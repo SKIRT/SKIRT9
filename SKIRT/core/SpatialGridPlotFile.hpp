@@ -50,6 +50,11 @@ public:
         convert the coordinates to output units. */
     void writeCircle(double radius, double z);
 
+    /** This function outputs a number of 3D line segments describing half a circle with the
+        specified radius in the meridional plane with the specified angle, using the Units object
+        specified in the constructor to convert the coordinates to output units. */
+    void writeMeridionalHalfCircle(double radius, double phi);
+
     /** This function outputs 3D line segments describing the specified polyhedron, using the Units
         object specified in the constructor to convert the coordinates to output units. Assuming
         the polyhedron has \f$n\f$ vertices, the first vector contains the \f$3n\f$ vertex

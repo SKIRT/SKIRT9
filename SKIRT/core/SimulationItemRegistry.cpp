@@ -242,6 +242,7 @@
 #include "SphePowerLawRedistributeGeometryDecorator.hpp"
 #include "Sphere1DSpatialGrid.hpp"
 #include "Sphere2DSpatialGrid.hpp"
+#include "Sphere3DSpatialGrid.hpp"
 #include "SphericalBackgroundSource.hpp"
 #include "SphericalClipGeometryDecorator.hpp"
 #include "SpheroidalGeometryDecorator.hpp"
@@ -491,10 +492,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // spatial grids
     ItemRegistry::add<SpatialGrid>();
     ItemRegistry::add<SphereSpatialGrid>();
+    ItemRegistry::add<CylinderSpatialGrid>();
     ItemRegistry::add<Sphere1DSpatialGrid>();
     ItemRegistry::add<Sphere2DSpatialGrid>();
-    ItemRegistry::add<CylinderSpatialGrid>();
     ItemRegistry::add<Cylinder2DSpatialGrid>();
+    ItemRegistry::add<Sphere3DSpatialGrid>();
     ItemRegistry::add<Cylinder3DSpatialGrid>();
     ItemRegistry::add<BoxSpatialGrid>();
     ItemRegistry::add<CartesianSpatialGrid>();
