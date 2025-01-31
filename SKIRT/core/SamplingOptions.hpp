@@ -55,7 +55,7 @@ class SamplingOptions : public SimulationItem
 
         PROPERTY_INT(numPropertySamples, "the number of random samples for determining other medium properties")
         ATTRIBUTE_MIN_VALUE(numPropertySamples, "1")
-        ATTRIBUTE_MAX_VALUE(numPropertySamples, "1000")
+        ATTRIBUTE_MAX_VALUE(numPropertySamples, "10000")
         ATTRIBUTE_DEFAULT_VALUE(numPropertySamples, "1")
         ATTRIBUTE_DISPLAYED_IF(numPropertySamples, "Level3")
 
