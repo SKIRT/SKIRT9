@@ -263,175 +263,164 @@ public:
             // intentionally falls through
             case State::Inside:
             {
-                while (true)  // the loop is executed more than once only if no exit point is found
+                // if we're not inside the real or artifical hole, proceed to the next boundary in the regular way
+                if (_i >= 0)
                 {
-                    // if we're not inside the real or artifical hole, proceed to the next boundary in the regular way
-                    if (_i >= 0)
+                    // remember the indices of the current cell
+                    int icur = _i;
+                    int jcur = _j;
+                    int kcur = _k;
+
+                    // calculate the distance travelled inside the cell by considering
+                    // the potential exit points for each of the six cell boundaries;
+                    // the smallest positive intersection "distance" wins.
+                    double ds = DBL_MAX;  // very large, but not infinity (so that infinite values are discarded)
+
+                    // inner radial boundary (always nonzero)
                     {
-                        // remember the indices of the current cell
-                        int icur = _i;
-                        int jcur = _j;
-                        int kcur = _k;
-
-                        // calculate the distance travelled inside the cell by considering
-                        // the potential exit points for each of the six cell boundaries;
-                        // the smallest positive intersection "distance" wins.
-                        double ds = DBL_MAX;  // very large, but not infinity (so that infinite values are discarded)
-
-                        // inner radial boundary (always nonzero)
+                        double s = firstIntersectionCylinder(icur);
+                        if (s > 0. && s < ds)
                         {
-                            double s = firstIntersectionCylinder(icur);
-                            if (s > 0. && s < ds)
-                            {
-                                ds = s;
-                                _i = icur - 1;  // may be decremented to -1 (inside the innermost boundary)
-                                _j = jcur;
-                                _k = kcur;
-                            }
-                        }
-
-                        // outer radial boundary
-                        {
-                            double s = firstIntersectionCylinder(icur + 1);
-                            if (s > 0. && s < ds)
-                            {
-                                ds = s;
-                                _i = icur + 1;  // may be incremented to NR (beyond the outermost boundary)
-                                _j = jcur;
-                                _k = kcur;
-                            }
-                        }
-
-                        // clockwise azimuthal boundary
-                        {
-                            double s = intersectionMeridionalPlane(jcur);
-                            if (s > 0. && s < ds)
-                            {
-                                ds = s;
-                                _i = icur;
-                                _j = jcur > 0 ? jcur - 1 : _grid->_Nphi - 1;  //scroll from -pi to pi
-                                _k = kcur;
-                            }
-                        }
-
-                        // anticlockwise azimuthal boundary
-                        {
-                            double s = intersectionMeridionalPlane(jcur + 1);  //scroll from pi to -pi
-                            if (s > 0. && s < ds)
-                            {
-                                ds = s;
-                                _i = icur;
-                                _j = (jcur + 1) % _grid->_Nphi;
-                                _k = kcur;
-                            }
-                        }
-
-                        // lower horizontal boundary
-                        {
-                            double s = intersectionHorizontalPlane(kcur);
-                            if (s > 0 && s < ds)
-                            {
-                                ds = s;
-                                _i = icur;
-                                _j = jcur;
-                                _k = kcur - 1;  // may be decremented to -1 (beyond the lower boundary)
-                            }
-                        }
-
-                        // upper horizontal boundary
-                        {
-                            double s = intersectionHorizontalPlane(kcur + 1);
-                            if (s > 0. && s < ds)
-                            {
-                                ds = s;
-                                _i = icur;
-                                _j = jcur;
-                                _k = kcur + 1;  // may be decremented to Nz (beyond the upper boundary)
-                            }
-                        }
-
-                        // if an exit point was found, add a segment to the path
-                        if (_i != icur || _j != jcur || _k != kcur)
-                        {
-                            setSegment(_grid->index(icur, jcur, kcur), ds);
-                            propagater(ds + _eps);
-                            if (_i >= _grid->_NR || _k < 0 || _k >= _grid->_Nz) setState(State::Outside);
-                            return true;
+                            ds = s;
+                            _i = icur - 1;  // may be decremented to -1 (inside the innermost boundary)
+                            _j = jcur;
+                            _k = kcur;
                         }
                     }
 
-                    // if we're inside the artificial hole, stay in the same azimuthal bin but allow moving
-                    // vertically until hitting the artificial hole radius;
-                    // then recalculate the bin indices (the phi bin index changes when crossing the origin)
-                    else if (!_grid->_hasHole)
+                    // outer radial boundary
                     {
-                        // remember the vertical index
-                        int kcur = _k;
-
-                        // calculate the distance travelled inside the hole by considering the hole boundary
-                        // and the horizontal planes; the smallest positive intersection "distance" wins.
-                        double ds = DBL_MAX;  // very large, but not infinity (so that infinite values are discarded)
+                        double s = firstIntersectionCylinder(icur + 1);
+                        if (s > 0. && s < ds)
                         {
-                            double s = firstIntersectionCylinder(0);
-                            if (s > 0. && s < ds)
-                            {
-                                ds = s;
-                            }
+                            ds = s;
+                            _i = icur + 1;  // may be incremented to NR (beyond the outermost boundary)
+                            _j = jcur;
+                            _k = kcur;
                         }
-                        {
-                            double s = intersectionHorizontalPlane(kcur);
-                            if (s > 0 && s < ds)
-                            {
-                                ds = s;
-                                _k = kcur - 1;  // may be decremented to -1 (beyond the lower boundary)
-                            }
-                        }
-                        {
-                            double s = intersectionHorizontalPlane(kcur + 1);
-                            if (s > 0. && s < ds)
-                            {
-                                ds = s;
-                                _k = kcur + 1;  // may be decremented to Nz (beyond the upper boundary)
-                            }
-                        }
-                        if (ds == DBL_MAX) return abortPath();
-
-                        // return a regular segment in the original azimuth bin
-                        setSegment(_grid->index(0, _j, kcur), ds);
-                        propagater(ds + _eps);
-
-                        // if we exit through the hole boundary, recalculate the bin indices
-                        if (_k == kcur)
-                        {
-                            if (!setCellIndices()) return abortPath();
-                        }
-                        // otherwise we may have exited through the roof or floor
-                        else if (_k < 0 || _k >= _grid->_Nz)
-                        {
-                            setState(State::Outside);
-                        }
-                        return true;
                     }
 
-                    // if we're inside the real hole, skip to the hole radius in one empty segment step
-                    // and recalculate the bin indices (the phi bin index changes when crossing the origin)
-                    else
+                    // clockwise azimuthal boundary
                     {
-                        double ds = firstIntersectionCylinder(0);
-                        if (ds <= 0.) return abortPath();
-                        setSegment(-1, ds);
-                        propagater(ds + _eps);
-                        if (!setCellIndices()) return abortPath();
-                        return true;
+                        double s = intersectionMeridionalPlane(jcur);
+                        if (s > 0. && s < ds)
+                        {
+                            ds = s;
+                            _i = icur;
+                            _j = jcur > 0 ? jcur - 1 : _grid->_Nphi - 1;  //scroll from -pi to pi
+                            _k = kcur;
+                        }
                     }
 
-                    // if no exit point was found, move a tiny bit along the path and reset the current cell indices
-                    // if the new current point is outside the grid, there is no segment to return
-                    propagater(_eps);
-                    if (!setCellIndices()) return abortPath();
+                    // anticlockwise azimuthal boundary
+                    {
+                        double s = intersectionMeridionalPlane(jcur + 1);  //scroll from pi to -pi
+                        if (s > 0. && s < ds)
+                        {
+                            ds = s;
+                            _i = icur;
+                            _j = (jcur + 1) % _grid->_Nphi;
+                            _k = kcur;
+                        }
+                    }
 
-                    // try again from the start of this loop
+                    // lower horizontal boundary
+                    {
+                        double s = intersectionHorizontalPlane(kcur);
+                        if (s > 0 && s < ds)
+                        {
+                            ds = s;
+                            _i = icur;
+                            _j = jcur;
+                            _k = kcur - 1;  // may be decremented to -1 (beyond the lower boundary)
+                        }
+                    }
+
+                    // upper horizontal boundary
+                    {
+                        double s = intersectionHorizontalPlane(kcur + 1);
+                        if (s > 0. && s < ds)
+                        {
+                            ds = s;
+                            _i = icur;
+                            _j = jcur;
+                            _k = kcur + 1;  // may be decremented to Nz (beyond the upper boundary)
+                        }
+                    }
+
+                    // if no exit point was found, abort the path
+                    if (ds == DBL_MAX) return abortPath();
+
+                    // add a segment to the path
+                    setSegment(_grid->index(icur, jcur, kcur), ds);
+                    propagater(ds + _eps);
+                    if (_i >= _grid->_NR || _k < 0 || _k >= _grid->_Nz) setState(State::Outside);
                 }
+
+                // if we're inside the artificial hole, stay in the same azimuthal bin but allow moving
+                // vertically until hitting the artificial hole radius;
+                // then recalculate the bin indices (the phi bin index changes when crossing the origin)
+                else if (!_grid->_hasHole)
+                {
+                    // remember the vertical index
+                    int kcur = _k;
+
+                    // calculate the distance travelled inside the hole by considering the hole boundary
+                    // and the horizontal planes; the smallest positive intersection "distance" wins.
+                    double ds = DBL_MAX;  // very large, but not infinity (so that infinite values are discarded)
+                    {
+                        double s = firstIntersectionCylinder(0);
+                        if (s > 0. && s < ds)
+                        {
+                            ds = s;
+                        }
+                    }
+                    {
+                        double s = intersectionHorizontalPlane(kcur);
+                        if (s > 0 && s < ds)
+                        {
+                            ds = s;
+                            _k = kcur - 1;  // may be decremented to -1 (beyond the lower boundary)
+                        }
+                    }
+                    {
+                        double s = intersectionHorizontalPlane(kcur + 1);
+                        if (s > 0. && s < ds)
+                        {
+                            ds = s;
+                            _k = kcur + 1;  // may be decremented to Nz (beyond the upper boundary)
+                        }
+                    }
+                    // if no exit point was found, abort the path
+                    if (ds == DBL_MAX) return abortPath();
+
+                    // add a regular segment to the path in the original azimuth bin
+                    setSegment(_grid->index(0, _j, kcur), ds);
+                    propagater(ds + _eps);
+
+                    // if we exit through the hole boundary, recalculate the bin indices
+                    if (_k == kcur)
+                    {
+                        if (!setCellIndices()) return abortPath();
+                    }
+                    // otherwise we may have exited through the roof or floor
+                    else if (_k < 0 || _k >= _grid->_Nz)
+                    {
+                        setState(State::Outside);
+                    }
+                }
+
+                // if we're inside the real hole, skip to the hole radius in one empty segment step
+                // and recalculate the bin indices (the phi bin index changes when crossing the origin)
+                else
+                {
+                    double ds = firstIntersectionCylinder(0);
+                    if (ds <= 0.) return abortPath();
+                    setSegment(-1, ds);
+                    propagater(ds + _eps);
+                    if (!setCellIndices()) return abortPath();
+                }
+                return true;
             }
 
             case State::Outside:
