@@ -56,7 +56,7 @@ void Sphere3DSpatialGrid::setupSelfAfter()
     int numZeroes = 0;
     for (int j = 1; j < _Ntheta; j++)
     {
-        if (fabs(_cv[j]) < 1e-9)
+        if (abs(_cv[j]) < 1e-9)
         {
             numZeroes++;
             _cv[j] = 0.;
@@ -203,48 +203,19 @@ Position Sphere3DSpatialGrid::randomPositionInCell(int m) const
 
 //////////////////////////////////////////////////////////////////////
 
-namespace
-{
-    // returns the smallest positive solution of a*x^2 + 2*b*x + c = 0, or 0 if there is no positive solution
-    double smallestPositiveSolution(double a, double b, double c)
-    {
-        if (fabs(a) > 1e-9) return Quadratic::smallestPositiveSolution(b / a, c / a);
-        double x = -0.5 * c / b;
-        if (x > 0.) return x;
-        return 0.;
-    }
-
-    // returns the distance to the first intersection between the ray (bfr,bfk) and the sphere with given radius,
-    // or 0 if there is no intersection
-    double firstIntersectionSphere(Vec bfr, Vec bfk, double r)
-    {
-        return Quadratic::smallestPositiveSolution(Vec::dot(bfr, bfk), bfr.norm2() - r * r);
-    }
-
-    // returns the distance to the first intersection between the ray (bfr,bfk) and the cone with given cos(theta),
-    // or 0 if there is no intersection (the degenarate cone with zero cosine is treated separately)
-    double firstIntersectionCone(Vec bfr, Vec bfk, double c)
-    {
-        return c ? smallestPositiveSolution(c * c - bfk.z() * bfk.z(), c * c * Vec::dot(bfr, bfk) - bfr.z() * bfk.z(),
-                                            c * c * bfr.norm2() - bfr.z() * bfr.z())
-                 : -bfr.z() / bfk.z();  // degenerate cone identical to xy-plane
-    }
-}
-
-//////////////////////////////////////////////////////////////////////
-
 class Sphere3DSpatialGrid::MySegmentGenerator : public PathSegmentGenerator
 {
     const Sphere3DSpatialGrid* _grid{nullptr};
-    double _eps{0.};     // small value relative to domain size
-    int _i{-1}, _j{-1};  // bin indices
+    double _eps{0.};             // small value relative to domain size
+    int _i{-1}, _j{-1}, _k{-1};  // bin indices
 
 public:
-    MySegmentGenerator(const Sphere3DSpatialGrid* grid) : _grid(grid), _eps(1e-11 * grid->maxRadius()) {}
+    MySegmentGenerator(const Sphere3DSpatialGrid* grid) : _grid(grid), _eps(grid->_eps) {}
 
-    // determines and sets the indices i and j of the cell containing the current position
+    // determines and sets the indices i, j and k of the cell containing the current position
     //   i is set to -1 if the position is inside rmin and to Nr if the position is outside rmax
     //   j is clipped to the range 0..Ntheta-1
+    //   k is clipped to the range 0..Nphi-1
     // returns true if the position is inside rmax, false if it is outside rmax
     bool setCellIndices()
     {
@@ -252,6 +223,7 @@ public:
         r().spherical(radius, theta, phi);
         _i = NR::locate(_grid->_rv, radius);
         _j = NR::locateClip(_grid->_thetav, theta);
+        _k = NR::locateClip(_grid->_phiv, phi);
         return _i < _grid->_Nr;
     }
 
@@ -260,6 +232,43 @@ public:
     {
         setState(State::Outside);
         return false;
+    }
+
+    // returns the distance to the first intersection (or 0 if there is no intersection)
+    // the current path and the sphere with given bin index
+    // or 0 if there is no intersection
+    double firstIntersectionSphere(int i)
+    {
+        return Quadratic::smallestPositiveSolution(Vec::dot(r(), k()), r().norm2() - _grid->_rv[i] * _grid->_rv[i]);
+    }
+
+    // returns the smallest positive solution of a*x^2 + 2*b*x + c = 0, or 0 if there is no positive solution
+    static double smallestPositiveSolution(double a, double b, double c)
+    {
+        if (abs(a) > EPS) return Quadratic::smallestPositiveSolution(b / a, c / a);
+        double x = -0.5 * c / b;
+        if (x > 0.) return x;
+        return 0.;
+    }
+
+    // returns the distance to the first intersection (or 0 if there is no intersection)
+    // between the current path and the cone with given bin index
+    // (the degenarate cone with zero cosine is treated separately)
+    double firstIntersectionCone(int j)
+    {
+        double c = _grid->_cv[j];
+        return c ? smallestPositiveSolution(c * c - kz() * kz(), c * c * Vec::dot(r(), k()) - rz() * kz(),
+                                            c * c * r().norm2() - rz() * rz())
+                 : -rz() / kz();  // degenerate cone identical to xy-plane
+    }
+
+    // returns the distance to the intersection (or 0 if there is no intersection)
+    // between the current path and the meridional plane with the given bin index
+    double intersectionMeridionalPlane(int k)
+    {
+        double q = kx() * _grid->_sinv[k] - ky() * _grid->_cosv[k];
+        if (abs(q) < EPS) return 0.;
+        return -(rx() * _grid->_sinv[k] - ry() * _grid->_cosv[k]) / q;
     }
 
     bool next() override
@@ -272,7 +281,7 @@ public:
                 if (r().norm() > _grid->maxRadius())
                 {
                     // find intersection; abort if there is none
-                    double ds = firstIntersectionSphere(r(), k(), _grid->maxRadius());
+                    double ds = firstIntersectionSphere(_grid->_Nr);
                     if (ds <= 0.) return abortPath();
 
                     // propagate the path to the intersection; abort in case of numerical inaccuracies
@@ -286,8 +295,6 @@ public:
                 }
 
                 // the original position was inside the grid
-                // if necessary, move it away from the origin so that it has meaningful cell indices
-                if (r().norm() < _eps) propagater(_eps);
                 if (!setCellIndices()) return abortPath();  // abort in case of numerical inaccuracies
                 setState(State::Inside);
 
@@ -297,80 +304,113 @@ public:
             // intentionally falls through
             case State::Inside:
             {
-                while (true)  // the loop is executed more than once only if no exit point is found
+                // if we're not inside the real or artificial hole, proceed to the next boundary in the regular way
+                if (_i >= 0)
                 {
                     // remember the indices of the current cell
                     int icur = _i;
                     int jcur = _j;
+                    int kcur = _k;
 
                     // calculate the distance travelled inside the cell by considering
-                    // the potential exit points for each of the four cell boundaries;
+                    // the potential exit points for each of the six cell boundaries;
                     // the smallest positive intersection "distance" wins.
                     double ds = DBL_MAX;  // very large, but not infinity (so that infinite values are discarded)
 
-                    // inner radial boundary (not applicable to innermost cell if its radius is zero)
-                    if (icur > 0 || (icur == 0 && _grid->_rv[0] > 0.))
+                    // inner radial boundary (always nonzero)
                     {
-                        double s = firstIntersectionSphere(r(), k(), _grid->_rv[icur]);
+                        double s = firstIntersectionSphere(icur);
                         if (s > 0 && s < ds)
                         {
                             ds = s;
                             _i = icur - 1;  // may be decremented to -1 (inside the innermost boundary)
                             _j = jcur;
+                            _k = kcur;
                         }
                     }
 
                     // outer radial boundary
                     {
-                        double s = firstIntersectionSphere(r(), k(), _grid->_rv[icur + 1]);
+                        double s = firstIntersectionSphere(icur + 1);
                         if (s > 0 && s < ds)
                         {
                             ds = s;
                             _i = icur + 1;  // may be incremented to Nr (beyond the outermost boundary)
                             _j = jcur;
+                            _k = kcur;
                         }
                     }
 
                     // upper angular boundary (not applicable to uppermost cell)
                     if (jcur > 0)
                     {
-                        double s = firstIntersectionCone(r(), k(), _grid->_cv[jcur]);
+                        double s = firstIntersectionCone(jcur);
                         if (s > 0 && s < ds)
                         {
                             ds = s;
                             _i = icur;
                             _j = jcur - 1;
+                            _k = kcur;
                         }
                     }
 
                     // lower angular boundary (not applicable to lowest cell)
                     if (jcur < _grid->_Ntheta - 1)
                     {
-                        double s = firstIntersectionCone(r(), k(), _grid->_cv[jcur + 1]);
+                        double s = firstIntersectionCone(jcur + 1);
                         if (s > 0 && s < ds)
                         {
                             ds = s;
                             _i = icur;
                             _j = jcur + 1;
+                            _k = kcur;
                         }
                     }
 
-                    // if an exit point was found, add a segment to the path
-                    if (_i != icur || _j != jcur)
+                    // clockwise azimuthal boundary
                     {
-                        setSegment(_grid->index(icur, 0, jcur), ds);
-                        propagater(ds + _eps);
-                        if (_i >= _grid->_Nr) setState(State::Outside);
-                        return true;
+                        double s = intersectionMeridionalPlane(kcur);
+                        if (s > 0. && s < ds)
+                        {
+                            ds = s;
+                            _i = icur;
+                            _j = jcur;
+                            _k = kcur > 0 ? kcur - 1 : _grid->_Nphi - 1;  //scroll from -pi to pi
+                        }
                     }
 
-                    // otherwise, move a tiny bit along the path and reset the current cell indices
-                    // if the new current point is outside the grid, there is no segment to return
-                    propagater(_eps);
-                    if (!setCellIndices()) return abortPath();
+                    // anticlockwise azimuthal boundary
+                    {
+                        double s = intersectionMeridionalPlane(kcur + 1);
+                        if (s > 0. && s < ds)
+                        {
+                            ds = s;
+                            _i = icur;
+                            _j = jcur;
+                            _k = (kcur + 1) % _grid->_Nphi;  //scroll from pi to -pi
+                        }
+                    }
 
-                    // try again from the start of this loop
+                    // if no exit point was found, abort the path
+                    if (ds == DBL_MAX) return abortPath();
+
+                    // add a segment to the path
+                    setSegment(_grid->index(icur, jcur, jcur), ds);
+                    propagater(ds + _eps);
+                    if (_i >= _grid->_Nr) setState(State::Outside);
                 }
+
+                // if we're inside the hole, skip to the hole radius in one empty segment step
+                // and recalculate the bin indices (the phi bin index changes when crossing the origin)
+                else
+                {
+                    double ds = firstIntersectionSphere(0);
+                    if (ds <= 0.) return abortPath();
+                    setEmptySegment(ds);
+                    propagater(ds + _eps);
+                    if (!setCellIndices()) return abortPath();
+                }
+                return true;
             }
 
             case State::Outside:

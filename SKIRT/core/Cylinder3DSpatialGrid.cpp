@@ -263,7 +263,7 @@ public:
             // intentionally falls through
             case State::Inside:
             {
-                // if we're not inside the real or artifical hole, proceed to the next boundary in the regular way
+                // if we're not inside the real or artificial hole, proceed to the next boundary in the regular way
                 if (_i >= 0)
                 {
                     // remember the indices of the current cell
@@ -314,12 +314,12 @@ public:
 
                     // anticlockwise azimuthal boundary
                     {
-                        double s = intersectionMeridionalPlane(jcur + 1);  //scroll from pi to -pi
+                        double s = intersectionMeridionalPlane(jcur + 1);
                         if (s > 0. && s < ds)
                         {
                             ds = s;
                             _i = icur;
-                            _j = (jcur + 1) % _grid->_Nphi;
+                            _j = (jcur + 1) % _grid->_Nphi;  //scroll from pi to -pi
                             _k = kcur;
                         }
                     }
@@ -416,7 +416,7 @@ public:
                 {
                     double ds = firstIntersectionCylinder(0);
                     if (ds <= 0.) return abortPath();
-                    setSegment(-1, ds);
+                    setEmptySegment(ds);
                     propagater(ds + _eps);
                     if (!setCellIndices()) return abortPath();
                 }
