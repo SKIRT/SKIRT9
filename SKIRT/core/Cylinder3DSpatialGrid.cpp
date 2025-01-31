@@ -34,10 +34,13 @@ void Cylinder3DSpatialGrid::setupSelfAfter()
     _phiv = _meshAzimuthal->mesh() * (2. * M_PI) - M_PI;
     _zv = _meshZ->mesh() * (maxZ() - minZ()) + minZ();
 
-    // make sure that the innermost radial bin border is always larger than the epsilon we use for progressing the path
+    // limit the epsilon we use for progressing the path to a value smaller than the hole and/or the first bin
+    _hasHole = _Rv[0] > 0.;
+    _eps = min(EPS * maxRadius(), 0.1 * (_hasHole ? min(_Rv[0], _Rv[1] - _Rv[0]) : _Rv[1]));
+
+    // if the cylinder has no hole, create an artificial hole larger than the epsilon we use for progressing the path
     // so that the segment generator has a chance to reset the phi bin index when crossing the origin
-    _eps = EPS * maxRadius();
-    _Rv[0] = max(_Rv[0], 2. * _eps);
+    if (!_hasHole) _Rv[0] = 2. * _eps;
 
     // verify that the azimuth bins are smaller than 120 degrees, with some leeway,
     // so that the segment generator never inadvertently intersects the path with the reflected phi bin border
@@ -262,18 +265,8 @@ public:
             {
                 while (true)  // the loop is executed more than once only if no exit point is found
                 {
-                    // if we're inside the innermost radius, skip to that radius in one step
-                    // and recalculate the bin indices (the phi bin index changes when crossing the origin)
-                    if (_i < 0)
-                    {
-                        double ds = firstIntersectionCylinder(0);
-                        if (ds <= 0.) return abortPath();
-                        setSegment(-1, ds);
-                        propagater(ds + _eps);
-                        if (!setCellIndices()) return abortPath();
-                        return true;
-                    }
-                    else
+                    // if we're not inside the real or artifical hole, proceed to the next boundary in the regular way
+                    if (_i >= 0)
                     {
                         // remember the indices of the current cell
                         int icur = _i;
@@ -367,7 +360,72 @@ public:
                         }
                     }
 
-                    // otherwise, move a tiny bit along the path and reset the current cell indices
+                    // if we're inside the artificial hole, stay in the same azimuthal bin but allow moving
+                    // vertically until hitting the artificial hole radius;
+                    // then recalculate the bin indices (the phi bin index changes when crossing the origin)
+                    else if (!_grid->_hasHole)
+                    {
+                        // remember the vertical index
+                        int kcur = _k;
+
+                        // calculate the distance travelled inside the hole by considering the hole boundary
+                        // and the horizontal planes; the smallest positive intersection "distance" wins.
+                        double ds = DBL_MAX;  // very large, but not infinity (so that infinite values are discarded)
+                        {
+                            double s = firstIntersectionCylinder(0);
+                            if (s > 0. && s < ds)
+                            {
+                                ds = s;
+                            }
+                        }
+                        {
+                            double s = intersectionHorizontalPlane(kcur);
+                            if (s > 0 && s < ds)
+                            {
+                                ds = s;
+                                _k = kcur - 1;  // may be decremented to -1 (beyond the lower boundary)
+                            }
+                        }
+                        {
+                            double s = intersectionHorizontalPlane(kcur + 1);
+                            if (s > 0. && s < ds)
+                            {
+                                ds = s;
+                                _k = kcur + 1;  // may be decremented to Nz (beyond the upper boundary)
+                            }
+                        }
+                        if (ds == DBL_MAX) return abortPath();
+
+                        // return a regular segment in the original azimuth bin
+                        setSegment(_grid->index(0, _j, kcur), ds);
+                        propagater(ds + _eps);
+
+                        // if we exit through the hole boundary, recalculate the bin indices
+                        if (_k == kcur)
+                        {
+                            if (!setCellIndices()) return abortPath();
+                        }
+                        // otherwise we may have exited through the roof or floor
+                        else if (_k < 0 || _k >= _grid->_Nz)
+                        {
+                            setState(State::Outside);
+                        }
+                        return true;
+                    }
+
+                    // if we're inside the real hole, skip to the hole radius in one empty segment step
+                    // and recalculate the bin indices (the phi bin index changes when crossing the origin)
+                    else
+                    {
+                        double ds = firstIntersectionCylinder(0);
+                        if (ds <= 0.) return abortPath();
+                        setSegment(-1, ds);
+                        propagater(ds + _eps);
+                        if (!setCellIndices()) return abortPath();
+                        return true;
+                    }
+
+                    // if no exit point was found, move a tiny bit along the path and reset the current cell indices
                     // if the new current point is outside the grid, there is no segment to return
                     propagater(_eps);
                     if (!setCellIndices()) return abortPath();
