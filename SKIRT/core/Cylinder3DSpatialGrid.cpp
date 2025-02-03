@@ -48,15 +48,12 @@ void Cylinder3DSpatialGrid::setupSelfAfter()
     for (int j = 0; j != _Nphi; ++j)
         if (_phiv[j + 1] - _phiv[j] > maxPhi) throw FATALERROR("Azimuth bin is wider than 120 deg");
 
-    // pre-calculate sines and cosines for azimuthal bin borders
-    _sinv.resize(_Nphi + 1);
-    _cosv.resize(_Nphi + 1);
+    // pre-calculate sines and cosines for azimuthal bin borders; make sure that the boundary values are exact
+    _sinv = sin(_phiv);
+    _cosv = cos(_phiv);
+    _sinv[0] = 0.;
     _cosv[0] = -1.;
-    for (int j = 1; j != _Nphi; ++j)
-    {
-        _sinv[j] = sin(_phiv[j]);
-        _cosv[j] = cos(_phiv[j]);
-    }
+    _sinv[_Nphi] = 0.;
     _cosv[_Nphi] = -1.;
 }
 

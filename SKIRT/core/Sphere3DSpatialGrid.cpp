@@ -42,51 +42,7 @@ void Sphere3DSpatialGrid::setupSelfAfter()
     // ---- polar ----
 
     // set up the polar grid; pre-calculate the cosines for each angular boundary
-    _Ntheta = _meshPolar->numBins();
-    _thetav = _meshPolar->mesh() * M_PI;
-    _cv = cos(_thetav);
-
-    // make sure that the boundary cosine values are exact
-    _cv[0] = 1.;
-    _cv[_Ntheta] = -1.;
-
-    // the path segment generator requires that there is a grid point corresponding to pi/2 (i.e. the xy-plane)
-
-    // if there is a cosine value close to zero, make it exactly zero
-    int numZeroes = 0;
-    for (int j = 1; j < _Ntheta; j++)
-    {
-        if (abs(_cv[j]) < 1e-9)
-        {
-            numZeroes++;
-            _cv[j] = 0.;
-        }
-    }
-    if (numZeroes > 1) throw FATALERROR("There are multiple grid points very close to pi/2");
-
-    // if there is no cosine value close to zero, add an extra grid point
-    if (numZeroes == 0)
-    {
-        // Make temporary copy of the original grid
-        Array or_thetav = _thetav;
-        Array or_cv = _cv;
-
-        // Resize the grid to contain one extra bin; this clears all values
-        _Ntheta++;
-        _thetav.resize(_Ntheta + 1);
-        _cv.resize(_Ntheta + 1);
-
-        // Initialize the new grid with values corresponding to the xy-plane so we can skip that index while copying
-        _thetav = M_PI_2;
-
-        // Copy the values from the original to the new grid, skipping the xy-plane
-        for (int j = 0; j < _Ntheta; j++)
-        {
-            int target = (or_cv[j] > 0) ? j : j + 1;
-            _thetav[target] = or_thetav[j];
-            _cv[target] = or_cv[j];
-        }
-    }
+    _Ntheta = initPolarGrid(_thetav, _cv, _meshPolar);
 
     // ---- azimuthal ----
 
@@ -100,11 +56,9 @@ void Sphere3DSpatialGrid::setupSelfAfter()
     for (int k = 0; k != _Nphi; ++k)
         if (_phiv[k + 1] - _phiv[k] > maxPhi) throw FATALERROR("Azimuth bin is wider than 120 deg");
 
-    // pre-calculate sines and cosines for azimuthal bin borders
+    // pre-calculate sines and cosines for azimuthal bin borders; make sure that the outer boundary values are exact
     _sinv = sin(_phiv);
     _cosv = cos(_phiv);
-
-    // make sure that the boundary values are exact
     _sinv[0] = 0.;
     _cosv[0] = -1.;
     _sinv[_Nphi] = 0.;

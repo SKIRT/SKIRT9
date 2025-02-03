@@ -6,7 +6,6 @@
 #ifndef SPHERE3DSPATIALGRID_HPP
 #define SPHERE3DSPATIALGRID_HPP
 
-#include "Array.hpp"
 #include "Mesh.hpp"
 #include "SphereSpatialGrid.hpp"
 class Random;

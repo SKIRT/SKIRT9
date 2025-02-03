@@ -6,7 +6,9 @@
 #ifndef SPHERESPATIALGRID_HPP
 #define SPHERESPATIALGRID_HPP
 
+#include "Array.hpp"
 #include "SpatialGrid.hpp"
+class Mesh;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -49,6 +51,16 @@ protected:
     /** This function returns \f$x_1^3 - x_0^3 = (x_1-x_0)(x_1^2 + x_1 x_0 + x_0^2)\f$. It is
         intended as a convenience for subclasses. */
     static double pow3(double x0, double x1) { return (x1 - x0) * (x1 * x1 + x1 * x0 + x0 * x0); }
+
+    /** This function initializes a polar-inclination grid from the specified mesh, making sure
+        that there is exactly one boundary corresponding to the equatorial plane
+        (\f$\theta=\pi/2\f$ or equivalently \f$\cos\theta=0\f$). If the mesh does not include such
+        as a boundary, one is automatically added. If the mesh includes multiple boundaries very
+        close to the equatorial plane, a fatal error is thrown.
+
+        The function stores the resulting boundaries and the corresponding cosine values in the
+        provided arrays, resizing them appropriately, and returns the number of boundaries. */
+    static int initPolarGrid(Array& thetav, Array& cosv, const Mesh* mesh);
 };
 
 ////////////////////////////////////////////////////////////////////
