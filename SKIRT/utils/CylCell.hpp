@@ -82,7 +82,7 @@ public:
     /** This function returns the volume of the cell, given by \f$\frac{1}{2}
         (R_\text{max}^2-R_\text{min}^2) (\varphi_\text{max}-\varphi_\text{min})
         (z_\text{max}-z_\text{min})\f$. */
-    double volume() const { return 0.5 * (_Rmax * _Rmax - _Rmin * _Rmin) * (_phimax - _phimin) * (_zmax - _zmin); }
+    double volume() const;
 
     /** This function returns the "center" of the cell in Cartesian coordinates. This position is
         defined as the halfway point between the cell borders in cylindrical coordinates, i.e.
@@ -148,10 +148,7 @@ public:
         R_*^2\f$ yields a quadratic equation of the form \f$s^2+2bs+c=0\f$ with \f[\begin{aligned}
         b &= \frac{r_\text{x}k_\text{x} + r_\text{y}k_\text{y}} {k_\text{x}^2 + k_\text{y}^2} \\ c
         &= \frac{r_\text{x}^2 + r_\text{y}^2 - R_*^2} {k_\text{x}^2 + k_\text{y}^2} \\
-        \end{aligned}\f] which, if \f$b^2 \ge c\f$, has solutions described by \f[\begin{aligned}
-        s_1 &= -b - \sqrt{b^2-c} \\ s_2 &= -b + \sqrt{b^2-c} \\ s_1s_2&=c.\end{aligned}\f] To avoid
-        loss of significance in case the roots have a different order of magnitude, we use the
-        first and third equations if \f$b>0\f$ and the second and third equations otherwise. */
+        \end{aligned}\f] */
     double intersection(Vec r, const Vec k) const;
 
 private:

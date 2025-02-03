@@ -113,6 +113,42 @@ void SpatialGridPlotFile::writeCube(double x1, double y1, double z1, double x2, 
 
 ////////////////////////////////////////////////////////////////////
 
+void SpatialGridPlotFile::writeCircle(double radius, double z)
+{
+    if (!_out.is_open()) return;
+
+    radius = _units->olength(radius);
+    z = _units->olength(z);
+
+    for (int l = 0; l <= 360; l++)
+    {
+        double phi = l * M_PI / 180;
+        _out << radius * cos(phi) << '\t' << radius * sin(phi) << '\t' << z << '\n';
+    }
+    _out << '\n';
+}
+
+////////////////////////////////////////////////////////////////////
+
+void SpatialGridPlotFile::writeMeridionalHalfCircle(double radius, double phi)
+{
+    if (!_out.is_open()) return;
+
+    radius = _units->olength(radius);
+
+    for (int l = 0; l <= 180; l++)
+    {
+        double theta = l * M_PI / 180;
+        double x = radius * cos(phi) * sin(theta);
+        double y = radius * sin(phi) * sin(theta);
+        double z = radius * cos(theta);
+        _out << x << '\t' << y << '\t' << z << '\n';
+    }
+    _out << '\n';
+}
+
+////////////////////////////////////////////////////////////////////
+
 void SpatialGridPlotFile::writePolyhedron(const vector<double>& coords, const vector<int>& indices)
 {
     if (!_out.is_open()) return;

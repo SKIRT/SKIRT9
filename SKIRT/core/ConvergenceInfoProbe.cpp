@@ -22,7 +22,7 @@ namespace
     {
         // determine a small value relative to the domain extent;
         // we integrate along a small offset from the axes to avoid cell borders
-        double eps = 1e-12 * ms->grid()->boundingBox().widths().norm();
+        double eps = 1e-15 * ms->grid()->boundingBox().diagonal();
         SpatialGridPath path(Position(eps, eps, eps), axis);
         double tau = ms->getExtinctionOpticalDepth(&path, lambda, type);
         path.setDirection(-axis);

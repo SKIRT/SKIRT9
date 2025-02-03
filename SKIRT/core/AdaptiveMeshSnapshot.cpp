@@ -212,7 +212,7 @@ void AdaptiveMeshSnapshot::readAndClose()
 void AdaptiveMeshSnapshot::setExtent(const Box& extent)
 {
     _extent = extent;
-    _eps = 1e-12 * extent.widths().norm();
+    _eps = 1e-12 * extent.diagonal();
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -11,7 +11,8 @@
 void CylinderSpatialGrid::setupSelfBefore()
 {
     SpatialGrid::setupSelfBefore();
-    if (_maxZ <= _minZ) throw FATALERROR("The extent of the cylinder should be positive in the Z direction");
+    if (_maxRadius <= _minRadius) throw FATALERROR("The outer radius must be larger than the inner radius");
+    if (_maxZ <= _minZ) throw FATALERROR("The height of the cylinder must be positive");
 }
 
 //////////////////////////////////////////////////////////////////////

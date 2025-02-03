@@ -49,13 +49,13 @@ class SamplingOptions : public SimulationItem
 
         PROPERTY_INT(numDensitySamples, "the number of random density samples for determining spatial cell mass")
         ATTRIBUTE_MIN_VALUE(numDensitySamples, "1")
-        ATTRIBUTE_MAX_VALUE(numDensitySamples, "1000")
+        ATTRIBUTE_MAX_VALUE(numDensitySamples, "10000")
         ATTRIBUTE_DEFAULT_VALUE(numDensitySamples, "100")
         ATTRIBUTE_DISPLAYED_IF(numDensitySamples, "Level2")
 
         PROPERTY_INT(numPropertySamples, "the number of random samples for determining other medium properties")
         ATTRIBUTE_MIN_VALUE(numPropertySamples, "1")
-        ATTRIBUTE_MAX_VALUE(numPropertySamples, "1000")
+        ATTRIBUTE_MAX_VALUE(numPropertySamples, "10000")
         ATTRIBUTE_DEFAULT_VALUE(numPropertySamples, "1")
         ATTRIBUTE_DISPLAYED_IF(numPropertySamples, "Level3")
 

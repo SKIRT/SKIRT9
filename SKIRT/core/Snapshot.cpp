@@ -541,7 +541,7 @@ double Snapshot::SigmaX() const
 {
     // determine a small value relative to the domain extent;
     // we integrate along a small offset from the axis to avoid cell borders
-    double eps = 1e-12 * extent().widths().norm();
+    double eps = 1e-12 * extent().diagonal();
 
     double sum = 0;
     double xmin = extent().xmin();
@@ -559,7 +559,7 @@ double Snapshot::SigmaY() const
 {
     // determine a small value relative to the domain extent;
     // we integrate along a small offset from the axis to avoid cell borders
-    double eps = 1e-12 * extent().widths().norm();
+    double eps = 1e-12 * extent().diagonal();
 
     double sum = 0;
     double ymin = extent().ymin();
@@ -577,7 +577,7 @@ double Snapshot::SigmaZ() const
 {
     // determine a small value relative to the domain extent;
     // we integrate along a small offset from the axis to avoid cell borders
-    double eps = 1e-12 * extent().widths().norm();
+    double eps = 1e-12 * extent().diagonal();
 
     double sum = 0;
     double zmin = extent().zmin();

@@ -5,7 +5,6 @@
 
 #include "VoronoiMeshSpatialGrid.hpp"
 #include "FatalError.hpp"
-#include "Log.hpp"
 #include "MediumSystem.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
