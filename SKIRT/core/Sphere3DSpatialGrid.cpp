@@ -97,8 +97,8 @@ void Sphere3DSpatialGrid::setupSelfAfter()
     // verify that the azimuth bins are smaller than 120 degrees, with some leeway,
     // so that the segment generator never inadvertently intersects the path with the reflected phi bin border
     constexpr double maxPhi = 0.7 * M_PI;
-    for (int j = 0; j != _Nphi; ++j)
-        if (_phiv[j + 1] - _phiv[j] > maxPhi) throw FATALERROR("Azimuth bin is wider than 120 deg");
+    for (int k = 0; k != _Nphi; ++k)
+        if (_phiv[k + 1] - _phiv[k] > maxPhi) throw FATALERROR("Azimuth bin is wider than 120 deg");
 
     // pre-calculate sines and cosines for azimuthal bin borders
     _sinv = sin(_phiv);
@@ -395,7 +395,7 @@ public:
                     if (ds == DBL_MAX) return abortPath();
 
                     // add a segment to the path
-                    setSegment(_grid->index(icur, jcur, jcur), ds);
+                    setSegment(_grid->index(icur, jcur, kcur), ds);
                     propagater(ds + _eps);
                     if (_i >= _grid->_Nr) setState(State::Outside);
                 }
