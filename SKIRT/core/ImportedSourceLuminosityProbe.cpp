@@ -12,7 +12,10 @@
 #include "FatalError.hpp"
 #include "ImportedSource.hpp"
 #include "Indices.hpp"
+#include "Parallel.hpp"
+#include "ParallelFactory.hpp"
 #include "ProbeFormBridge.hpp"
+#include "ProcessManager.hpp"
 #include "Snapshot.hpp"
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
@@ -97,17 +100,24 @@ void ImportedSourceLuminosityProbe::probeImportedSources(const vector<const Impo
     ArrayTable<3> convolvedLuminosities;  // indexed on wavelength band, source, entity
     if (style == Style::Convolve)
     {
+        auto parallel = find<ParallelFactory>()->parallelDistributed();
+
         int numSources = sources.size();
         convolvedLuminosities.resize(numWaves, numSources, 1);  // last index has variable size
-
         for (int ell = 0; ell != numWaves; ++ell)
         {
             for (int h = 0; h != numSources; ++h)
             {
                 int numEntities = snapshots[h]->numEntities();
                 convolvedLuminosities(ell, h).resize(numEntities);
-                for (int m = 0; m != numEntities; ++m)
-                    convolvedLuminosities(ell, h, m) = sources[h]->meanSpecificLuminosity(band[ell], m);
+
+                // calculate the convolved luminosities in parallel
+                parallel->call(numEntities, [&convolvedLuminosities, &sources, &band, ell, h](size_t firstEntity,
+                                                                                              size_t numEntities) {
+                    for (size_t m = firstEntity; m != firstEntity + numEntities; ++m)
+                        convolvedLuminosities(ell, h, m) = sources[h]->meanSpecificLuminosity(band[ell], m);
+                });
+                ProcessManager::sumToRoot(convolvedLuminosities(ell, h), true);
             }
         }
     }
