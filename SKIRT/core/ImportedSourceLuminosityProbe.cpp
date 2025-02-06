@@ -116,7 +116,7 @@ void ImportedSourceLuminosityProbe::probeImportedSources(const vector<const Impo
     // depending on the value of the path argument (to avoid duplicating a lot of code):
     //  - a luminosity volume density value at a given position or along a given path
     //  - a surface brightness value along a given path
-    auto valueAtPositionOrAlongPath = [&sources, &snapshots, numWaves, style, &wave, &bin, &band, &cvol, &csrf,
+    auto valueAtPositionOrAlongPath = [&sources, &snapshots, numWaves, style, &wave, &bin, &cvol, &csrf,
                                        &convolvedLuminosities](bool path, Position bfr, Direction bfk) {
         // allocate an entity collection that can be reused for all queries in a given execution thread
         thread_local EntityCollection entities;
