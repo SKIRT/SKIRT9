@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "ImportedSourceLuminosityProbe.hpp"
+#include "ArrayTable.hpp"
 #include "BandWavelengthGrid.hpp"
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
@@ -92,12 +93,31 @@ void ImportedSourceLuminosityProbe::probeImportedSources(const vector<const Impo
         }
     };
 
+    // when convolving, precompute the luminosities for all entities
+    ArrayTable<3> convolvedLuminosities;  // indexed on wavelength band, source, entity
+    if (style == Style::Convolve)
+    {
+        int numSources = sources.size();
+        convolvedLuminosities.resize(numWaves, numSources, 1);  // last index has variable size
+
+        for (int ell = 0; ell != numWaves; ++ell)
+        {
+            for (int h = 0; h != numSources; ++h)
+            {
+                int numEntities = snapshots[h]->numEntities();
+                convolvedLuminosities(ell, h).resize(numEntities);
+                for (int m = 0; m != numEntities; ++m)
+                    convolvedLuminosities(ell, h, m) = sources[h]->meanSpecificLuminosity(band[ell], m);
+            }
+        }
+    }
+
     // define a common call-back function to retrieve a compound luminosity value in one of two ways
     // depending on the value of the path argument (to avoid duplicating a lot of code):
     //  - a luminosity volume density value at a given position or along a given path
     //  - a surface brightness value along a given path
-    auto valueAtPositionOrAlongPath = [&sources, &snapshots, numWaves, style, &wave, &bin, &band, &cvol,
-                                       &csrf](bool path, Position bfr, Direction bfk) {
+    auto valueAtPositionOrAlongPath = [&sources, &snapshots, numWaves, style, &wave, &bin, &band, &cvol, &csrf,
+                                       &convolvedLuminosities](bool path, Position bfr, Direction bfk) {
         // allocate an entity collection that can be reused for all queries in a given execution thread
         thread_local EntityCollection entities;
 
@@ -129,7 +149,7 @@ void ImportedSourceLuminosityProbe::probeImportedSources(const vector<const Impo
                     {
                         case Style::Sample: luminosity = sources[h]->specificLuminosity(wave[ell], m); break;
                         case Style::Average: luminosity = sources[h]->meanSpecificLuminosity(bin[ell], m); break;
-                        case Style::Convolve: luminosity = sources[h]->meanSpecificLuminosity(band[ell], m); break;
+                        case Style::Convolve: luminosity = convolvedLuminosities(ell, h, m); break;
                     }
 
                     // convert to the proper output value and accumulate into the result array
