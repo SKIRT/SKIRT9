@@ -40,7 +40,7 @@ bool CylCell::contains(Vec r) const
     double R = sqrt(r.x() * r.x() + r.y() * r.y());
     if (R < _Rmin || R >= _Rmax) return false;
 
-    // as an expection, don't exclude pi from the maximum
+    // as an exception, don't exclude pi from the maximum
     double phi = atan2(r.y(), r.x());
     if (phi < _phimin || phi > _phimax) return false;
     if (phi != M_PI && phi == _phimax) return false;

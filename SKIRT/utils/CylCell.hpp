@@ -22,7 +22,7 @@
 
     - two horizontal planes defined by \f$z_\text{min} \le z_\text{max}\f$.
 
-    \note Because of the limitations on the range of \f$\varphi\f$, a Cylcell cannot straddle the
+    \note Because of the limitations on the range of \f$\varphi\f$, a CylCell cannot straddle the
     negative x-axis of the Cartesian model coordinate system, and it cannot span more than half of
     the azimuth circle.
 
