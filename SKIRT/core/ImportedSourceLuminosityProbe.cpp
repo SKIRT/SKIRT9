@@ -134,13 +134,15 @@ void ImportedSourceLuminosityProbe::probeImportedSources(const vector<const Impo
                         {
                             switch (style)
                             {
+                                case Style::Sample:
+                                    throw FATALERROR("convolve option is not compatible with style Sample");
+                                    break;
                                 case Style::Average:
                                     storedLuminosities(ell, h, m) = sources[h]->meanSpecificLuminosity(bin[ell], m);
                                     break;
                                 case Style::Convolve:
                                     storedLuminosities(ell, h, m) = sources[h]->meanSpecificLuminosity(band[ell], m);
                                     break;
-                                default: break;
                             }
                         }
                         log->infoIfElapsed(progress, currentChunkSize);
