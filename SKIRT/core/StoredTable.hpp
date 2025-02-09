@@ -311,13 +311,30 @@ public:
         return operator()(value);
     }
 
-    /** This function returns a sequence of values of the quantity represented by this stored table
-        (in the \em yv argument) corresponding to the specified sequence of first-axis values (the
-        \em xv argument), using given fixed values for the other axes, if any (the arguments at the
-        end of the list). The function behaves as if it would call the operator()() function for
-        each element in the specified input sequence, but it is more efficient. */
+    // ------------------------------------------
+
+    /** This function constructs both the normalized probability density function (pdf) and the
+        corresponding normalized cumulative distribution function (cdf) for the tabulated quantity
+        across a given range in the first axis (the \em xrange argument), using given fixed values
+        for the other axes, if any (the arguments at the end of the list).
+
+        The resulting first-axis grid is constructed into \em xv, the corresponding pdf into \em
+        pv, and the corresponding cdf into \em Pv. In all cases, xv[0]=xmin, xv[n]=xmax, Pv[0]=0,
+        and Pv[n]=1. The function returns the normalization factor, i.e. the value of Pv[n] before
+        normalization. This corresponds to the result of integrating the tabulated quantity
+        over the given range.
+
+        If any of the axes values, including the \em xrange values specifying the range for the
+        first axis, are out of range of the internal grid, extra quantity values are fabricated
+        according to the policy set by the \em clampFirstAxis flag in the open() function.
+
+        If the flags specified in the stored table indicate that both the first axis and the
+        quantity represented by the table should be interpolated logarithmically, it is assumed
+        that the pdf behaves as a power-law between any two grid points, and the integration to
+        determine the cdf is performed accordingly. In all other cases, piece-wise linear behavior
+        is assumed and regular trapezium-rule integration is used. */
     template<typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N - 1, Values...>()>>
-    void valueArray(Array& yv, const Array& xv, Values... values) const
+    double cdf(Array& xv, Array& pv, Array& Pv, Range xrange, Values... values) const
     {
         // storage for each axis
         std::array<double, N> value = {{0., static_cast<double>(values)...}};
@@ -329,10 +346,6 @@ public:
         constexpr size_t numTerms = 1 << N;  // there are 2^N terms
         std::array<double, numTerms> ff;     // front factor
         std::array<double, numTerms> yy;     // tabulated value
-
-        // resize output array
-        size_t n = xv.size();  // number of values to calculate
-        yv.resize(n);
 
         // precompute grid index and fraction for all but the first axis
         for (size_t k = 1; k != N; ++k)
@@ -370,15 +383,26 @@ public:
             f[k] = (x - x1) / (x2 - x1);
         }
 
-        // calculate each value in the array
+        // determine the relevant portion of the internal first axis grid
+        size_t minRight = std::upper_bound(_axBeg[0], _axBeg[0] + _axLen[0], xrange.min()) - _axBeg[0];
+        size_t maxRight = std::lower_bound(_axBeg[0], _axBeg[0] + _axLen[0], xrange.max()) - _axBeg[0];
+        size_t n = 2 + maxRight - minRight;  // number of internal grid points plus two external points
+
+        // resize output arrays for axis and pdf
+        xv.resize(n);
+        pv.resize(n);
+
+        // loop over the arrays to copy the first axis points and calculate the pdf values
         for (size_t i = 0; i != n; ++i)
         {
-            value[0] = xv[i];
+            // determine and copy the first axis point
+            double x = (i == 0 ? xrange.min() : (i == n - 1 ? xrange.max() : _axBeg[0][i + minRight - 1]));
+            xv[i] = x;
 
-            // compute grid index and fraction for the first axis
+            // compute grid index and fraction for the outermost first axis points
+            if (i == 0 || i == n - 1)
             {
                 // get the index of the upper border of the axis grid bin containing the specified axis value
-                double x = value[0];
                 size_t right = std::lower_bound(_axBeg[0], _axBeg[0] + _axLen[0], x) - _axBeg[0];
 
                 // if the value is beyond the grid borders:
@@ -388,7 +412,7 @@ public:
                 {
                     if (!_clamp && x != _axBeg[0][0])
                     {
-                        yv[i] = 0.;
+                        pv[i] = 0.;
                         continue;
                     };
                     right++;
@@ -398,7 +422,7 @@ public:
                 {
                     if (!_clamp)
                     {
-                        yv[i] = 0.;
+                        pv[i] = 0.;
                         continue;
                     };
                     right--;
@@ -420,6 +444,13 @@ public:
 
                 // calculate the fraction of the requested axis value in the bin
                 f[0] = (x - x1) / (x2 - x1);
+            }
+
+            // set grid index and fraction for the inner axis points, which don't need interpolation
+            else
+            {
+                i2[0] = i + minRight - 1;
+                f[0] = 1.;
             }
 
             // determine front factor and tabulated value for each term of the interpolation
@@ -444,7 +475,7 @@ public:
                     // we can't comply with the request, so return zero
                     if (_qtyLog && yy[t] <= 0)
                     {
-                        yv[i] = 0.;
+                        pv[i] = 0.;
                         continue;
                     };
                 }
@@ -467,45 +498,8 @@ public:
             {
                 for (size_t t = 0; t != numTerms; ++t) y += ff[t] * yy[t];
             }
-            yv[i] = y;
+            pv[i] = y;
         }
-    }
-
-    // ------------------------------------------
-
-    /** This function constructs both the normalized probability density function (pdf) and the
-        corresponding normalized cumulative distribution function (cdf) for the tabulated quantity
-        across a given range in the first axis (the \em xrange argument), using given fixed values
-        for the other axes, if any (the arguments at the end of the list).
-
-        The resulting first-axis grid is constructed into \em xv, the corresponding pdf into \em
-        pv, and the corresponding cdf into \em Pv. In all cases, xv[0]=xmin, xv[n]=xmax, Pv[0]=0,
-        and Pv[n]=1. The function returns the normalization factor, i.e. the value of Pv[n] before
-        normalization.
-
-        If any of the axes values, including the \em xrange values specifying the range for the
-        first axis, are out of range of the internal grid, extra quantity values are fabricated
-        according to the policy set by the \em clampFirstAxis flag in the open() function.
-
-        If the flags specified in the stored table indicate that both the first axis and the
-        quantity represented by the table should be interpolated logarithmically, it is assumed
-        that the pdf behaves as a power-law between any two grid points, and the integration to
-        determine the cdf is performed accordingly. In all other cases, piece-wise linear behavior
-        is assumed and regular trapezium-rule integration is used. */
-    template<typename... Values, typename = std::enable_if_t<CompileTimeUtils::isFloatArgList<N - 1, Values...>()>>
-    double cdf(Array& xv, Array& pv, Array& Pv, Range xrange, Values... values) const
-    {
-        // copy the relevant portion of the internal axis grid
-        size_t minRight = std::upper_bound(_axBeg[0], _axBeg[0] + _axLen[0], xrange.min()) - _axBeg[0];
-        size_t maxRight = std::lower_bound(_axBeg[0], _axBeg[0] + _axLen[0], xrange.max()) - _axBeg[0];
-        xv.resize(2 + maxRight - minRight);  // number of internal grid points plus two external points
-        size_t i = 0;                        // i = index in target array
-        xv[i++] = xrange.min();              // j = index in internal grid array
-        for (size_t j = minRight; j < maxRight;) xv[i++] = _axBeg[0][j++];
-        xv[i++] = xrange.max();
-
-        // interpolate or copy the corresponding probability density values
-        valueArray(pv, xv, values...);
 
         // perform the rest of the operation in a non-templated function
         return NR::cdf2(_axLog[0] && _qtyLog, xv, pv, Pv);
