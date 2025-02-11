@@ -89,6 +89,20 @@ Box SphericalCell::boundingBox() const
             xmax = max(xmax, x);
             ymax = max(ymax, y);
         }
+
+        void extendx(double r, double sintheta, double sign)
+        {
+            double x = r * sintheta * sign;
+            xmin = min(xmin, x);
+            xmax = max(xmax, x);
+        }
+
+        void extendy(double r, double sintheta, double sign)
+        {
+            double y = r * sintheta * sign;
+            ymin = min(ymin, y);
+            ymax = max(ymax, y);
+        }
     };
 
     // initialize the equatorial bounds from the projected coordinates of the eight corner points
@@ -110,30 +124,10 @@ Box SphericalCell::boundingBox() const
     }
 
     // extend with radial points if phi crosses an axis
-    if (_phimin <= -M_PI_2 && _phimax >= -M_PI_2)  // negative y
-    {
-        constexpr double cosphi = 0.;
-        constexpr double sinphi = -1.;
-        eqbox.extend(_rmax, _sinthetamin, cosphi, sinphi);
-        eqbox.extend(_rmax, _sinthetamax, cosphi, sinphi);
-        if (thetacross) eqbox.extend(_rmax, 1., cosphi, sinphi);
-    }
-    if (_phimin <= 0. && _phimax >= 0.)  // positive x
-    {
-        constexpr double cosphi = 1.;
-        constexpr double sinphi = 0.;
-        eqbox.extend(_rmax, _sinthetamin, cosphi, sinphi);
-        eqbox.extend(_rmax, _sinthetamax, cosphi, sinphi);
-        if (thetacross) eqbox.extend(_rmax, 1., cosphi, sinphi);
-    }
-    if (_phimin <= M_PI_2 && _phimax >= M_PI_2)  // positive y
-    {
-        constexpr double cosphi = 0.;
-        constexpr double sinphi = 1.;
-        eqbox.extend(_rmax, _sinthetamin, cosphi, sinphi);
-        eqbox.extend(_rmax, _sinthetamax, cosphi, sinphi);
-        if (thetacross) eqbox.extend(_rmax, 1., cosphi, sinphi);
-    }
+    double sintheta = thetacross ? 1. : max(_sinthetamin, _sinthetamax);
+    if (_phimin <= -M_PI_2 && _phimax >= -M_PI_2) eqbox.extendy(_rmax, sintheta, -1.);  // negative y
+    if (_phimin <= M_PI_2 && _phimax >= M_PI_2) eqbox.extendy(_rmax, sintheta, 1.);  // positive y
+    if (_phimin <= 0. && _phimax >= 0.) eqbox.extendx(_rmax, sintheta, 1.);  // positive x
 
     return Box(eqbox.xmin, eqbox.ymin, zmin, eqbox.xmax, eqbox.ymax, zmax);
 }
