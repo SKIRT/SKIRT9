@@ -4,6 +4,8 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "CylindricalCell.hpp"
+#include "Box.hpp"
+#include "Position.hpp"
 #include "Quadratic.hpp"
 #include <array>
 
@@ -23,12 +25,12 @@ double CylindricalCell::volume() const
 
 //////////////////////////////////////////////////////////////////////
 
-Vec CylindricalCell::center() const
+Position CylindricalCell::center() const
 {
     double R = 0.5 * (_Rmin + _Rmax);
     double phi = 0.5 * (_phimin + _phimax);
     double z = 0.5 * (_zmin + _zmax);
-    return Vec(R * cos(phi), R * sin(phi), z);
+    return Position(R, phi, z, Position::CoordinateSystem::CYLINDRICAL);
 }
 
 //////////////////////////////////////////////////////////////////////

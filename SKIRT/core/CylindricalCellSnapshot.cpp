@@ -192,7 +192,7 @@ double CylindricalCellSnapshot::mass() const
 
 Position CylindricalCellSnapshot::position(int m) const
 {
-    return Position(_cellv[m].center());
+    return _cellv[m].center();
 }
 
 ////////////////////////////////////////////////////////////////////

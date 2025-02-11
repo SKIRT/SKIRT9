@@ -6,7 +6,9 @@
 #ifndef CYLINDRICALCELL_HPP
 #define CYLINDRICALCELL_HPP
 
-#include "Box.hpp"
+#include "Vec.hpp"
+class Box;
+class Position;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -83,7 +85,7 @@ public:
 
         As stated above the function returns this position after converting it to Cartesian
         coordinates. */
-    Vec center() const;
+    Position center() const;
 
     /** This function returns true if the Cartesian position \f${\bf{r}}=(x,y,z)\f$ is inside the
         cell, and false otherwise. A position on an edge or face on the "lower" side of the cell is
