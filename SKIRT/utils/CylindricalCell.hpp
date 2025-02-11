@@ -28,7 +28,7 @@
 
     The class offers functions to retrieve various basic properties of the cell, such as its border
     coordinates and its volume, and for geometric operations such as determining whether a given
-    Cartesian position is inside the cell. */
+    Cartesian position is inside the cell or calculating the intersection with a ray. */
 class CylindricalCell
 {
 public:
@@ -38,7 +38,7 @@ public:
 
     /** This constructor initializes the cell border coordinates to the values provided as
         arguments. It does not verify that these values conform to the limits described in the
-        class header. Non-comforming values lead to undefined behavior. */
+        class header. Non-conforming values lead to undefined behavior. */
     CylindricalCell(double Rmin, double phimin, double zmin, double Rmax, double phimax, double zmax);
 
     /** This function stores the cell border coordinates in the provided arguments. */
@@ -70,15 +70,6 @@ public:
     /** This function returns the \f$z_\text{max}\f$ border coordinate of the cell. */
     double zmax() const { return _zmax; }
 
-    /** This function returns the width \f$R_\text{max}-R_\text{min}\f$ of the cell. */
-    double Rwidth() const { return _Rmax - _Rmin; }
-
-    /** This function returns the width \f$\varphi_\text{max}-\varphi_\text{min}\f$ of the cell. */
-    double phiwidth() const { return _phimax - _phimin; }
-
-    /** This function returns the width \f$z_\text{max}-z_\text{min}\f$ of the cell. */
-    double zwidth() const { return _zmax - _zmin; }
-
     /** This function returns the volume of the cell, given by \f$\frac{1}{2}
         (R_\text{max}^2-R_\text{min}^2) (\varphi_\text{max}-\varphi_\text{min})
         (z_\text{max}-z_\text{min})\f$. */
@@ -105,10 +96,10 @@ public:
         cuboid lined up with the Cartesian coordinate axes that encloses the cell.
 
         The bounds along the z-axis are the same for Cylindrical and Cartesian coordinates, but the
-        function needs to to specifically determine the bounding rectangle projected on the xy
-        plane. This bounding rectangle must of course enclose the four corner points of the cell.
-        In addition, if the cell straddles one of the coordinate axes, the bounding rectangle must
-        also enclose a point on that axis at radius Rmax. */
+        function needs to specifically determine the bounding rectangle projected on the xy plane.
+        This bounding rectangle must of course enclose the four corner points of the cell. In
+        addition, if the cell straddles one of the coordinate axes, the bounding rectangle must
+        also enclose a point on that axis at radius \f$R_\text{max}\f$. */
     Box boundingBox() const;
 
     /** This function intersects the receiving cell with a ray (half-line) defined by the specified
