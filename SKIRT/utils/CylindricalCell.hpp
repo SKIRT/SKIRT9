@@ -3,15 +3,15 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef CYLCELL_HPP
-#define CYLCELL_HPP
+#ifndef CYLINDRICALCELL_HPP
+#define CYLINDRICALCELL_HPP
 
 #include "Box.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** CylCell is a low-level class for working with basic three-dimensional cells in cylindrical
-    coordinates. Each CylCell instance represents a cell bordered by:
+/** CylindricalCell is a low-level class for working with basic three-dimensional cells in
+    cylindrical coordinates. Each CylindricalCell instance represents a cell bordered by:
 
     - two vertical cylinders centered on the origin defined by radii \f$0 \le R_\text{min} \le
     R_\text{max}\f$,
@@ -22,24 +22,24 @@
 
     - two horizontal planes defined by \f$z_\text{min} \le z_\text{max}\f$.
 
-    \note Because of the limitations on the range of \f$\varphi\f$, a CylCell cannot straddle the
-    negative x-axis of the Cartesian model coordinate system, and it cannot span more than half of
-    the azimuth circle.
+    \note Because of the limitations on the range of \f$\varphi\f$, a CylindricalCell cannot
+    straddle the negative x-axis of the Cartesian model coordinate system, and it cannot span more
+    than half of the azimuth circle.
 
     The class offers functions to retrieve various basic properties of the cell, such as its border
     coordinates and its volume, and for geometric operations such as determining whether a given
     Cartesian position is inside the cell. */
-class CylCell
+class CylindricalCell
 {
 public:
     /** The default constructor creates an empty cell at the origin, i.e. it initializes all border
         coordinates to zero. */
-    CylCell() {}
+    CylindricalCell() {}
 
     /** This constructor initializes the cell border coordinates to the values provided as
         arguments. It does not verify that these values conform to the limits described in the
         class header. Non-comforming values lead to undefined behavior. */
-    CylCell(double Rmin, double phimin, double zmin, double Rmax, double phimax, double zmax);
+    CylindricalCell(double Rmin, double phimin, double zmin, double Rmax, double phimax, double zmax);
 
     /** This function stores the cell border coordinates in the provided arguments. */
     void extent(double& Rmin, double& phimin, double& zmin, double& Rmax, double& phimax, double& zmax) const

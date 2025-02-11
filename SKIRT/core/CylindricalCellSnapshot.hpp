@@ -7,7 +7,7 @@
 #define CYLINDRICALCELLSNAPSHOT_HPP
 
 #include "BoxSearch.hpp"
-#include "CylCell.hpp"
+#include "CylindricalCell.hpp"
 #include "Snapshot.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -181,8 +181,8 @@ private:
     int _numAutoRevolveBins{0};  // must be 2 or more to enable auto-revolve feature
 
     // data members initialized when reading the input file
-    vector<Array> _propv;    // cell properties as imported
-    vector<CylCell> _cellv;  // imported coordinates converted to a cylindrical cell object
+    vector<Array> _propv;            // cell properties as imported
+    vector<CylindricalCell> _cellv;  // imported coordinates converted to a cylindrical cell object
 
     // data members initialized after reading the input file if a density policy has been set
     Array _rhov;        // density for each cell (not normalized)
