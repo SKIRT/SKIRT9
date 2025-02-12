@@ -19,7 +19,7 @@ class Position;
     r_\text{max}\f$,
 
     - two polar half-cones defined by inclination angles \f$0 \le \theta_\text{min} \le
-    \theta_\text{max} \le \pi\\f$,
+    \theta_\text{max} \le \pi\f$,
 
     - two meridional half-planes (with \f$r>0\f$) defined by azimuth angles \f$-\pi \le
     \varphi_\text{min} \le \varphi_\text{max} \le \pi\f$ with \f$\varphi_\text{max} -
@@ -90,7 +90,7 @@ public:
         coordinates. */
     Position center() const;
 
-    /** This function returns true if the Cartesian position \f${\bf{bfr}}=(x,y,z)\f$ is inside the
+    /** This function returns true if the Cartesian position \f$\bf{r}=(x,y,z)\f$ is inside the
         cell, and false otherwise. A position on an edge or face on the "lower" side of the cell is
         considered to be contained in the cell, while a position on an edge or face on the "upper"
         side of the cell is considered \em not to be contained in the cell. This approach avoids
@@ -134,16 +134,19 @@ public:
         segments. This automatically takes care of the cases where the ray lies in one of the
         bordering surfaces.
 
-        The ray equation can be written as \f[\begin{cases} x = r_\text{x} + k_\text{x}s \\ y =
-        r_\text{y} + k_\text{y}s \\ z = r_\text{z} + k_\text{z}s \\ \end{cases} \quad \text{with}
-        \;s>0.\f]
+        The ray can be represented by its parameter equation \f${\bf{x}}={\bf{r}}+s\,{\bf{k}}\f$,
+        with \f${\bf{k}}\f$ a unit vector.
 
-        Intersection with a sphere [XXX]
+        The two intersection points with a radial boundary sphere \f${\bf{x}}^2=r_*^2\f$ are
+        obtained by solving the quadratic equation \f$s^2 + 2\,({\bf{r}}\cdot{\bf{k}})\,s +
+        ({\bf{r}}^2-r_*^2)=0\f$ for \f$s\f$.
 
-        Intersection with a cone [XXX]
+        The two intersection points with an angular boundary cone \f$x_z^2=c^2\,{\bf{x}}^2\f$ (with
+        \f$c=\cos\theta_*\f$) are obtained by solving the quadratic equation \f$(c^2-k_z^2)\,s^2 +
+        2\,(c^2\,{\bf{r}}\cdot{\bf{k}}-r_z k_z)\,s + (c^2\,{\bf{r}}^2-r_z^2)=0\f$ for \f$s\f$.
 
-        Intersection with a meridional plane with equation \f$\sin\varphi_* x = \cos\varphi_* y\f$
-        yields \f[ s = -\;\frac{r_\text{x}\sin\varphi_* - r_\text{y}\cos\varphi_*}
+        The intersection point with a meriodonal plane \f$\sin\varphi_* x = \cos\varphi_* y\f$ is
+        obtained by \f[ s = -\;\frac{r_\text{x}\sin\varphi_* - r_\text{y}\cos\varphi_*}
         {k_\text{x}\sin\varphi_* - k_\text{y}\cos\varphi_*} \f] */
     double intersection(Vec r, const Vec k) const;
 

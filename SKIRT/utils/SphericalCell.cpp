@@ -123,11 +123,11 @@ Box SphericalCell::boundingBox() const
         eqbox.extend(_rmax, 1., _cosphimax, _sinphimax);
     }
 
-    // extend with radial points if phi crosses an axis
+    // extend with radial points if phi crosses an axis (cannot cross negative x axis)
     double sintheta = thetacross ? 1. : max(_sinthetamin, _sinthetamax);
     if (_phimin <= -M_PI_2 && _phimax >= -M_PI_2) eqbox.extendy(_rmax, sintheta, -1.);  // negative y
-    if (_phimin <= M_PI_2 && _phimax >= M_PI_2) eqbox.extendy(_rmax, sintheta, 1.);  // positive y
-    if (_phimin <= 0. && _phimax >= 0.) eqbox.extendx(_rmax, sintheta, 1.);  // positive x
+    if (_phimin <= M_PI_2 && _phimax >= M_PI_2) eqbox.extendy(_rmax, sintheta, 1.);     // positive y
+    if (_phimin <= 0. && _phimax >= 0.) eqbox.extendx(_rmax, sintheta, 1.);             // positive x
 
     return Box(eqbox.xmin, eqbox.ymin, zmin, eqbox.xmax, eqbox.ymax, zmax);
 }
@@ -139,13 +139,76 @@ double SphericalCell::intersection(Vec r, const Vec k) const
     // small value used to check for parallel directions
     constexpr double eps = 1e-12;
 
-    // allocate room for the 8 possible intersections (1 per plane and 2 per cylinder)
+    // allocate room for the 10 possible intersections (2 per sphere, 2 per cone, and 1 per plane)
     // plus the starting position (which starts the first segment).
     // initialize the array to zeroes:
     //  - leave the first value at zero to represent the starting position
     //  - overwrite the other values for each intersection, or leave at zero if there is none
-    enum { START, ZMIN, ZMAX, PHIMIN, PHIMAX, RMIN1, RMIN2, RMAX1, RMAX2, LEN };
+    enum { START, RMIN1, RMIN2, RMAX1, RMAX2, THETAMIN1, THETAMIN2, THETAMAX1, THETAMAX2, PHIMIN, PHIMAX, LEN };
     std::array<double, LEN> sv = {};
+
+    // precalculate some properties of the ray
+    double rk = Vec::dot(r, k);
+    double r2 = r.norm2();
+    double rz2 = r.z() * r.z();
+    double kz2 = k.z() * k.z();
+    double rkz = r.z() * k.z();
+
+    // intersections with the rmin and rmax boundary spheres
+    Quadratic::distinctSolutions(rk, r2 - _rmin * _rmin, sv[RMIN1], sv[RMIN2]);
+    Quadratic::distinctSolutions(rk, r2 - _rmax * _rmax, sv[RMAX1], sv[RMAX2]);
+
+    // intersections with the thetamin boundary cone
+    {
+        double cos2 = _costhetamin * _costhetamin;
+        if (abs(cos2) >= eps)
+        {
+            double a = cos2 - kz2;
+            double b = cos2 * rk - rkz;
+            double c = cos2 * r2 - rz2;
+            if (abs(a) >= eps)
+            {
+                // general case
+                Quadratic::distinctSolutions(b / a, c / a, sv[THETAMIN1], sv[THETAMIN2]);
+            }
+            else
+            {
+                // ray parallel to cone
+                if (abs(b) >= eps) sv[THETAMIN1] = -0.5 * c / b;
+            }
+        }
+        else
+        {
+            // degenerate cone identical to xy-plane
+            if (abs(k.z()) >= eps) sv[THETAMIN1] = -r.z() / k.z();
+        }
+    }
+
+    // intersections with the thetamax boundary cone
+    {
+        double cos2 = _costhetamax * _costhetamax;
+        if (abs(cos2) >= eps)
+        {
+            double a = cos2 - kz2;
+            double b = cos2 * rk - rkz;
+            double c = cos2 * r2 - rz2;
+            if (abs(a) >= eps)
+            {
+                // general case
+                Quadratic::distinctSolutions(b / a, c / a, sv[THETAMAX1], sv[THETAMAX2]);
+            }
+            else
+            {
+                // ray parallel to cone
+                if (abs(b) >= eps) sv[THETAMAX1] = -0.5 * c / b;
+            }
+        }
+        else
+        {
+            // degenerate cone identical to xy-plane
+            if (abs(k.z()) >= eps) sv[THETAMAX1] = -r.z() / k.z();
+        }
+    }
 
     // intersection with meridional phimin plane
     {
