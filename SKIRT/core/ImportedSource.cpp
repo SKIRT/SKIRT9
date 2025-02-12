@@ -6,7 +6,6 @@
 #include "ImportedSource.hpp"
 #include "Band.hpp"
 #include "Configuration.hpp"
-#include "Constants.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
@@ -70,6 +69,7 @@ void ImportedSource::setupSelfAfter()
         if (_importVelocityDispersion) _snapshot->importVelocityDispersion();
     }
     if (_importCurrentMass) _snapshot->importCurrentMass();
+    if (_importBias) _snapshot->importBias();
     _snapshot->importParameters(_sedFamily->parameterInfo());
 
     // notify about building search data structures if needed
@@ -88,7 +88,8 @@ void ImportedSource::setupSelfAfter()
         log->info("Calculating luminosities for " + std::to_string(M) + " imported entities...");
         log->infoSetElapsed(M);
         find<ParallelFactory>()->parallelDistributed()->call(M, [this, log](size_t firstIndex, size_t numIndices) {
-            Array lambdav, pv, Pv;  // the contents of these arrays is not used, so this could be optimized if needed
+            // the contents of these three arrays is not used, so this could be optimized if needed
+            Array lambdav, pv, Pv;
             Array params;
 
             while (numIndices)
@@ -105,6 +106,18 @@ void ImportedSource::setupSelfAfter()
             }
         });
         ProcessManager::sumToAll(_Lv);
+
+        // save the bias and biased luminosity and normalize both vectors
+        if (_snapshot->hasBias())
+        {
+            _bv.resize(M);
+            for (int m = 0; m != M; ++m) _bv[m] = _snapshot->bias(m);
+
+            _Lbv = _Lv * _bv;
+            _Lbv /= _Lbv.sum();
+
+            _bv /= _bv.sum();
+        }
 
         // remember the total luminosity and normalize the vector
         _L = _Lv.sum();
@@ -222,7 +235,10 @@ void ImportedSource::prepareForLaunch(double sourceBias, size_t firstIndex, size
     if (!M) return;
 
     // calculate the launch weight for each entity, normalized to unity
-    _Wv = (1 - sourceBias) * _Lv + sourceBias / M;
+    if (_snapshot->hasBias())
+        _Wv = (1 - sourceBias) * _Lbv + sourceBias * _bv;
+    else
+        _Wv = (1 - sourceBias) * _Lv + sourceBias / M;
 
     // determine the first history index for each entity
     _Iv.resize(M + 1);

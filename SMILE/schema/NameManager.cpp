@@ -44,10 +44,22 @@ void NameManager::popLocal()
 
 namespace
 {
-    bool isLowercase(int c) { return c >= 'a' && c <= 'z'; }
-    bool isUppercase(int c) { return c >= 'A' && c <= 'Z'; }
-    bool isDigit(int c) { return c >= '0' && c <= '9'; }
-    bool isLetterOrDigit(int c) { return isLowercase(c) || isUppercase(c) || isDigit(c); }
+    bool isLowercase(int c)
+    {
+        return c >= 'a' && c <= 'z';
+    }
+    bool isUppercase(int c)
+    {
+        return c >= 'A' && c <= 'Z';
+    }
+    bool isDigit(int c)
+    {
+        return c >= '0' && c <= '9';
+    }
+    bool isLetterOrDigit(int c)
+    {
+        return isLowercase(c) || isUppercase(c) || isDigit(c);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -24,7 +24,7 @@
     Q &= P_\mathrm{L}\,\cos 2\gamma \\
     U &= P_\mathrm{L}\,\sin 2\gamma \\
     V &= 0 \\
-    \bf{n} &= \bf{s} \times \bf{k}
+    \bf{n} &= \frac{\bf{s} \times \bf{k}}{||\bf{s} \times \bf{k}||}
     \end{aligned}\f]
 
     where \f$\bf{n}\f$ is the normal to the reference plane. The reference plane is the plane through

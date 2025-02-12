@@ -25,6 +25,8 @@
     and the temperature are considered to be spatially constant (for a given medium component),
     while the overall density can obviously vary across space as usual.
 
+    <b>Photo-absorption and fluorescence</b>
+
     Photo-absorption by an atom is the process where the energy of a photon is used to liberate a
     bound electron from one of the electron shells of the atom. This class supports
     photo-absorption by any of the 30 elements in the gas for any of the electron shells, i.e. up
@@ -43,11 +45,23 @@
     L\f$_{\alpha1}\f$, L\f$_{\beta6}\f$ (i.e. all transitions from higher shells towards the K and
     L shells, except for \f$L \to L\f$ lines).
 
+    For a subset of these fluorescence transitions, i.e. for the K\f$_{\alpha}\f$ and
+    K\f$_{\beta}\f$ lines of the metals Cr, Mn, Fe, Co, Ni, and Cu, this class emulates the
+    intrinsic shape of the emission line. This is accomplished by randomly sampling the emitted
+    photon packet energy (wavelength) for a given fluorescence interaction from the appropriate
+    line shape. The class uses the results obtained by Hölzer+97, who measured these intrinsic
+    line shapes in the lab and suggested a parameterisation using a number of Lorentzian components
+    for each line. For the fluorescence transitions not in the above list, this class emits photon
+    packets at the fixed line energy (wavelength) corresponding to the relevant transition,
+    effectively emulating a zero-width line.
+
     Because fluorescence only occurs as the result of a photo-absorption event, this class
     implements fluorescence as a form of scattering (where the wavelength of the photon being
     scattered changes) as opposed to emission. This allows both photo-absorption and fluorescence
     to be treated during primary emission. A possible drawback is that the weaker fluorescence
     lines will be represented by a fairly small number of photon packets.
+
+    <b>Scattering by bound electrons</b>
 
     Electrons bound to the atoms in the gas scatter incoming X-ray photons. This process can be
     elastic (Rayleigh scattering) or inelastic (bound-Compton scattering). The user can select one
@@ -144,7 +158,7 @@
     element, multiplied by the appropriate fluorescence yields in addition to the element
     abundancy.
 
-    <b>Electron scattering</b>
+    <b>Electron scattering - cross section and phase function</b>
 
     As described above, this class provides several implementations for the scattering of X-rays
     photons by the electrons bound to the atoms. These implementations involve four types of
@@ -169,9 +183,7 @@
     Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{CS, Z}(E)}\Big[C^3(\theta, E) + C(\theta,
     E) -C^2(\theta, E)\sin^2\theta\Big] \cdot S_Z(q), \f] with tabulated incoherent scattering
     functions \f$S_Z(q)\f$ and the Compton factor \f$C(\theta, E)\f$ defined as \f[ C(\theta, E) =
-    {\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f] Also, inelastic bound-Compton
-    scattering will change the photon energy by the Compton factor, just as for free-electron
-    scattering.
+    {\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f]
 
     For smooth Rayleigh scattering, the cross sections \f$\sigma_{RSS, Z}(E)\f$ are available as a
     table. The normalised scattering phase function for element Z is given by \f[ \Phi_{RSS,
@@ -185,6 +197,45 @@
     \cos^2\theta \Big] \cdot \Big[\big(F_Z(q) + F'_Z(E)\big)^2 + {F''_Z}^2(E)\Big], \f] with the
     same atomic form factors \f$F_Z(q)\f$ as before, and tabulated real and imaginary anomalous
     scattering functions \f$F'_Z(E)\f$ and \f$F''_Z(E)\f$.
+
+    <b>Electron scattering - photon energy shift</b>
+
+    Rayleigh scattering is elastic, meaning that the photon energy (wavelength) does not change
+    during the interaction (in the frame of the atom involved). On the other hand, Compton
+    scattering is inelastic, meaning that the photon transfers a fraction of its energy to the atom
+    (or more precisely, the electron) involved in the interaction.
+
+    For free-electron Compton scattering, the energy shift \f$E'/E\f$ is given by the Compton
+    factor \f$C(\theta, E)\f$ defined above. The implementation is delegated to the
+    ComptonPhaseFunction class.
+
+    For bound-electron Compton scattering, the energy shift is mostly determined by the momentum
+    distribution of the target electrons, which are bound to the atomic nucleus. As a result, the
+    final photon energy is no longer uniquely defined by the incoming photon energy and the
+    scattering angle, but also depends on the initial momentum of the target electron:
+
+    \f[ E' = {\Big({1+\frac{E}{m_ec^2} \, \left(1-\cos \theta\right) - \frac{p_\text{z}
+    c}{m_ec^2}2\sin \frac{\theta}{2}}\Big)}^{-1} \; E, \f]
+
+    with \f$p_\text{z}\f$ the momentum of the target electron before scattering projected on the
+    scattering vector \f$\bf{k}_\text{out}-\bf{k}_\text{in}\f$.
+
+    The momentum distribution of bound electrons in atom \f$Z\f$ is characterised by the
+    corresponding Compton profile \f$J_Z(p_\text{z}c)\f$, which can be interpreted as a probability
+    density function for the projected electron momentum \f$p_\text{z}c\f$. Compton profiles for
+    all atoms in the photo-absorbing gas are tabulated by Biggs+75.
+
+    In addition, the energy transfer from the photon to the electron should be large enough to
+    liberate an electron, i.e. larger than the ionisation potential \f$I_b\f$ of the outer
+    electrons of element Z. This condition is fulfilled only when \f$p_\text{z}c < p_zc_{max}\f$,
+    with
+
+    \f[p_zc_{max} = \frac{-m_ec^2I_b+E\cdot(E-I_b)\cdot(1-\cos\theta)}{2\cdot(E-I_b)\cdot
+    \sin(\theta/2)}.\f]
+
+    This equation is undefined for \f$\theta=0\f$, but this scattering angle will never occur as
+    the scattering phase function is zero for \f$\theta=0\f$. Following Namito+94, the probability
+    density function for \f$p_\text{z}c\f$ should be truncated at \f$p_zc_{max}\f$.
 
     <b>Performing scattering</b>
 
@@ -344,7 +395,8 @@ public:
 private:
     /** This private function draws a random scattering channel and atom velocity and stores this
         information in the photon packet's scattering information record, unless a previous
-        peel-off stored this already. */
+        peel-off stored this already. For fluorescence transitions that support a nonzero line
+        width, the function also draws a random wavelength from the line shape. */
     void setScatteringInfoIfNeeded(PhotonPacket::ScatteringInfo* scatinfo, double lambda) const;
 
 public:
@@ -403,8 +455,12 @@ private:
     Array _sigmaextv;  // indexed on ell
     Array _sigmascav;  // indexed on ell
 
-    // emission wavelengths for each of the fluorescence transitions
-    vector<double> _lambdafluov;  // indexed on k
+    // emission parameters for each of the fluorescence transitions:
+    // if wavelength is nonzero, all photons are emitted at this wavelength;
+    // if wavelength is zero, sample wavelength from Lorentz shape defined by central energy and HWHM = FWHM / 2
+    vector<double> _lambdafluov;   // indexed on k
+    vector<double> _centralfluov;  // indexed on k
+    vector<double> _widthfluov;    // indexed on k
 
     // thermal velocities and normalized cumulative probability distributions for the scattering channnels:
     //   - Rayleigh scattering by bound electrons for each atom

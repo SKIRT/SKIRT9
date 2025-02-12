@@ -20,7 +20,10 @@ namespace
     const int numWavelengthsPerScaleUnit = 100;
 
     // double-peaked spectrum centered on 0 with scale of 1, evaluated at x
-    double unitSpectrum(double x) { return 1.5 * x * x / (1. + cosh(x * x * x)); }
+    double unitSpectrum(double x)
+    {
+        return 1.5 * x * x / (1. + cosh(x * x * x));
+    }
 
     // integrate double-peaked unit spectrum from x1 to x2
     double integrateUnitSpectrum(double x1, double x2)

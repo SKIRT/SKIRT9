@@ -6,51 +6,34 @@
 # Execute this script with "git" as default directory to
 # automatically reformat all C++ code in the SKIRT project
 #
-# Requires clang-format version 9.0.0 to be installed
-# in the default path or in the home directory
-#
-# See https://releases.llvm.org/9.0.0/tools/clang/docs/ClangFormat.html
+# Requires clang-format version 18.1 to be installed
+# in the default path.
 #
 
 # --------------------------------------------------------------------
 
-# Look for clang-format or clang-format-9 in the default path or in the home directory;
-# exit with an error if we don't find it
-CLANGFORMATPATH="$(which clang-format-9)"
+# Look for clang-format-18 or clang-format
+CLANGFORMATPATH="$(which clang-format-18)"
 if [ "$CLANGFORMATPATH" == "" ]
 then
     CLANGFORMATPATH="$(which clang-format)"
 fi
-if [ "$CLANGFORMATPATH" == "" ]
-then
-    CANDIDATEPATH="$HOME/clang/bin/clang-format-9"
-    if [[ -x $CANDIDATEPATH ]]
-    then
-        CLANGFORMATPATH=$CANDIDATEPATH
-    fi
-fi
-if [ "$CLANGFORMATPATH" == "" ]
-then
-    CANDIDATEPATH="$HOME/clang/bin/clang-format"
-    if [[ -x $CANDIDATEPATH ]]
-    then
-        CLANGFORMATPATH=$CANDIDATEPATH
-    fi
-fi
+
+# Exit with an error if we don't find it
 if [ "$CLANGFORMATPATH" == "" ]
 then
     echo
-    echo Fatal error: there is no clang-format in the default path or in ~/clang/bin/
+    echo Fatal error: there is no clang-format in the default path
     echo
     exit
 fi
 
 # Verify the clang-format version
 CLANGFORMATVERSION=$($CLANGFORMATPATH -version)
-if ! [[ $CLANGFORMATVERSION == *"9.0.0"* ]]
+if ! [[ $CLANGFORMATVERSION == *"18.1."* ]]
 then
     echo
-    echo Fatal error: $CLANGFORMATPATH is not version 9.0.0 but
+    echo Fatal error: $CLANGFORMATPATH is not version 18.1 but
     echo $CLANGFORMATVERSION
     echo
     exit
@@ -66,6 +49,17 @@ then
 fi
 
 # Format all .hpp and .cpp files, which skips third-party source code because it has a different filename extension
-echo Using $CLANGFORMATPATH...
-find . \( -name '*.hpp' -or -name '*.cpp' \) -exec $CLANGFORMATPATH -style=file -i {} \;
-echo Done
+# (we use xargs so that multiple invocations of clang-format can run in parallel)
+echo Using $CLANGFORMATPATH -- $CLANGFORMATVERSION...
+find . \( -name '*.hpp' -or -name '*.cpp' \) -print0 | xargs -0L1 -P0 $CLANGFORMATPATH -style=file -i 2> formaterror.txt
+
+# If the error file is nonempty, show its contents before removing it
+if [ -s formaterror.txt ]
+then
+    cat formaterror.txt
+    rm -f formaterror.txt
+    echo Failed!
+else
+    rm -f formaterror.txt
+    echo Done
+fi

@@ -10,11 +10,11 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** ListMesh is a subclass of the MoveableMesh class. It represents a one-dimensional mesh over the
-    unit interval [0,1] with mesh points that are fully specified inside the configuration file
-    (i.e. without referring to an input file). It is intended for use in cases where there are just
-    a mesh border points, but nothing keeps the user from specifying a long list. The \em numBins
-    property of the Mesh base class is overridden to match the number of bins defined by the user.
+/** ListMesh represents a one-dimensional mesh over the unit interval [0,1] with mesh points that
+    are fully specified inside the configuration file (i.e. without referring to an input file). It
+    is intended for use in cases where there are just a few mesh border points, but nothing keeps
+    the user from specifying a long list. The \em numBins property of the Mesh base class is
+    overridden to match the number of bins defined by the user.
 
     The configured list specifies the mesh points (i.e. the border points separating the mesh bins)
     in arbitrary order and in arbitary units. If the smallest point is not zero, an extra zero mesh

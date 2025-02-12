@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "ImportedSourceLuminosityProbe.hpp"
+#include "ArrayTable.hpp"
 #include "BandWavelengthGrid.hpp"
 #include "Configuration.hpp"
 #include "DisjointWavelengthGrid.hpp"
@@ -11,11 +12,23 @@
 #include "FatalError.hpp"
 #include "ImportedSource.hpp"
 #include "Indices.hpp"
+#include "Log.hpp"
+#include "Parallel.hpp"
+#include "ParallelFactory.hpp"
 #include "ProbeFormBridge.hpp"
+#include "ProcessManager.hpp"
 #include "Snapshot.hpp"
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
 #include "Units.hpp"
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // maximum number of luminosity calculations between two invocations of infoIfElapsed()
+    const size_t logProgressChunkSize = 10000;
+}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -92,12 +105,62 @@ void ImportedSourceLuminosityProbe::probeImportedSources(const vector<const Impo
         }
     };
 
+    // when convolving, precompute the luminosities for all entities
+    ArrayTable<3> storedLuminosities;  // indexed on wavelength, source, entity
+    if (convolve())
+    {
+        auto parallel = find<ParallelFactory>()->parallelDistributed();
+        auto log = find<Log>();
+        string progress = typeAndName() + " calculated convolved luminosities: ";
+
+        int numSources = sources.size();
+        storedLuminosities.resize(numWaves, numSources, 1);  // last index has variable size
+        for (int h = 0; h != numSources; ++h)
+        {
+            int numEntities = snapshots[h]->numEntities();
+            log->infoSetElapsed(numEntities * numWaves);
+
+            for (int ell = 0; ell != numWaves; ++ell)
+            {
+                storedLuminosities(ell, h).resize(numEntities);
+
+                // calculate the convolved luminosities in parallel
+                parallel->call(numEntities, [&storedLuminosities, &sources, &bin, &band, ell, h, style, log,
+                                             progress](size_t firstIndex, size_t numIndices) {
+                    while (numIndices)
+                    {
+                        size_t currentChunkSize = min(logProgressChunkSize, numIndices);
+                        for (size_t m = firstIndex; m != firstIndex + currentChunkSize; ++m)
+                        {
+                            switch (style)
+                            {
+                                case Style::Sample:
+                                    throw FATALERROR("convolve option is not compatible with style Sample");
+                                    break;
+                                case Style::Average:
+                                    storedLuminosities(ell, h, m) = sources[h]->meanSpecificLuminosity(bin[ell], m);
+                                    break;
+                                case Style::Convolve:
+                                    storedLuminosities(ell, h, m) = sources[h]->meanSpecificLuminosity(band[ell], m);
+                                    break;
+                            }
+                        }
+                        log->infoIfElapsed(progress, currentChunkSize);
+                        firstIndex += currentChunkSize;
+                        numIndices -= currentChunkSize;
+                    }
+                });
+                ProcessManager::sumToRoot(storedLuminosities(ell, h), true);
+            }
+        }
+    }
+
     // define a common call-back function to retrieve a compound luminosity value in one of two ways
     // depending on the value of the path argument (to avoid duplicating a lot of code):
     //  - a luminosity volume density value at a given position or along a given path
     //  - a surface brightness value along a given path
-    auto valueAtPositionOrAlongPath = [&sources, &snapshots, numWaves, style, &wave, &bin, &band, &cvol,
-                                       &csrf](bool path, Position bfr, Direction bfk) {
+    auto valueAtPositionOrAlongPath = [&sources, &snapshots, numWaves, style, &wave, &cvol, &csrf,
+                                       &storedLuminosities](bool path, Position bfr, Direction bfk) {
         // allocate an entity collection that can be reused for all queries in a given execution thread
         thread_local EntityCollection entities;
 
@@ -128,8 +191,8 @@ void ImportedSourceLuminosityProbe::probeImportedSources(const vector<const Impo
                     switch (style)
                     {
                         case Style::Sample: luminosity = sources[h]->specificLuminosity(wave[ell], m); break;
-                        case Style::Average: luminosity = sources[h]->meanSpecificLuminosity(bin[ell], m); break;
-                        case Style::Convolve: luminosity = sources[h]->meanSpecificLuminosity(band[ell], m); break;
+                        case Style::Average: luminosity = storedLuminosities(ell, h, m); break;
+                        case Style::Convolve: luminosity = storedLuminosities(ell, h, m); break;
                     }
 
                     // convert to the proper output value and accumulate into the result array

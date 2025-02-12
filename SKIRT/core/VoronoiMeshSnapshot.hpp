@@ -215,12 +215,6 @@ private:
         It assumes that both mass and mass density columns are being imported. */
     void calculateVolume();
 
-    /** This private function calculates the densities and (cumulative) masses for all cells, and
-        logs some statistics. The function assumes that the cell volumes have been calculated,
-        either by building a Voronoi tessellation, or by deriving the volume from mass and mass
-        density columns being imported. */
-    void calculateDensityAndMass();
-
     /** Private function to recursively build a binary search tree (see
         en.wikipedia.org/wiki/Kd-tree) */
     Node* buildTree(vector<int>::iterator first, vector<int>::iterator last, int depth) const;
@@ -346,11 +340,6 @@ protected:
         range, the behavior is undefined. */
     const Array& properties(int m) const override;
 
-    /** This function returns the index \f$0\le m \le N_\mathrm{ent}-1\f$ of the cell containing
-        the specified point \f${\bf{r}}\f$, or -1 if the point is outside the domain, if there
-        are no cells in the snapshot, or if the search data structures were not created. */
-    int nearestEntity(Position bfr) const override;
-
 public:
     /** This function sets the specified entity collection to the cell containing the specified
         point \f${\bf{r}}\f$, or to the empty collection if the point is outside the domain or if
@@ -388,7 +377,7 @@ public:
         the path is complete and the loop is terminated. If no exit point is found, which shouldn't
         happen too often, this must be due to computational inaccuracies. In that case, no path
         segment is added, the current point is advanced by a small amount, and the new current cell
-        is determined by calling the function whichcell().
+        is determined by calling the function cellIndex().
 
         The algorithm that computes the exit point has the following input data:
         <TABLE>

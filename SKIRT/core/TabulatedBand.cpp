@@ -16,7 +16,8 @@ void TabulatedBand::setupSelfBefore()
     getWavelengthsAndTransmissions(_lambdav, _transv);
 
     // verify the number of values
-    if (_transv.size() < 2) throw FATALERROR("Number of loaded transmission values is less than 2");
+    if (_lambdav.size() != _transv.size()) throw FATALERROR("Number of wavelength and transmission values differ");
+    if (_lambdav.size() < 2) throw FATALERROR("Number of wavelength/transmission values is less than 2");
 
     // reverse the arrays if needed to get the wavelengths in increasing order
     if (_lambdav[0] > _lambdav[_lambdav.size() - 1])
@@ -24,6 +25,13 @@ void TabulatedBand::setupSelfBefore()
         std::reverse(begin(_lambdav), end(_lambdav));
         std::reverse(begin(_transv), end(_transv));
     }
+
+    // verify that the wavelengths now are in increasing order
+    if (!std::is_sorted(begin(_lambdav), end(_lambdav), std::less<>()))
+        throw FATALERROR("Wavelengths are not sorted in increasing or decreasing order");
+
+    // verify that the wavelength range is nonzero
+    if (_lambdav[0] >= _lambdav[_lambdav.size() - 1]) throw FATALERROR("Wavelength range is empty");
 
     // calculate the normalization factor for the transmission values
     size_t size = _transv.size();

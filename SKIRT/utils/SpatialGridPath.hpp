@@ -97,6 +97,7 @@ public:
         double _s;            // cumulative distance until cell exit
         double _tauExtOrSca;  // cumulative extinction or scattering optical depth at cell exit
         double _tauAbs;       // cumulative absorption optical depth at cell exit or zero
+
     public:
         Segment(int m, double ds, double s) : _m(m), _ds(ds), _s(s), _tauExtOrSca{0.}, _tauAbs{0.} {}
         int m() const { return _m; }
@@ -178,6 +179,7 @@ public:
     double interactionOpticalDepth() const { return _interactionOpticalDepth; }
 
     // ------- Data members -------
+
 private:
     Position _bfr;
     Direction _bfk;

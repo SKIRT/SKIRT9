@@ -8,7 +8,7 @@
 
 #include "Array.hpp"
 #include "BoxSpatialGrid.hpp"
-#include "MoveableMesh.hpp"
+#include "Mesh.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -19,13 +19,13 @@ class CartesianSpatialGrid : public BoxSpatialGrid
 {
     ITEM_CONCRETE(CartesianSpatialGrid, BoxSpatialGrid, "a Cartesian spatial grid")
 
-        PROPERTY_ITEM(meshX, MoveableMesh, "the bin distribution in the X direction")
+        PROPERTY_ITEM(meshX, Mesh, "the bin distribution in the X direction")
         ATTRIBUTE_DEFAULT_VALUE(meshX, "LinMesh")
 
-        PROPERTY_ITEM(meshY, MoveableMesh, "the bin distribution in the Y direction")
+        PROPERTY_ITEM(meshY, Mesh, "the bin distribution in the Y direction")
         ATTRIBUTE_DEFAULT_VALUE(meshY, "LinMesh")
 
-        PROPERTY_ITEM(meshZ, MoveableMesh, "the bin distribution in the Z direction")
+        PROPERTY_ITEM(meshZ, Mesh, "the bin distribution in the Z direction")
         ATTRIBUTE_DEFAULT_VALUE(meshZ, "LinMesh")
 
     ITEM_END()

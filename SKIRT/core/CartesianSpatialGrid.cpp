@@ -4,17 +4,17 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "CartesianSpatialGrid.hpp"
-#include "Log.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
-#include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
 void CartesianSpatialGrid::setupSelfAfter()
 {
+    BoxSpatialGrid::setupSelfAfter();
+
     // initialize our local mesh arrays
     _Nx = _meshX->numBins();
     _Ny = _meshY->numBins();
@@ -22,9 +22,6 @@ void CartesianSpatialGrid::setupSelfAfter()
     _xv = _meshX->mesh() * (xmax() - xmin()) + xmin();
     _yv = _meshY->mesh() * (ymax() - ymin()) + ymin();
     _zv = _meshZ->mesh() * (zmax() - zmin()) + zmin();
-
-    // base class setupSelfAfter() depends on initialization performed above
-    BoxSpatialGrid::setupSelfAfter();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -92,7 +89,7 @@ public:
             case State::Unknown:
             {
                 // try moving the photon packet inside the grid; if this is impossible, return an empty path
-                if (!moveInside(_grid->extent(), 1e-12 * _grid->extent().widths().norm())) return false;
+                if (!moveInside(_grid->extent(), 1e-12 * _grid->extent().diagonal())) return false;
 
                 // determine which grid cell we are in
                 _i = NR::locateClip(_grid->_xv, rx());

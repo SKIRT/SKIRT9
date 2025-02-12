@@ -49,6 +49,7 @@ protected:
     void setupSelfAfter() override;
 
     //======================== Other Functions =======================
+
 public:
     /** The dimension of the geometry after applying the decorator can only change spherical
         geometries into axially symmetric, otherwise it doesn't change the dimension. */

@@ -301,7 +301,10 @@ void XmlReader::skipUpTo(string match)
 
 namespace
 {
-    bool isLetter(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
+    bool isLetter(char c)
+    {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    }
 
     bool isLetterOrDigitOrDash(char c)
     {

@@ -109,6 +109,8 @@ void ProbeFormBridge::writeQuantity(string fileid, string quantity, string descr
     _form->writeQuantity(this);
 }
 
+////////////////////////////////////////////////////////////////////
+
 void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, string quantity, string projectedQuantity,
                                     string description, string projectedDescription, const Array& axis, string axisUnit,
                                     AddColumnDefinitions addColumnDefinitions, CompoundValueInCell valueInCell)
@@ -121,6 +123,33 @@ void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, strin
     _projectedUnit = _units->unit(projectedQuantity);
     _unitFactor = _units->out(quantity, 1.);
     _projectedUnitFactor = _units->out(projectedQuantity, 1.);
+    _description = description;
+    _projectedDescription = projectedDescription;
+    _axis = axis;
+    _axisUnit = axisUnit;
+    _numValues = axis.size();
+
+    _addColumnDefinitions = addColumnDefinitions;
+    _compoundValueInCell = valueInCell;
+
+    _form->writeQuantity(this);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void ProbeFormBridge::writeQuantity(string fileid, string projectedFileid, string unit, string projectedUnit,
+                                    double projectedUnitFactor, string description, string projectedDescription,
+                                    const Array& axis, string axisUnit, AddColumnDefinitions addColumnDefinitions,
+                                    CompoundValueInCell valueInCell)
+{
+    _type = Type::GridCompoundAccumulated;
+
+    _fileid = fileid;
+    _projectedFileid = projectedFileid;
+    _unit = unit;
+    _projectedUnit = projectedUnit;
+    _unitFactor = 1.;
+    _projectedUnitFactor = projectedUnitFactor;
     _description = description;
     _projectedDescription = projectedDescription;
     _axis = axis;

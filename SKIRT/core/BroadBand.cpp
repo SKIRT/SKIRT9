@@ -30,21 +30,21 @@ void BroadBand::setupSelfBefore()
     string resourceName = FilePaths::resourceName("_BroadBand.stab", segments);
 
     // open the table
-    _table.open(this, resourceName, "lambda(m)", "T(1)", false);
+    _table.open(this, resourceName, "lambda(m)", "T(1/m)", false);
 }
 
 ////////////////////////////////////////////////////////////////////
 
 size_t BroadBand::dataSize() const
 {
-    return _table.size();
+    return _table.axisSize<0>();
 }
 
 ////////////////////////////////////////////////////////////////////
 
 const double* BroadBand::wavelengthData() const
 {
-    return _table.axisData();
+    return _table.axisData<0>();
 }
 
 ////////////////////////////////////////////////////////////////////

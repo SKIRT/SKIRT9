@@ -71,12 +71,14 @@ public:
         the log message issued after the file is successfully opened. */
     void open(const SimulationItem* item, string filename, string description);
 
+    /** This function closes the file and deletes the corresponding file object. */
+    void close();
+
     /** This function reads the snapshot data from the input file, honoring the options set through
         the configuration functions, stores the data for later use, and closes the file.
 
-        The implementation in this base class simply closes the file and deletes the corresponding
-        file object. Subclasses must override the function to actually read the data and then call
-        the implementation in this base class. */
+        The implementation in this base class simply calls close(). Subclasses must override the
+        function to actually read the data and then call close(). */
     virtual void readAndClose();
 
 protected:
@@ -116,8 +118,22 @@ public:
         equivalent to not calling it at all. */
     void useColumns(string columns);
 
+    /** This enum has a constant for each of the supported coordinate systems. */
+    enum class CoordinateSystem { CARTESIAN, CYLINDRICAL, SPHERICAL };
+
+    /** This function configures the snapshot to use the specified coordinate system when importing
+        %Position, %Box, Velocity, and MagneticField. The default coordinate system is Cartesian.
+
+        After the input file has been read, the contents of the %Position and %Box properties are
+        fully under control of the subclass. On the other hand, the Velocity and MagneticField
+        properties are handled by query functions in this base class. Therefore, if a coordinate
+        system other than Cartesian has been configured, the subclass must convert these vector
+        components from the input coordinate system to the Cartesian coordinate system. */
+    void setCoordinateSystem(CoordinateSystem coordinateSystem);
+
     /** This function configures the snapshot to import a spatial position with three components
-        (x,y,z). The default unit is pc. */
+        \f$(x,y,z)\f$, \f$(R,\varphi,z)\f$ or \f$(r,\theta,\varphi)\f$. The default unit is pc,
+        and deg for the angular components. */
     void importPosition();
 
     /** This function configures the snapshot to import a spatial radial size. The default unit is
@@ -125,7 +141,11 @@ public:
     void importSize();
 
     /** This function configures the snapshot to import a cuboid lined up with the coordinate axes,
-        defined by six components (xmin,ymin,zmin,xmax,ymax,zmax). The default unit is pc. */
+        defined by six components \f$(x_\text{min}, y_\text{min}, z_\text{min}, x_\text{max},
+        y_\text{max}, z_\text{max})\f$, \f$(R_\text{min}, \varphi_\text{min}, z_\text{min},
+        R_\text{max}, \varphi_\text{max}, z_\text{max})\f$, or \f$(r_\text{min}, \theta_\text{min},
+        \varphi_\text{min}, r_\text{max}, \theta_\text{max}, \varphi_\text{max})\f$. The default
+        unit is pc, and deg for the angular components. */
     void importBox();
 
     /** This function configures the snapshot to import a mass density per unit of volume (for use
@@ -169,8 +189,9 @@ public:
     /** This function configures the snapshot to import a temperature. The default unit is K. */
     void importTemperature();
 
-    /** This function configures the snapshot to import a velocity with three components (x,y,z).
-        The default unit is km/s. */
+    /** This function configures the snapshot to import a velocity with three components
+        \f$(v_\text{x},v_\text{y},v_\text{z})\f$, \f$(v_\text{R},v_\varphi,v_\text{z})\f$ or
+        \f$(v_\text{r},v_\theta,v_\varphi)\f$. The default unit is km/s. */
     void importVelocity();
 
     /** This function configures the snapshot to import a single velocity dispersion value,
@@ -179,8 +200,13 @@ public:
     void importVelocityDispersion();
 
     /** This function configures the snapshot to import a magnetic field vector with three
-        components (x,y,z). The default unit is \f$\mu \mathrm{G}\f$. */
+        components \f$(B_\text{x},B_\text{y},B_\text{z})\f$,
+        \f$(B_\text{R},B_\varphi,B_\text{z})\f$ or \f$(B_\text{r},B_\theta,B_\varphi)\f$. The
+        default unit is \f$\mu \mathrm{G}\f$. */
     void importMagneticField();
+
+    /** This function configures the snapshot to import a bias for each entity in the snapshot. */
+    void importBias();
 
     /** This function configures the snapshot to import a sequence of parameters as described by
         the specified list of SnapshotParameter metadata objects. */
@@ -264,6 +290,10 @@ protected:
         not being imported, for use by subclasses. */
     int magneticFieldIndex() const { return _magneticFieldIndex; }
 
+    /** This function returns the column index of the bias field, or -1 if this is not being
+        imported, for use by subclasses. */
+    int biasIndex() const { return _biasIndex; }
+
     /** This function returns the column index of the first field in the parameter list, or -1 if
         this is not being imported, for use by subclasses. */
     int parametersIndex() const { return _parametersIndex; }
@@ -299,10 +329,24 @@ protected:
         Returns false otherwise. For use by subclasses. */
     bool needGetEntities() const { return _needGetEntities; }
 
-    /** This function issues log messages with statistics on the imported masses. It is implemented
+    //========== Facilities for use during setup ==========
+
+protected:
+    /** This function issues log messages with statistics on the imported masses. It is provided
         here for use by subclasses. */
     void logMassStatistics(int numIgnored, double totalOriginalMass, double totalMetallicMass,
                            double totalEffectiveMass);
+
+    /** This function is provided here for use by subclasses that describe the snapshot through
+        cells (as opposed to particles). It determines the densities and the cumulative mass
+        distribution for all cells and stores the result in the provided array arguments, resizing
+        them and replacing any previous contents. The function also accumulates and stores the
+        total mass, and logs mass statistics by calling logMassStatistics().
+
+        The function assumes that the snapshot is fully configured, all properties have been read,
+        and the following functions implemented in the subclass return the proper values:
+        numEntities(), properties(m), volume(m). */
+    void calculateDensityAndMass(Array& rhov, Array& cumrhov, double& mass);
 
     //============== Interrogation (to be implemented in subclass) =============
 
@@ -359,13 +403,6 @@ protected:
         range, the behavior is undefined. */
     virtual const Array& properties(int m) const = 0;
 
-    /** This function returns the index \f$0\le m \le N_\mathrm{ent}-1\f$ for the entity at or
-        nearest to the specified point \f${\bf{r}}\f$, or -1 if the point is outside the domain or
-        if there are no entities in the snapshot. For a cell-based snapshot, the function returns
-        the index of the cell containing the given point. For a particle-based snapshot, the
-        function returns the index of the particle whose center is nearest to the given point. */
-    virtual int nearestEntity(Position bfr) const = 0;
-
 public:
     /** This function replaces the contents of the specified entity collection by the set of
         entities that overlap the specified point \f${\bf{r}}\f$, with their corresponding weights.
@@ -407,11 +444,6 @@ public:
         range, the behavior is undefined. */
     double initialMass(int m) const;
 
-    /** This function returns the initial mass of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
-        initial mass is not being imported, the behavior is undefined. */
-    double initialMass(Position bfr) const;
-
     /** This function returns true if the current mass is being imported, and false otherwise. */
     bool hasCurrentMass() const { return _currentMassIndex >= 0; }
 
@@ -419,11 +451,6 @@ public:
         N_\mathrm{ent}-1\f$. If the current mass is not being imported, or the index is out of
         range, the behavior is undefined. */
     double currentMass(int m) const;
-
-    /** This function returns the current mass of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
-        current mass is not being imported, the behavior is undefined. */
-    double currentMass(Position bfr) const;
 
     /** This function returns true if the metallicity is being imported, and false otherwise. */
     bool hasMetallicity() const { return _metallicityIndex >= 0; }
@@ -433,7 +460,7 @@ public:
         range, the behavior is undefined. */
     double metallicity(int m) const;
 
-    /** This function returns the metallicity of the entity nearest to (or at) the specified point
+    /** This function returns the metallicity at the specified point
         \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
         metallicity is not being imported, the behavior is undefined. */
     double metallicity(Position bfr) const;
@@ -446,11 +473,6 @@ public:
         */
     double age(int m) const;
 
-    /** This function returns the age of the entity nearest to (or at) the specified point
-        \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the age
-        is not being imported, the behavior is undefined. */
-    double age(Position bfr) const;
-
     /** This function returns true if the temperature is being imported, and false otherwise. */
     bool hasTemperature() const { return _temperatureIndex >= 0; }
 
@@ -459,7 +481,7 @@ public:
         range, the behavior is undefined. */
     double temperature(int m) const;
 
-    /** This function returns the temperature of the entity nearest to (or at) the specified point
+    /** This function returns the temperature at the specified point
         \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero. If the
         temperature is not being imported, the behavior is undefined. */
     double temperature(Position bfr) const;
@@ -472,7 +494,7 @@ public:
         the behavior is undefined. */
     Vec velocity(int m) const;
 
-    /** This function returns the velocity of the entity nearest to (or at) the specified point
+    /** This function returns the velocity at the specified point
         \f${\bf{r}}\f$. If the point is outside the domain, the function returns zero velocity. If
         the velocity is not being imported, the behavior is undefined. */
     Vec velocity(Position bfr) const;
@@ -486,12 +508,6 @@ public:
         of range, the behavior is undefined. */
     double velocityDispersion(int m) const;
 
-    /** This function returns the velocity dispersion of the entity nearest to (or at) the
-        specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns
-        zero dispersion. If the velocity dispersion is not being imported, the behavior is
-        undefined. */
-    double velocityDispersion(Position bfr) const;
-
     /** This function returns true if the magnetic field is being imported, and false otherwise. */
     bool hasMagneticField() const { return _magneticFieldIndex >= 0; }
 
@@ -500,11 +516,19 @@ public:
         range, the behavior is undefined. */
     Vec magneticField(int m) const;
 
-    /** This function returns the magnetic field vector of the entity nearest to (or at) the
+    /** This function returns the magnetic field vector at the
         specified point \f${\bf{r}}\f$. If the point is outside the domain, the function returns a
         zero magnetic field. If the magnetic field is not being imported, the behavior is
         undefined. */
     Vec magneticField(Position bfr) const;
+
+    /** This function returns true if the bias is being imported, and false otherwise. */
+    bool hasBias() const { return _biasIndex >= 0; }
+
+    /** This function returns the bias of the entity with index \f$0\le m \le N_\mathrm{ent}-1\f$.
+        If the bias is not being imported, or the index is out of range, the behavior is undefined.
+        */
+    double bias(int m) const;
 
     /** This function returns true if parameters are being imported (i.e. if the number of imported
          parameters is nonzero), and false otherwise. */
@@ -515,7 +539,7 @@ public:
         index is out of range, the behavior is undefined. */
     void parameters(int m, Array& params) const;
 
-    /** This function stores the parameters of the entity nearest to (or at) the specified point
+    /** This function stores the parameters at the specified point
         \f${\bf{r}}\f$ into the given array. If the point is outside the domain, the function
         returns the appropriate number of zero parameter values. If parameters are not being
         imported, the behavior is undefined. */
@@ -551,6 +575,9 @@ private:
     Units* _units{nullptr};
     Random* _random{nullptr};
 
+    // coordinate system
+    CoordinateSystem _coordinateSystem{CoordinateSystem::CARTESIAN};
+
     // column indices
     int _nextIndex{0};
     int _positionIndex{-1};
@@ -566,6 +593,7 @@ private:
     int _velocityIndex{-1};
     int _velocityDispersionIndex{-1};
     int _magneticFieldIndex{-1};
+    int _biasIndex{-1};
     int _parametersIndex{-1};
     int _numParameters{0};
 

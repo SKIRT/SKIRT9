@@ -4,23 +4,20 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Sphere1DSpatialGrid.hpp"
-#include "Log.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
-#include "SpatialGridPath.hpp"
 #include "SpatialGridPlotFile.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
 void Sphere1DSpatialGrid::setupSelfAfter()
 {
-    // Set up the grid properties
-    _Nr = _meshRadial->numBins();
-    _rv = minRadius() + _meshRadial->mesh() * (maxRadius() - minRadius());
-
-    // base class setupSelfAfter() depends on initialization performed above
     SphereSpatialGrid::setupSelfAfter();
+
+    // initialize our local mesh array
+    _Nr = _meshRadial->numBins();
+    _rv = _meshRadial->mesh() * (maxRadius() - minRadius()) + minRadius();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -43,13 +40,9 @@ double Sphere1DSpatialGrid::volume(int m) const
 {
     int i = m;
     if (i < 0 || i >= _Nr)
-        return 0.0;
+        return 0.;
     else
-    {
-        double rL = _rv[i];
-        double rR = _rv[i + 1];
-        return 4.0 * M_PI / 3.0 * (rR - rL) * (rR * rR + rR * rL + rL * rL);
-    }
+        return 4. / 3. * M_PI * pow3(_rv[i], _rv[i + 1]);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -57,8 +50,10 @@ double Sphere1DSpatialGrid::volume(int m) const
 double Sphere1DSpatialGrid::diagonal(int m) const
 {
     int i = m;
-    if (i < 0 || i >= _Nr) return 0.;
-    return _rv[i + 1] - _rv[i];
+    if (i < 0 || i >= _Nr)
+        return 0.;
+    else
+        return _rv[i + 1] - _rv[i];
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -73,8 +68,10 @@ int Sphere1DSpatialGrid::cellIndex(Position bfr) const
 Position Sphere1DSpatialGrid::centralPositionInCell(int m) const
 {
     int i = m;
-    double r = (_rv[i] + _rv[i + 1]) / 2.0;
-    return Position(r, 0, 0);
+    if (i < 0 || i >= _Nr)
+        return Position();
+    else
+        return Position(0.5 * (_rv[i] + _rv[i + 1]), 0., 0.);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -82,11 +79,14 @@ Position Sphere1DSpatialGrid::centralPositionInCell(int m) const
 Position Sphere1DSpatialGrid::randomPositionInCell(int m) const
 {
     int i = m;
-    Direction bfk = random()->direction();
-    double r = cbrt(_rv[i] * _rv[i] * _rv[i]
-                    + (_rv[i + 1] - _rv[i]) * (_rv[i + 1] * _rv[i + 1] + _rv[i + 1] * _rv[i] + _rv[i] * _rv[i])
-                          * random()->uniform());
-    return Position(r, bfk);
+    if (i < 0 || i >= _Nr)
+        return Position();
+    else
+    {
+        Direction bfk = random()->direction();
+        double r = cbrt(pow3(_rv[i]) + pow3(_rv[i], _rv[i + 1]) * random()->uniform());
+        return Position(r, bfk);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -108,7 +108,7 @@ public:
         {
             case State::Unknown:
             {
-                // try moving the photon packet inside the grid, if necessary
+                // try moving the path inside the grid, if necessary
                 double rmax = _grid->maxRadius();
                 double rmin = _grid->minRadius();
                 double r = sqrt(rx() * rx() + ry() * ry() + rz() * rz());
@@ -213,7 +213,8 @@ std::unique_ptr<PathSegmentGenerator> Sphere1DSpatialGrid::createPathSegmentGene
 
 void Sphere1DSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
 {
-    for (int i = 0; i <= _Nr; i++) outfile->writeCircle(_rv[i]);
+    // spheres
+    for (double r : _rv) outfile->writeCircle(r);
 }
 
 //////////////////////////////////////////////////////////////////////

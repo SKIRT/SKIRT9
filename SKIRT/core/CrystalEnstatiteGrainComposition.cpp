@@ -30,7 +30,7 @@ string CrystalEnstatiteGrainComposition::resourceNameForOpticalProps() const
 
 string CrystalEnstatiteGrainComposition::resourceNameForEnthalpies() const
 {
-    return "DustEM_aSil_Entalphies";
+    return "DustEM_aSil_Enthalpies";
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -181,6 +181,7 @@ namespace
     class DustAbsorptionConvergence
     {
         double _prevLabsseco{0.};  // remembers the absorbed luminosity in the previous iteration
+
     public:
         // this function determines and logs the total absorbed luminosity and related percentages
         // it returns true if secondary emission can be considered to be converged, false otherwise

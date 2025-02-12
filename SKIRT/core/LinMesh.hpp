@@ -6,15 +6,15 @@
 #ifndef LINMESH_HPP
 #define LINMESH_HPP
 
-#include "MoveableMesh.hpp"
+#include "Mesh.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** The LinMesh class represents meshes on the unit interval \f$[0,1]\f$ with a linear distribution
+/** The LinMesh class represents a mesh on the unit interval \f$[0,1]\f$ with a linear distribution
     of the mesh points. */
-class LinMesh : public MoveableMesh
+class LinMesh : public Mesh
 {
-    ITEM_CONCRETE(LinMesh, MoveableMesh, "a linear mesh")
+    ITEM_CONCRETE(LinMesh, Mesh, "a linear mesh")
     ITEM_END()
 
     //======================== Other Functions =======================

@@ -51,8 +51,8 @@
     \;\mathrm{or}\; T_\mathrm{max}=0 \\ 0 & \mathrm{otherwise} \end{cases} \f]
 
     If the \em importVelocity option is enabled, the subsequent three columns specify the
-    \f$v_x\f$, \f$v_y\f$, \f$v_z\f$ velocity components of the particle (considered as the bulk
-    velocity for the mass represented by the particle).
+    \f$v_x\f$, \f$v_y\f$, \f$v_z\f$ components of the bulk velocity for the material represented
+    by the cell.
 
     If the \em importMagneticField option is enabled, the subsequent three columns specify the
     \f$B_x\f$, \f$B_y\f$, \f$B_z\f$ magnetic field vector components for the cell.
@@ -81,7 +81,7 @@ class CellMedium : public ImportedMedium
 
 protected:
     /** This function constructs a new CellSnapshot object, calls its open() function, configures
-        it to import a mass or density column, it, and finally returns a pointer to the object.
+        it to import a mass or density column, and finally returns a pointer to the object.
         Ownership of the Snapshot object is transferred to the caller. */
     Snapshot* createAndOpenSnapshot() override;
 };

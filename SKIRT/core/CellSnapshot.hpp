@@ -6,6 +6,7 @@
 #ifndef CELLSNAPSHOT_HPP
 #define CELLSNAPSHOT_HPP
 
+#include "BoxSearch.hpp"
 #include "Snapshot.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -35,10 +36,6 @@
 class CellSnapshot : public Snapshot
 {
     //================= Construction - Destruction =================
-
-public:
-    /** The destructor deletes the search data structure, if it was constructed. */
-    ~CellSnapshot();
 
     //========== Reading ==========
 
@@ -109,11 +106,6 @@ protected:
         range, the behavior is undefined. */
     const Array& properties(int m) const override;
 
-    /** This function returns the index \f$0\le m \le N_\mathrm{ent}-1\f$ of the cell containing
-        the specified point \f${\bf{r}}\f$, or -1 if the point is outside the domain, if there are
-        no cells in the snapshot, or if the search data structures were not created. */
-    int nearestEntity(Position bfr) const override;
-
 public:
     /** This function sets the specified entity collection to the cell containing the specified
         point \f${\bf{r}}\f$, or to the empty collection if the point is outside the domain or if
@@ -128,6 +120,13 @@ public:
         data structures were not created, invoking this function causes undefined behavior. */
     void getEntities(EntityCollection& entities, Position bfr, Direction bfk) const override;
 
+    //=================== Private helper functions =====================
+
+private:
+    /** This function returns the bounding box representing the cell with the given index. If the
+        index is out of range, the behavior is undefined. */
+    Box boxForCell(int m) const;
+
     //======================== Data Members ========================
 
 private:
@@ -135,13 +134,10 @@ private:
     vector<Array> _propv;  // cell properties as imported
 
     // data members initialized after reading the input file if a density policy has been set
-    Array _rhov;       // density for each cell (not normalized)
-    Array _cumrhov;    // normalized cumulative density distribution for cells
-    double _mass{0.};  // total effective mass
-
-    // data members initialized after reading the input file if a density policy has been set
-    class CellGrid;
-    CellGrid* _grid{nullptr};  // smart grid for locating the cell at a given location
+    Array _rhov;        // density for each cell (not normalized)
+    Array _cumrhov;     // normalized cumulative density distribution for cells
+    double _mass{0.};   // total effective mass
+    BoxSearch _search;  // search structure for locating cells
 };
 
 ////////////////////////////////////////////////////////////////////
