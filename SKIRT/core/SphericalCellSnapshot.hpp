@@ -32,8 +32,8 @@
 
     \note Because of the limitations on the range of \f$\varphi\f$, a cell cannot straddle the
     negative x-axis of the Cartesian model coordinate system, and it cannot span more than half of
-    the azimuth circle. Also, because of the limitations on the range of \f$\theta\f$, a
-    cell cannot straddle the z-axis of the Cartesian model coordinate system.
+    the azimuth circle. Also, because of the limitations on the range of \f$\theta\f$, a cell
+    cannot straddle the z-axis of the Cartesian model coordinate system.
 
     The intention is for the cells to define a partition of the spatial domain, and usually they
     will, however this is not enforced. When two or more cells overlap at a given position, the
@@ -55,26 +55,28 @@
 
     <em>2D or 1D data</em>
 
-    If the 2D auto-revolve feature is enabled, each line in the text file represents a 2D cell in
-    the meridional plane with \f$\varphi=0\f$. The cells are defined using just the radial and
-    inclination borders. After reading the text file, these 2D cells will automatically be revolved
-    around the z-axis using a user-specified number of \f$\varphi\f$ bins.
+    If the inclination auto-revolve feature is enabled, each line in the text file represents a 2D
+    cell in the equatorial plane, defined using just the \f$r\f$ and \f$\varphi\f$ borders. After
+    reading the text file, these cells will automatically be revolved around the origin using a
+    user-specified number of \f$\theta\f$ bins. To enable this feature, the number of inclination
+    auto-revolve bins must be set to at least 2, and all \f$\theta_\text{min}\f$ and
+    \f$\theta_\text{max}\f$ values in the input file must be zero. A nonzero value in these columns
+    will trigger a fatal error.
 
-    If the 1D auto-revolve feature is enabled, each line in the text file represents a 1D cell
-    along the vertical axis (with \f$\theta=0\f$ and \f$\varphi=0\f$). The cells are defined using
-    just the radial borders. After reading the text file, these 1D cells will automatically be
-    revolved around the origin using a user-specified number of \f$\theta\f$ and \f$\varphi\f$
-    bins.
+    If the azimuth auto-revolve feature is enabled, each line in the text file represents a 2D cell
+    in a meridional plane, defined using just the \f$r\f$ and \f$\theta\f$ borders. After reading
+    the text file, these cells will automatically be revolved around the z-axis using a
+    user-specified number of \f$\varphi\f$ bins. To enable this feature, the number of azimuth
+    auto-revolve bins must be set to at least 2, and all \f$\varphi_\text{min}\f$ and
+    \f$\varphi_\text{max}\f$ values in the input file must be zero. A nonzero value in these
+    columns will trigger a fatal error.
 
-    To enable the 2D auto-revolve feature, the number of azimuth auto-revolve bins must be set to
-    at least 2. To enable the 1D auto-revolve feature, the number of inclination auto-revolve bins
-    must be set to at least 2 as well. Also, for 2D all \f$\varphi_\text{min}\f$ and
-    \f$\varphi_\text{max}\f$ values in the input file must be exactly zero. For 1D, all
-    \f$\theta_\text{min}\f$ and \f$\theta_\text{max}\f$ values in the input file must be exactly
-    zero as well. A nonzero value in these columns will trigger a fatal error.
+    Finally, if both the inclination and azimuth auto-revolve features are enabled, each line in
+    the text file represents a 1D cell along a radial axis, defined using just the \f$r\f$ borders.
+    After reading the text file, these 1D cells will automatically be revolved using the
+    user-specified number of \f$\theta\f$ and \f$\varphi\f$ bins.
 
-    \note It is \em not allowed to omit the irrelevant columns; they must be present with zero
-    values.
+    \note It is \em not allowed to omit the unused columns; they must be present with zero values.
 
     If the 1D or 2D input file specifies an integrated mass type (as opposed to a mass density),
     the mass of each 1D or 2D cell is evenly distributed over the revolved 3D bins.
@@ -96,9 +98,9 @@ class SphericalCellSnapshot : public Snapshot
     //================= Construction - Destruction =================
 
 public:
-    /** This function sets the number of auto-revolve azimuth and inclination bins; see the class
+    /** This function sets the number of auto-revolve inclination and azimuth bins; see the class
         header for more information. */
-    void setNumAutoRevolveBins(int numAzimuthBins, int numInclinationBins);
+    void setNumAutoRevolveBins(int numInclinationBins, int numAzimuthBins);
 
     //========== Reading ==========
 
@@ -190,8 +192,8 @@ public:
 
 private:
     // data members initialized during configuration
-    int _numAutoAzimuthBins{0};      // must be 2 or more to enable 2D auto-revolve feature
-    int _numAutoInclinationBins{0};  // must be 2 or more as well to enable 1D auto-revolve feature
+    int _numAutoInclinationBins{0};  // must be 2 or more to enable inclination auto-revolve feature
+    int _numAutoAzimuthBins{0};      // must be 2 or more to enable azimuth auto-revolve feature
 
     // data members initialized when reading the input file
     vector<Array> _propv;          // cell properties as imported

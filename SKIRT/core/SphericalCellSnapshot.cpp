@@ -4,21 +4,21 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "SphericalCellSnapshot.hpp"
+#include "Cubic.hpp"
 #include "EntityCollection.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
 #include "Random.hpp"
 #include "StringUtils.hpp"
-#include "Cubic.hpp"
 #include "TextInFile.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void SphericalCellSnapshot::setNumAutoRevolveBins(int numAzimuthBins, int numInclinationBins)
+void SphericalCellSnapshot::setNumAutoRevolveBins(int numInclinationBins, int numAzimuthBins)
 {
-    _numAutoAzimuthBins = numAzimuthBins;
     _numAutoInclinationBins = numInclinationBins;
+    _numAutoAzimuthBins = numAzimuthBins;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -31,11 +31,60 @@ void SphericalCellSnapshot::readAndClose()
     // close the file
     close();
 
-    // perform 2D auto-revolve if requested
-    if (_numAutoAzimuthBins >= 2 && _numAutoInclinationBins < 2)
+    // perform inclination auto-revolve if requested
+    if (_numAutoInclinationBins >= 2)
     {
-        int num2DCells = _propv.size();
-        log()->info("  Auto-revolving " + std::to_string(num2DCells) + " 2D cells using "
+        int numCells = _propv.size();
+        log()->info("  Auto-revolving " + std::to_string(numCells) + " cells using "
+                    + std::to_string(_numAutoInclinationBins) + " inclination bins");
+
+        // construct the inclination grid, and make sure the endpoints are exact;
+        // use cosine grid point placement so that all inclination bins have the same volume
+        Array thetav;
+        NR::buildLinearGrid(thetav, 1., -1., _numAutoInclinationBins);
+        thetav = acos(thetav);
+        thetav[0] = 0.;
+        thetav[_numAutoInclinationBins] = M_PI;
+
+        // get indices for columns we need during the revolve operation (mass indices might be -1)
+        int ithetamin = boxIndex() + 1;
+        int ithetamax = boxIndex() + 4;
+        int imass1 = massIndex();
+        int imass2 = initialMassIndex();
+        int imass3 = currentMassIndex();
+
+        // move the original cells to a temporary vector
+        vector<Array> propOrigv;
+        _propv.swap(propOrigv);
+        _propv.reserve(numCells * _numAutoInclinationBins);
+
+        // loop over the original cells
+        for (Array& prop : propOrigv)
+        {
+            // verify that the cell is non-3D
+            if (prop[ithetamin] || prop[ithetamax])
+                throw FATALERROR("non-3D cell in input file has nonzero inclination angle(s)");
+
+            // distribute masses over inclination bins
+            if (imass1 >= 0) prop[imass1] /= _numAutoInclinationBins;
+            if (imass2 >= 0) prop[imass2] /= _numAutoInclinationBins;
+            if (imass3 >= 0) prop[imass3] /= _numAutoInclinationBins;
+
+            // loop over inclination bins and add a new 3D cell for each
+            for (int j = 0; j != _numAutoInclinationBins; ++j)
+            {
+                prop[ithetamin] = thetav[j];
+                prop[ithetamax] = thetav[j + 1];
+                _propv.push_back(prop);
+            }
+        }
+    }
+
+    // perform azimuth auto-revolve if requested
+    if (_numAutoAzimuthBins >= 2)
+    {
+        int numCells = _propv.size();
+        log()->info("  Auto-revolving " + std::to_string(numCells) + " cells using "
                     + std::to_string(_numAutoAzimuthBins) + " azimuth bins");
 
         // construct the azimuth grid, and make sure the endpoints are exact
@@ -51,16 +100,17 @@ void SphericalCellSnapshot::readAndClose()
         int imass2 = initialMassIndex();
         int imass3 = currentMassIndex();
 
-        // move the original 2D cells to a temporary vector
-        vector<Array> prop2Dv;
-        _propv.swap(prop2Dv);
-        _propv.reserve(num2DCells * _numAutoAzimuthBins);
+        // move the original cells to a temporary vector
+        vector<Array> propOrigv;
+        _propv.swap(propOrigv);
+        _propv.reserve(numCells * _numAutoAzimuthBins);
 
-        // loop over the original 2D cells
-        for (Array& prop : prop2Dv)
+        // loop over the original cells
+        for (Array& prop : propOrigv)
         {
-            // verify that the cell is 2D
-            if (prop[iphimin] || prop[iphimax]) throw FATALERROR("2D cell in input file has nonzero azimuth angle(s)");
+            // verify that the cell is non-3D
+            if (prop[iphimin] || prop[iphimax])
+                throw FATALERROR("non-3D cell in input file has nonzero azimuth angle(s)");
 
             // distribute masses over azimuth bins
             if (imass1 >= 0) prop[imass1] /= _numAutoAzimuthBins;
@@ -72,7 +122,7 @@ void SphericalCellSnapshot::readAndClose()
             {
                 prop[iphimin] = phiv[k];
                 prop[iphimax] = phiv[k + 1];
-                _propv.emplace_back(prop);
+                _propv.push_back(prop);
             }
         }
     }

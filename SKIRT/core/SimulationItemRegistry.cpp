@@ -257,6 +257,7 @@
 #include "StellarSurfaceSource.hpp"
 #include "StellarUnits.hpp"
 #include "SunSED.hpp"
+#include "SymCosMesh.hpp"
 #include "SymLogMesh.hpp"
 #include "SymPowMesh.hpp"
 #include "TTauriDiskGeometry.hpp"
@@ -520,6 +521,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SymPowMesh>();
     ItemRegistry::add<LogMesh>();
     ItemRegistry::add<SymLogMesh>();
+    ItemRegistry::add<SymCosMesh>();
     ItemRegistry::add<TabulatedMesh>();
     ItemRegistry::add<FileMesh>();
     ItemRegistry::add<ListMesh>();
