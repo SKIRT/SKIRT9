@@ -23,8 +23,8 @@
     number of columns in the input file depends on the options configured by the user for this
     SphericalCellGeometry instance:
 
-    \f[ R_\mathrm{min}\,(\mathrm{pc}) \quad \theta_\mathrm{min}\,(\mathrm{deg}) \quad
-    \varphi_\mathrm{min}\,(\mathrm{deg}) \quad R_\mathrm{max}\,(\mathrm{pc}) \quad
+    \f[ r_\mathrm{min}\,(\mathrm{pc}) \quad \theta_\mathrm{min}\,(\mathrm{deg}) \quad
+    \varphi_\mathrm{min}\,(\mathrm{deg}) \quad r_\mathrm{max}\,(\mathrm{pc}) \quad
     \theta_\mathrm{max}\,(\mathrm{deg}) \quad \varphi_\mathrm{max}\,(\mathrm{deg}) \quad \{\,
     \rho\,(\text{M}_\odot\,\text{pc}^{-3}) \;\;|\;\; M\,(\text{M}_\odot) \;\;|\;\;
     n\,(\text{cm}^{-3}) \;\;|\;\; N\,(1) \,\} \quad [Z\,(1)] \quad [T\,(\mathrm{K})] \f]
@@ -65,7 +65,7 @@ class SphericalCellGeometry : public ImportedGeometry
     ENUM_END()
 
     ITEM_CONCRETE(SphericalCellGeometry, ImportedGeometry, "a geometry imported from spherical cell data")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(SphericalCellMedium, "Level2")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(SphericalCellGeometry, "Level2")
 
         PROPERTY_ENUM(autoRevolve, AutoRevolveType, "automatically revolve 1D or 2D data to a 3D model")
         ATTRIBUTE_DEFAULT_VALUE(autoRevolve, "None")
