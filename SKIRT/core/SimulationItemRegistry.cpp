@@ -244,6 +244,7 @@
 #include "Sphere2DSpatialGrid.hpp"
 #include "Sphere3DSpatialGrid.hpp"
 #include "SphericalBackgroundSource.hpp"
+#include "SphericalCellGeometry.hpp"
 #include "SphericalClipGeometryDecorator.hpp"
 #include "SpheroidalGeometryDecorator.hpp"
 #include "SpheroidalGraphiteGrainComposition.hpp"
@@ -455,6 +456,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ParticleGeometry>();
     ItemRegistry::add<CellGeometry>();
     ItemRegistry::add<CylindricalCellGeometry>();
+    ItemRegistry::add<SphericalCellGeometry>();
     ItemRegistry::add<MeshGeometry>();
     ItemRegistry::add<AdaptiveMeshGeometry>();
     ItemRegistry::add<VoronoiMeshGeometry>();
