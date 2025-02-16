@@ -245,6 +245,7 @@
 #include "Sphere3DSpatialGrid.hpp"
 #include "SphericalBackgroundSource.hpp"
 #include "SphericalCellGeometry.hpp"
+#include "SphericalCellMedium.hpp"
 #include "SphericalCellSource.hpp"
 #include "SphericalClipGeometryDecorator.hpp"
 #include "SpheroidalGeometryDecorator.hpp"
@@ -538,6 +539,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ParticleMedium>();
     ItemRegistry::add<CellMedium>();
     ItemRegistry::add<CylindricalCellMedium>();
+    ItemRegistry::add<SphericalCellMedium>();
     ItemRegistry::add<MeshMedium>();
     ItemRegistry::add<AdaptiveMeshMedium>();
     ItemRegistry::add<VoronoiMeshMedium>();
