@@ -45,13 +45,6 @@ public:
     //======================== Helper Functions =======================
 
 protected:
-    /** This function returns \f$x^3\f$. It is intended as a convenience for subclasses. */
-    static double pow3(double x) { return x * x * x; }
-
-    /** This function returns \f$x_1^3 - x_0^3 = (x_1-x_0)(x_1^2 + x_1 x_0 + x_0^2)\f$. It is
-        intended as a convenience for subclasses. */
-    static double pow3(double x0, double x1) { return (x1 - x0) * (x1 * x1 + x1 * x0 + x0 * x0); }
-
     /** This function initializes a polar-inclination grid from the specified mesh, making sure
         that there is exactly one boundary corresponding to the equatorial plane
         (\f$\theta=\pi/2\f$ or equivalently \f$\cos\theta=0\f$). If the mesh does not include such

@@ -1,0 +1,24 @@
+/*//////////////////////////////////////////////////////////////////
+////     The SKIRT project -- advanced radiative transfer       ////
+////       © Astronomical Observatory, Ghent University         ////
+///////////////////////////////////////////////////////////////// */
+
+#include "SymCosMesh.hpp"
+#include "NR.hpp"
+
+////////////////////////////////////////////////////////////////////
+
+Array SymCosMesh::mesh() const
+{
+    Array tv;
+
+    // get a linear grid in the interval [1, -1]
+    NR::buildLinearGrid(tv, 1., -1., numBins());
+
+    // convert it to the desired spacing and scale
+    tv = acos(tv) / M_PI;
+
+    return tv;
+}
+
+//////////////////////////////////////////////////////////////////////

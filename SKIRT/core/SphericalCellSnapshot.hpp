@@ -3,36 +3,37 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef CYLINDRICALCELLSNAPSHOT_HPP
-#define CYLINDRICALCELLSNAPSHOT_HPP
+#ifndef SPHERICALCELLSNAPSHOT_HPP
+#define SPHERICALCELLSNAPSHOT_HPP
 
 #include "BoxSearch.hpp"
-#include "CylindricalCell.hpp"
 #include "Snapshot.hpp"
+#include "SphericalCell.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** A CylindricalCellSnapshot object represents the data in a 2D or 3D snapshot imported from a
-    column text file and discretized using cylindrical coordinates.
+/** A SphericalCellSnapshot object represents the data in a 1D, 2D or 3D snapshot imported from a
+    column text file and discretized using spherical coordinates.
 
     <em>3D data</em>
 
-    By default, each line in the text file represents a 3D cylindrical cell lined up with the
-    cylindrical coordinate axes. The columns specify the coordinates of the bordering planes and
-    cylinders, along with properties such as density. Specifically, each cell is bordered by:
+    By default, each line in the text file represents a 3D spherical cell lined up with the
+    spherical coordinate axes. The columns specify the coordinates of the bordering surfaces, along
+    with properties such as density. Specifically, each cell is bordered by:
 
-    - two vertical cylinders centered on the origin defined by radii \f$0 \le R_\text{min} \le
-    R_\text{max}\f$,
+    - two spheres centered on the origin defined by radii \f$0 \le r_\text{min} \le
+    r_\text{max}\f$,
 
-    - two meridional half-planes (with \f$R>0\f$) defined by azimuth angles \f$-\pi \le
-    \varphi_\text{min} \le \varphi_\text{max} \le \pi\f$ with \f$\varphi_\text{max} -
-    \varphi_\text{min} \le \pi\f$,
+    - two polar half-cones defined by inclination angles \f$0 \le \theta_\text{min} \le
+    \theta_\text{max} \le \pi\f$,
 
-    - two horizontal planes defined by \f$z_\text{min} \le z_\text{max}\f$.
+    - two meridional half-planes defined by azimuth angles \f$-\pi \le \varphi_\text{min} \le
+    \varphi_\text{max} \le \pi\f$ with \f$\varphi_\text{max} - \varphi_\text{min} \le \pi\f$.
 
     \note Because of the limitations on the range of \f$\varphi\f$, a cell cannot straddle the
     negative x-axis of the Cartesian model coordinate system, and it cannot span more than half of
-    the azimuth circle.
+    the azimuth circle. Also, because of the limitations on the range of \f$\theta\f$, a cell
+    cannot straddle the z-axis of the Cartesian model coordinate system.
 
     The intention is for the cells to define a partition of the spatial domain, and usually they
     will, however this is not enforced. When two or more cells overlap at a given position, the
@@ -44,32 +45,46 @@
     <em>Velocities</em>
 
     If velocity or magnetic field vectors are being imported, the class converts these from
-    cylindrical to Cartesian coordinates using \f[\begin{aligned} v_\text{x} &= v_{R}\cos\varphi -
-    v_\varphi\sin\varphi \\ v_\text{y} &= v_{R}\sin\varphi + v_\varphi\cos\varphi \\ v_\text{z} &=
-    v_\text{z} \end{aligned}\f] where \f$\varphi = (\varphi_\text{min}+\varphi_\text{max})/2\f$ is
-    the central angle of the corresponding cell.
+    spherical to Cartesian coordinates using \f[\begin{aligned} v_\text{x} &=
+    v_{r}\sin\theta\cos\varphi + v_\theta\cos\theta\cos\varphi - v_\varphi\sin\varphi \\ v_\text{y}
+    &= v_{r}\sin\theta\sin\varphi + v_\theta\cos\theta\sin\varphi + v_\varphi\cos\varphi \\
+    v_\text{z} &= v_{r}\cos\theta - v_\theta\sin\theta \end{aligned}\f] where \f$\theta =
+    (\theta_\text{min} + \theta_\text{max})/2\f$ and \f$\varphi = (\varphi_\text{min} +
+    \varphi_\text{max})/2\f$ are the central inclination and azimuth angles of the corresponding
+    cell.
 
-    <em>2D data</em>
+    <em>2D or 1D data</em>
 
-    If the auto-revolve feature is enabled, each line in the text file represents a 2D cell in the
-    meridional plane with \f$\varphi=0\f$. The cells are defined using just the radial and vertical
-    borders \f$0 \le R_\text{min} \le R_\text{max}\f$ and \f$z_\text{min} \le z_\text{max}\f$.
-    After reading the text file, these 2D cells will automatically be revolved around the z-axis
-    using a user-specified number of \f$\varphi\f$ bins.
+    If the inclination auto-revolve feature is enabled, each line in the text file represents a 2D
+    cell in the equatorial plane, defined using just the \f$r\f$ and \f$\varphi\f$ borders. After
+    reading the text file, these cells will automatically be revolved around the origin using a
+    user-specified number of \f$\theta\f$ bins. To enable this feature, the number of inclination
+    auto-revolve bins must be set to at least 2, and all \f$\theta_\text{min}\f$ and
+    \f$\theta_\text{max}\f$ values in the input file must be zero. A nonzero value in these columns
+    will trigger a fatal error.
 
-    To enable the auto-revolve feature, the number of auto-revolve bins must be set to at least 2.
-    Also, all \f$\varphi_\text{min}\f$ and \f$\varphi_\text{max}\f$ values in the input file must
-    be exactly zero. A nonzero value in these columns will trigger a fatal error.
+    If the azimuth auto-revolve feature is enabled, each line in the text file represents a 2D cell
+    in a meridional plane, defined using just the \f$r\f$ and \f$\theta\f$ borders. After reading
+    the text file, these cells will automatically be revolved around the z-axis using a
+    user-specified number of \f$\varphi\f$ bins. To enable this feature, the number of azimuth
+    auto-revolve bins must be set to at least 2, and all \f$\varphi_\text{min}\f$ and
+    \f$\varphi_\text{max}\f$ values in the input file must be zero. A nonzero value in these
+    columns will trigger a fatal error.
 
-    \note It is \em not allowed to omit the \f$\varphi_\text{min}, \varphi_\text{max}\f$ columns.
+    Finally, if both the inclination and azimuth auto-revolve features are enabled, each line in
+    the text file represents a 1D cell along a radial axis, defined using just the \f$r\f$ borders.
+    After reading the text file, these 1D cells will automatically be revolved using the
+    user-specified number of \f$\theta\f$ and \f$\varphi\f$ bins.
 
-    If the 2D input file specifies an integrated mass type (as opposed to a mass density), the mass
-    of a 2D cell is evenly distributed over the revolved 3D bins.
+    \note It is \em not allowed to omit the unused columns; they must be present with zero values.
 
-    For a model that includes velocities, the velocities will be converted from cylindrical to
+    If the 1D or 2D input file specifies an integrated mass type (as opposed to a mass density),
+    the mass of each 1D or 2D cell is evenly distributed over the revolved 3D bins.
+
+    For a model that includes velocities, the velocities will be converted from spherical to
     Cartesian coordinates as described above after revolving to a 3D representation. Because the
-    result of this conversion depends on the azimuth angle, the user must set a sufficiently high
-    number of auto-revolve bins to properly resolve the revolved velocity field.
+    result of this conversion depends on the inclination and azimuth angles, the user must set a
+    sufficiently high number of auto-revolve bins to properly resolve the revolved velocity field.
 
     <em>Implementation</em>
 
@@ -78,15 +93,14 @@
     interface. If the snapshot configuration requires the ability to determine the density at a
     given spatial position, an effort is made to accelerate the search for the cell containing that
     position even for a large number of cells. */
-class CylindricalCellSnapshot : public Snapshot
+class SphericalCellSnapshot : public Snapshot
 {
     //================= Construction - Destruction =================
 
 public:
-    /** This function sets the number of auto-revolve azimuth bins, enabling the auto-revolve
-        feature if the number of bins is at least 2 and all azimuth angles in the imported data are
-        zero (see the class header for more information). */
-    void setNumAutoRevolveBins(int numBins);
+    /** This function sets the number of auto-revolve inclination and azimuth bins; see the class
+        header for more information. */
+    void setNumAutoRevolveBins(int numInclinationBins, int numAzimuthBins);
 
     //========== Reading ==========
 
@@ -101,7 +115,7 @@ public:
         an empty cell may overlap and thus hide (a portion of) a nonempty cell later in the list.
 
         If velocity and/or magnetic field vectors are being imported, the function converts these
-        from cylindrical to Cartesian coordinates as described in the class header.
+        from spherical to Cartesian coordinates as described in the class header.
 
         The function also logs some statistical information about the import. If the snapshot
         configuration requires the ability to determine the density at a given spatial position,
@@ -178,11 +192,12 @@ public:
 
 private:
     // data members initialized during configuration
-    int _numAutoRevolveBins{0};  // must be 2 or more to enable auto-revolve feature
+    int _numAutoInclinationBins{0};  // must be 2 or more to enable inclination auto-revolve feature
+    int _numAutoAzimuthBins{0};      // must be 2 or more to enable azimuth auto-revolve feature
 
     // data members initialized when reading the input file
-    vector<Array> _propv;            // cell properties as imported
-    vector<CylindricalCell> _cellv;  // imported coordinates converted to a cylindrical cell object
+    vector<Array> _propv;          // cell properties as imported
+    vector<SphericalCell> _cellv;  // imported coordinates converted to a spherical cell object
 
     // data members initialized after reading the input file if a density policy has been set
     Array _rhov;        // density for each cell (not normalized)

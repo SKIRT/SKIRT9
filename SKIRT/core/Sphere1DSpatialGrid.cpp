@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Sphere1DSpatialGrid.hpp"
+#include "Cubic.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
 #include "Random.hpp"
@@ -42,7 +43,7 @@ double Sphere1DSpatialGrid::volume(int m) const
     if (i < 0 || i >= _Nr)
         return 0.;
     else
-        return 4. / 3. * M_PI * pow3(_rv[i], _rv[i + 1]);
+        return 4. / 3. * M_PI * Cubic::pow3(_rv[i], _rv[i + 1]);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -84,7 +85,7 @@ Position Sphere1DSpatialGrid::randomPositionInCell(int m) const
     else
     {
         Direction bfk = random()->direction();
-        double r = cbrt(pow3(_rv[i]) + pow3(_rv[i], _rv[i + 1]) * random()->uniform());
+        double r = cbrt(Cubic::pow3(_rv[i]) + Cubic::pow3(_rv[i], _rv[i + 1]) * random()->uniform());
         return Position(r, bfk);
     }
 }

@@ -52,7 +52,7 @@
 class CylindricalCellSource : public ImportedSource
 {
     ITEM_CONCRETE(CylindricalCellSource, ImportedSource, "a primary source imported from cylindrical cell data")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(CylindricalCellMedium, "Level2")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(CylindricalCellSource, "Level2")
 
         PROPERTY_BOOL(autoRevolve, "automatically revolve 2D data to a 3D model")
         ATTRIBUTE_DEFAULT_VALUE(autoRevolve, "false")

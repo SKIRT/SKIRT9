@@ -4,7 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Sphere2DSpatialGrid.hpp"
-#include "FatalError.hpp"
+#include "Cubic.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
 #include "Quadratic.hpp"
@@ -49,7 +49,7 @@ double Sphere2DSpatialGrid::volume(int m) const
     double rmin, thetamin, rmax, thetamax;
     if (getCoords(m, rmin, thetamin, rmax, thetamax))
     {
-        return (2. / 3.) * M_PI * pow3(rmin, rmax) * (cos(thetamin) - cos(thetamax));
+        return (2. / 3.) * M_PI * Cubic::pow3(rmin, rmax) * (cos(thetamin) - cos(thetamax));
     }
     return 0.;
 }
@@ -104,7 +104,7 @@ Position Sphere2DSpatialGrid::randomPositionInCell(int m) const
     double rmin, thetamin, rmax, thetamax;
     if (getCoords(m, rmin, thetamin, rmax, thetamax))
     {
-        double r = cbrt(pow3(rmin) + pow3(rmin, rmax) * random()->uniform());
+        double r = cbrt(Cubic::pow3(rmin) + Cubic::pow3(rmin, rmax) * random()->uniform());
         double theta = acos(cos(thetamin) + (cos(thetamax) - cos(thetamin)) * random()->uniform());
         double phi = 2.0 * M_PI * random()->uniform();
         return Position(r, theta, phi, Position::CoordinateSystem::SPHERICAL);

@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Sphere3DSpatialGrid.hpp"
+#include "Cubic.hpp"
 #include "FatalError.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
@@ -91,7 +92,7 @@ double Sphere3DSpatialGrid::volume(int m) const
     double rmin, thetamin, phimin, rmax, thetamax, phimax;
     if (getCoords(m, rmin, thetamin, phimin, rmax, thetamax, phimax))
     {
-        return (1. / 3.) * pow3(rmin, rmax) * (cos(thetamin) - cos(thetamax)) * (phimax - phimin);
+        return (1. / 3.) * Cubic::pow3(rmin, rmax) * (cos(thetamin) - cos(thetamax)) * (phimax - phimin);
     }
     return 0.;
 }
@@ -147,7 +148,7 @@ Position Sphere3DSpatialGrid::randomPositionInCell(int m) const
     double rmin, thetamin, phimin, rmax, thetamax, phimax;
     if (getCoords(m, rmin, thetamin, phimin, rmax, thetamax, phimax))
     {
-        double r = cbrt(pow3(rmin) + pow3(rmin, rmax) * random()->uniform());
+        double r = cbrt(Cubic::pow3(rmin) + Cubic::pow3(rmin, rmax) * random()->uniform());
         double theta = acos(cos(thetamin) + (cos(thetamax) - cos(thetamin)) * random()->uniform());
         double phi = phimin + (phimax - phimin) * random()->uniform();
         return Position(r, theta, phi, Position::CoordinateSystem::SPHERICAL);

@@ -3,44 +3,46 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "CylCell.hpp"
+#include "CylindricalCell.hpp"
+#include "Box.hpp"
+#include "Position.hpp"
 #include "Quadratic.hpp"
 #include <array>
 
 //////////////////////////////////////////////////////////////////////
 
-CylCell::CylCell(double Rmin, double phimin, double zmin, double Rmax, double phimax, double zmax)
+CylindricalCell::CylindricalCell(double Rmin, double phimin, double zmin, double Rmax, double phimax, double zmax)
     : _Rmin(Rmin), _phimin(phimin), _zmin(zmin), _Rmax(Rmax), _phimax(phimax), _zmax(zmax), _cosphimin(cos(phimin)),
       _sinphimin(sin(phimin)), _cosphimax(cos(phimax)), _sinphimax(sin(phimax))
 {}
 
 //////////////////////////////////////////////////////////////////////
 
-double CylCell::volume() const
+double CylindricalCell::volume() const
 {
     return 0.5 * (_Rmax - _Rmin) * (_Rmax + _Rmin) * (_phimax - _phimin) * (_zmax - _zmin);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-Vec CylCell::center() const
+Position CylindricalCell::center() const
 {
     double R = 0.5 * (_Rmin + _Rmax);
     double phi = 0.5 * (_phimin + _phimax);
     double z = 0.5 * (_zmin + _zmax);
-    return Vec(R * cos(phi), R * sin(phi), z);
+    return Position(R, phi, z, Position::CoordinateSystem::CYLINDRICAL);
 }
 
 //////////////////////////////////////////////////////////////////////
 
-bool CylCell::contains(Vec r) const
+bool CylindricalCell::contains(Vec r) const
 {
     if (r.z() < _zmin || r.z() >= _zmax) return false;
 
     double R = sqrt(r.x() * r.x() + r.y() * r.y());
     if (R < _Rmin || R >= _Rmax) return false;
 
-    // as an expection, don't exclude pi from the maximum
+    // as an exception, don't exclude pi from the maximum
     double phi = atan2(r.y(), r.x());
     if (phi < _phimin || phi > _phimax) return false;
     if (phi != M_PI && phi == _phimax) return false;
@@ -50,7 +52,7 @@ bool CylCell::contains(Vec r) const
 
 //////////////////////////////////////////////////////////////////////
 
-Box CylCell::boundingBox() const
+Box CylindricalCell::boundingBox() const
 {
     // the (x,y) coordinates of the four corner points
     double x1 = _Rmin * _cosphimin;
@@ -79,7 +81,7 @@ Box CylCell::boundingBox() const
 
 //////////////////////////////////////////////////////////////////////
 
-double CylCell::intersection(Vec r, const Vec k) const
+double CylindricalCell::intersection(Vec r, const Vec k) const
 {
     // small value used to check for parallel directions
     constexpr double eps = 1e-12;
