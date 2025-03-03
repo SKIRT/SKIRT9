@@ -304,6 +304,7 @@ private:
     bool _isResource{false};     // true if the file is a resource (as opposed to a user input file)
     bool _hasFileInfo{false};    // becomes true if the file has column header info
     bool _hasProgInfo{false};    // becomes true if the program has added at least one column
+    bool _doAutoCols{false};     // becomes true if the user requested automatic column assignment
 
     vector<ColumnInfo> _colv;  // info for each column, derived from file info and/or program info
     size_t _numLogCols{0};     // number of logical columns, or number of program columns added so far

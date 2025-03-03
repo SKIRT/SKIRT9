@@ -224,6 +224,13 @@ void TextInFile::useColumns(string columns)
     // verify that file contains column info
     if (!_hasFileInfo) throw FATALERROR("Requesting logical columns but there is no column info in file header");
 
+    // automatic column assignment happens in addColumn() because we don't have the required information here
+    if (columns == "*")
+    {
+        _doAutoCols = true;
+        return;
+    }
+
     // establish the logical column info list
     vector<ColumnInfo> newcolv;
     for (string name : StringUtils::split(columns, ","))
@@ -246,8 +253,23 @@ void TextInFile::useColumns(string columns)
 
 void TextInFile::addColumn(string description, string quantity, string defaultUnit)
 {
+    _hasProgInfo = true;
+
+    // in case of automatic column assignment, find the intended column and move it to the correct place
+    if (_doAutoCols)
+    {
+        string sdescription = StringUtils::squeeze(description);
+        size_t index = indexForName(sdescription);
+        if (index == ERROR_NO_INDEX)
+            throw FATALERROR("No column description in file header matches '" + sdescription + "'");
+        if (index == ERROR_AM_INDEX)
+            throw FATALERROR("Multiple column descriptions in file header match '" + sdescription + "'");
+        if (index < _numLogCols)
+            throw FATALERROR("Program requests multiple columns with same description '" + sdescription + "'");
+        if (index > _numLogCols) std::swap(_colv[index], _colv[_numLogCols]);
+    }
     // if the file has no header info at all, add a default record for this column
-    if (!_hasFileInfo)
+    else if (!_hasFileInfo)
     {
         _colv.emplace_back();
         _colv.back().physColIndex = _numLogCols + 1;
@@ -259,7 +281,6 @@ void TextInFile::addColumn(string description, string quantity, string defaultUn
         if (_numLogCols + 1 > _colv.size())
             throw FATALERROR("No column info in file header for column " + std::to_string(_numLogCols + 1));
     }
-    _hasProgInfo = true;
 
     // get a writable reference to the column record being handled, and increment the program column index
     ColumnInfo& col = _colv[_numLogCols++];
