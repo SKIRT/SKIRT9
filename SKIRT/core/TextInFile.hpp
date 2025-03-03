@@ -32,7 +32,7 @@ class Units;
     described below. For example, a two-column input file might have the following header:
 
         # My personal SED written from Python
-        # column 1: wavelength (A)
+        # column 1: wavelength (Angstrom)
         # column 2: specific luminosity (W/Hz)
         #
         ... data ...

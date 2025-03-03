@@ -19,9 +19,9 @@
 namespace
 {
     // This function looks for the next header line that conforms to the required structured syntax. If such a line
-    // is found, the column index, description and unit string are stored in the arguments and true is returned.
-    // If no such header line is found, the function consumes the complete header and returns false.
-    bool getNextInfoLine(std::ifstream& in, size_t& colIndex, string& description, string& unit)
+    // is found, the function stores the column index (or if missing, -1), description and unit string in the arguments
+    // and returns true. If no such header line is found, the function consumes the complete header and returns false.
+    bool getNextInfoLine(std::ifstream& in, int& colIndex, string& description, string& unit)
     {
         // continue reading until a conforming header line is found or until the complete header has been consumed
         while (true)
@@ -42,12 +42,13 @@ namespace
             getline(in, line);
 
             // if the line conforms to the required syntax, return the extracted information
-            static const std::regex syntax("#\\s*column\\s*(\\d+)\\s*:\\s*([^()]*)\\(\\s*([a-zA-Z0-9/]*)\\s*\\)\\s*",
+            static const std::regex syntax("#\\s*column\\s*(\\d*)\\s*:\\s*([^()]*)\\(\\s*([a-zA-Z0-9/]*)\\s*\\)\\s*",
                                            std::regex::icase);
             std::smatch matches;
             if (std::regex_match(line, matches, syntax) && matches.size() == 4)
             {
-                colIndex = std::stoul(matches[1].str());
+                string index = matches[1].str();
+                colIndex = index.empty() ? -1 : std::stoul(index);
                 description = StringUtils::squeeze(matches[2].str());
                 unit = matches[3].str();
                 return true;
@@ -103,18 +104,18 @@ TextInFile::TextInFile(const SimulationItem* item, string filename, string descr
         _log->info(item->typeAndName() + " reads " + description + " from text file " + filepath + "...");
 
         // read any structured header lines into a list of ColumnInfo records
-        size_t index;  // one-based column index obtained from file info
+        int index;  // one-based column index obtained from file info
         string title;
         string unit;
         while (getNextInfoLine(_in, index, title, unit))
         {
             // add a default-constructed ColumnInfo record to the list
             _colv.emplace_back();
-            if (index != _colv.size())
+            if (index != -1 && static_cast<size_t>(index) != _colv.size())
                 throw FATALERROR("Incorrect column index in file header for column " + std::to_string(_colv.size()));
 
             // remember the description and the units specified in the file
-            _colv.back().physColIndex = index;
+            _colv.back().physColIndex = _colv.size();
             _colv.back().unit = unit;
             _colv.back().title = title;
         }
@@ -309,13 +310,14 @@ void TextInFile::addColumn(string description, string quantity, string defaultUn
     // for regular user input files, log column information
     if (!_isResource)
     {
-        string message = "  Column " + std::to_string(_numLogCols) + ": " + col.description + " (" + col.unit + ")";
+        string message = "  Column " + std::to_string(_numLogCols) + ": " + col.description;
         if (!col.title.empty())
         {
             message += " <-- ";
             if (col.physColIndex != _numLogCols) message += "column " + std::to_string(col.physColIndex) + ": ";
             message += col.title;
         }
+        message += " (" + col.unit + ")";
         _log->info(message);
     }
 }
