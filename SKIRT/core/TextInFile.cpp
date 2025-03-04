@@ -225,9 +225,10 @@ void TextInFile::useColumns(string columns)
     if (!_hasFileInfo) throw FATALERROR("Requesting logical columns but there is no column info in file header");
 
     // automatic column assignment happens in addColumn() because we don't have the required information here
-    if (columns == "*")
+    if (columns == "*" || columns == "*0")
     {
         _doAutoCols = true;
+        if (columns == "*0") _allowZeroCols = true;
         return;
     }
 
@@ -236,13 +237,26 @@ void TextInFile::useColumns(string columns)
     for (string name : StringUtils::split(columns, ","))
     {
         string sname = StringUtils::squeeze(name);
-        size_t index = indexForName(sname);
-        if (index == ERROR_NO_INDEX)
-            throw FATALERROR("No column description in file header matches logical name '" + sname + "'");
-        if (index == ERROR_AM_INDEX)
-            throw FATALERROR("Multiple column descriptions in file header match logical name '" + sname + "'");
 
-        newcolv.emplace_back(_colv[index]);
+        // handle virtual zero column
+        if (sname == "0")
+        {
+            // add a default-constructed ColumnInfo record; physColIndex remains zero to indicate virtual zero column
+            newcolv.emplace_back();
+            _haveZeroCols = true;
+        }
+        // handle regular physical column
+        else
+        {
+            size_t index = indexForName(sname);
+            if (index == ERROR_NO_INDEX)
+                throw FATALERROR("No column description in file header matches logical name '" + sname + "'");
+            if (index == ERROR_AM_INDEX)
+                throw FATALERROR("Multiple column descriptions in file header match logical name '" + sname + "'");
+
+            // copy the appropriate ColumnInfo record
+            newcolv.emplace_back(_colv[index]);
+        }
     }
 
     // replace the column info list
@@ -261,12 +275,22 @@ void TextInFile::addColumn(string description, string quantity, string defaultUn
         string sdescription = StringUtils::squeeze(description);
         size_t index = indexForName(sdescription);
         if (index == ERROR_NO_INDEX)
-            throw FATALERROR("No column description in file header matches '" + sdescription + "'");
-        if (index == ERROR_AM_INDEX)
+        {
+            if (_allowZeroCols)
+            {
+                // insert a default-constructed record; physColIndex remains zero to indicate virtual zero column
+                _colv.emplace(_colv.begin() + _numLogCols);
+                _haveZeroCols = true;
+            }
+            else
+                throw FATALERROR("No column description in file header matches '" + sdescription + "'");
+        }
+        else if (index == ERROR_AM_INDEX)
             throw FATALERROR("Multiple column descriptions in file header match '" + sdescription + "'");
-        if (index < _numLogCols)
+        else if (index < _numLogCols)
             throw FATALERROR("Program requests multiple columns with same description '" + sdescription + "'");
-        if (index > _numLogCols) std::swap(_colv[index], _colv[_numLogCols]);
+        else if (index > _numLogCols)
+            std::swap(_colv[index], _colv[_numLogCols]);
     }
     // if the file has no header info at all, add a default record for this column
     else if (!_hasFileInfo)
@@ -289,56 +313,70 @@ void TextInFile::addColumn(string description, string quantity, string defaultUn
     col.description = description;
     col.quantity = quantity;
 
-    // verify units and determine conversion factor for this column
-    if (col.quantity.empty())  // dimensionless quantity
+    // if this is not a virtual zero column, verify units and add physical to logical column mapping
+    if (col.physColIndex)
     {
-        if (!col.unit.empty() && col.unit != "1")
-            throw FATALERROR("Invalid units (" + col.unit + ") for dimensionless quantity in column "
-                             + std::to_string(_numLogCols));
-        col.unit = "1";
-    }
-    else if (col.quantity == "specific")  // arbitrarily scaled value per wavelength or per frequency
-    {
-        col.waveExponent = waveExponentForSpecificQuantity(_units, col.unit);
-        if (col.waveExponent == ERROR_NO_EXPON)
-            throw FATALERROR("Invalid units (" + col.unit + ") for specific quantity '" + col.quantity + "' in column "
-                             + std::to_string(_numLogCols));
-        if (col.waveExponent)
+        // verify units and determine conversion factor for this column
+        if (col.quantity.empty())  // dimensionless quantity
         {
-            col.waveIndex = waveIndexForSpecificQuantity();
-            if (col.waveIndex == ERROR_NO_INDEX)
-                throw FATALERROR("No preceding wavelength column for specific quantity '" + col.quantity
-                                 + "' in column " + std::to_string(_numLogCols));
+            if (!col.unit.empty() && col.unit != "1")
+                throw FATALERROR("Invalid units (" + col.unit + ") for dimensionless quantity in column "
+                                 + std::to_string(_numLogCols));
+            col.unit = "1";
         }
-    }
-    else
-    {
-        if (!_units->has(col.quantity, col.unit))
-            throw FATALERROR("Invalid units (" + col.unit + ") for quantity '" + col.quantity + "' in column "
-                             + std::to_string(_numLogCols));
-        double offset;  // all SKIRT units have a zero offset
-        std::tie(col.convFactor, col.convPower, offset) = _units->def(col.quantity, col.unit);
-    }
+        else if (col.quantity == "specific")  // arbitrarily scaled value per wavelength or per frequency
+        {
+            col.waveExponent = waveExponentForSpecificQuantity(_units, col.unit);
+            if (col.waveExponent == ERROR_NO_EXPON)
+                throw FATALERROR("Invalid units (" + col.unit + ") for specific quantity '" + col.quantity
+                                 + "' in column " + std::to_string(_numLogCols));
+            if (col.waveExponent)
+            {
+                col.waveIndex = waveIndexForSpecificQuantity();
+                if (col.waveIndex == ERROR_NO_INDEX)
+                    throw FATALERROR("No preceding wavelength column for specific quantity '" + col.quantity
+                                     + "' in column " + std::to_string(_numLogCols));
+            }
+        }
+        else
+        {
+            if (!_units->has(col.quantity, col.unit))
+                throw FATALERROR("Invalid units (" + col.unit + ") for quantity '" + col.quantity + "' in column "
+                                 + std::to_string(_numLogCols));
+            double offset;  // all SKIRT units have a zero offset
+            std::tie(col.convFactor, col.convPower, offset) = _units->def(col.quantity, col.unit);
+        }
 
-    // add the physical to logical column mapping for this column
-    if (_logColIndices.size() < col.physColIndex) _logColIndices.resize(col.physColIndex, ERROR_NO_INDEX);
-    if (_logColIndices[col.physColIndex - 1] != ERROR_NO_INDEX)
-        throw FATALERROR("Multiple logical columns (" + std::to_string(_logColIndices[col.physColIndex - 1] + 1) + ","
-                         + std::to_string(_numLogCols) + ") map to the same physical column ("
-                         + std::to_string(col.physColIndex) + ")");
-    _logColIndices[col.physColIndex - 1] = _numLogCols - 1;
+        // add the physical to logical column mapping for this column
+        if (_logColIndices.size() < col.physColIndex) _logColIndices.resize(col.physColIndex, ERROR_NO_INDEX);
+        if (_logColIndices[col.physColIndex - 1] != ERROR_NO_INDEX)
+            throw FATALERROR("Multiple logical columns (" + std::to_string(_logColIndices[col.physColIndex - 1] + 1)
+                             + "," + std::to_string(_numLogCols) + ") map to the same physical column ("
+                             + std::to_string(col.physColIndex) + ")");
+        _logColIndices[col.physColIndex - 1] = _numLogCols - 1;
+    }
 
     // for regular user input files, log column information
     if (!_isResource)
     {
         string message = "  Column " + std::to_string(_numLogCols) + ": " + col.description;
-        if (!col.title.empty())
+
+        // for a regular physical column
+        if (col.physColIndex)
         {
-            message += " <-- ";
-            if (col.physColIndex != _numLogCols) message += "column " + std::to_string(col.physColIndex) + ": ";
-            message += col.title;
+            if (!col.title.empty())
+            {
+                message += " <-- ";
+                if (col.physColIndex != _numLogCols) message += "column " + std::to_string(col.physColIndex) + ": ";
+                message += col.title;
+            }
+            message += " (" + col.unit + ")";
         }
-        message += " (" + col.unit + ")";
+        // for a virtual zero column
+        else
+        {
+            message += " <-- 0";
+        }
         _log->info(message);
     }
 }
@@ -360,8 +398,8 @@ bool TextInFile::readRow(Array& values)
             auto pos = line.find_first_not_of(" \t");
             if (pos != string::npos && line[pos] != '#')
             {
-                // resize result array if needed (we don't need it to be cleared)
-                if (values.size() != _numLogCols) values.resize(_numLogCols);
+                // resize result array (and clear it in case there are virtual zero columns)
+                if (values.size() != _numLogCols || _haveZeroCols) values.resize(_numLogCols);
 
                 // convert values from line and store them in result array
                 std::stringstream linestream(line);

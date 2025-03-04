@@ -305,6 +305,8 @@ private:
     bool _hasFileInfo{false};    // becomes true if the file has column header info
     bool _hasProgInfo{false};    // becomes true if the program has added at least one column
     bool _doAutoCols{false};     // becomes true if the user requested automatic column assignment
+    bool _allowZeroCols{false};  // becomes true if the automatic column assignment allows zero columns
+    bool _haveZeroCols{false};   // becomes true if there is at least one (explicit or automatic) virtual zero column
 
     vector<ColumnInfo> _colv;  // info for each column, derived from file info and/or program info
     size_t _numLogCols{0};     // number of logical columns, or number of program columns added so far
