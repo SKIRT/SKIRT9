@@ -251,8 +251,9 @@ private:
         multiple such columns. */
     size_t indexForName(string name) const;
 
-    /** This function returns the index of the first column that is described as "wavelength", or
-        the error value if there is no such column. */
+    /** This function returns the logical index of the first logical column that is described as
+        "wavelength" and that both logically and physically precedes the current column, or the
+        error value if there is no such column. */
     size_t waveIndexForSpecificQuantity() const;
 
     //======================== Private helpers for reading ========================

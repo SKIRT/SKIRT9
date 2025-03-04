@@ -201,11 +201,15 @@ size_t TextInFile::indexForName(std::string name) const
 
 size_t TextInFile::waveIndexForSpecificQuantity() const
 {
-    size_t index = 0;
-    for (const ColumnInfo& col : _colv)
+    for (size_t index = 0; index < _numLogCols; ++index)
     {
-        if (col.description == "wavelength") return index;
-        index++;
+        if (_colv[index].description == "wavelength")
+        {
+            if (_colv[index].physColIndex < _colv[_numLogCols - 1].physColIndex)
+                return index;
+            else
+                break;
+        }
     }
     return ERROR_NO_INDEX;
 }
