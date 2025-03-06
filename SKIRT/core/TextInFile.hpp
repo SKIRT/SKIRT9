@@ -28,11 +28,19 @@ class Units;
     formatted). On the other hand, any additional information on a line beyond the last expected
     value is ignored.
 
+    Header lines
+    ------------
+
     It is recommended that the header of the input file includes column information in the format
-    described below. For example, a two-column input file might have the following header:
+    described below. This provides formal documentation about the contents of the file and
+    specifies the units used for the values in each column. If there is no column information in
+    the file (i.e. none of the header lines match the syntax decribed below), the default units
+    are used as specified by the program (i.e. the client class invoking TextInFile).
+
+    For example, a two-column input file might have the following header:
 
         # My personal SED written from Python
-        # column 1: wavelength (A)
+        # column 1: wavelength (Angstrom)
         # column 2: specific luminosity (W/Hz)
         #
         ... data ...
@@ -50,8 +58,13 @@ class Units;
     occur in the same order as the data columns. Extra header lines are allowed between, before,
     and after the column info lines.
 
-    If there is no column information in the file (i.e. none of the header lines match the syntax
-    decribed above), the default units provided by the program are used.
+    Column order
+    ------------
+
+    By default, the columns in the file must be in the exact order as expected by the program (i.e.
+    the client class invoking TextInFile). However, some client classes offer a user-configurable
+    \em useColumns property that allows column reordering, as described in the documentation for
+    the TextInFile::useColumns() function.
 
     Stored columns file format
     --------------------------
@@ -103,38 +116,60 @@ public:
 
     //====================== Other functions =======================
 
-    /** This function specifies a mapping (defined by the \em columns argument, as described below)
-        between the "physical" columns in the file (defined by the column information in the file
-        header) and the "logical" columns requested by the program (defined by repeated calls to
-        the addColumn() function). This function can be called with a non-empty \em columns string
-        at most once for each file, and such invocation should occur \em before the first
-        invocation of the addColumn() function. Calling this function with an empty \em columns
-        string is equivalent to not calling it at all.
-
-        If the \em columns string is non-empty, it is interpreted as a comma-separated sequence of
-        logical column names. Within each column name, consecutive white space characters are
-        replaced by a single space, and white space at the start and at the end is removed. The
-        following rules then apply:
-
-        - The input file must contain valid column information in the file header, as described in
-        the header of this class.
-
-        - The number of logical column names must match (or exceed) the number of subsequent
-        invocations of the addColumn() function.
-
-        - Each logical column name must be equal to exactly one of the file column descriptions,
-        unambiguously identifying a particular physical column.
-
-        - Two logical columns cannot identify the same physical column, i.e. a physical column can
-        map to at most one logical column.
-
-        - It is allowed for a file to contain physical columns that do not map to a logical column.
-
-        These rules define a mapping between the physical file column ordering and the logical
-        column ordering defined by the \em columns string. Once this mapping has been established,
-        the program only sees the logical ordering. In other words, the subsequent calls to the
+    /** The \em columns string argument of this function specifies a mapping between the "physical"
+        columns in the file (defined by the column information in the file header) and the
+        "logical" columns expected by the program (defined by the TextInFile client through
+        repeated calls to the addColumn() function). Once this mapping has been established, the
+        program only sees the logical ordering. In other words, the subsequent calls to the
         addColumn() function are matched to the corresponding logical columns, and the readXxx()
-        functions retrieve logical columns only. */
+        functions retrieve logical columns only.
+
+        The useColumns() function can be called with a non-empty \em columns string at most once
+        for each file, and such invocation should occur \em before the first invocation of the
+        addColumn() function. Calling this function with an empty \em columns string is equivalent
+        to not calling it at all.
+
+        If the \em columns string is non-empty, the input file must contain valid column
+        information in the file header, as described in the header of this class.
+
+        <b>Explicit column re-ordering</b>
+
+        The \em columns string is interpreted as a comma-separated sequence of physical column
+        names. Within each column name, consecutive white space characters are replaced by a single
+        space, and white space at the start and at the end is removed. The following rules then
+        apply:
+
+        - Each physical column name in the string must be equal to exactly one of the file column
+        descriptions, unambiguously identifying a particular physical column.
+
+        - The order and number of the physical column names in the string must correspond to the
+        order and number of logical columns expected by the program, defining a mapping between the
+        physical file column ordering and the logical column ordering.
+
+        - A given physical column name cannot occur multiple times in the string, i.e. a physical
+        column can map to at most one logical column.
+
+        - It is allowed for the file to contain physical columns that are not named in the string.
+
+        As an exception to the above rules, the special column name "0" does not map to a column in
+        the file but instead introduces a "virtual" logical column containing zero values. This
+        avoids the need for including zero-value columns in the file.
+
+        <b>Automatic column re-ordering</b>
+
+        If the \em columns string is equal to "*" or "*0", automatic column re-ordering is
+        activated. In this mode, the names provided in the file header for physical columns must
+        match logical column names. The following rules apply:
+
+        - For each logical column expected by the program, the file should include a physical
+        column with the same name, in any position (allowing arbitrary physical ordering). If there
+        is no such column, a fatal error is thrown if the \em columns string is "*", or a virtual
+        zero column is introduced if the \em columns string is "*0".
+
+        - It is allowed for the file to contain physical columns that do no match an expected
+        logical name.
+
+        */
     void useColumns(string columns);
 
     /** This function (virtually) adds a new column to the text file, characterized by the given
@@ -251,8 +286,9 @@ private:
         multiple such columns. */
     size_t indexForName(string name) const;
 
-    /** This function returns the index of the first column that is described as "wavelength", or
-        the error value if there is no such column. */
+    /** This function returns the logical index of the first logical column that is described as
+        "wavelength" and that both logically and physically precedes the current column, or the
+        error value if there is no such column. */
     size_t waveIndexForSpecificQuantity() const;
 
     //======================== Private helpers for reading ========================
@@ -304,6 +340,9 @@ private:
     bool _isResource{false};     // true if the file is a resource (as opposed to a user input file)
     bool _hasFileInfo{false};    // becomes true if the file has column header info
     bool _hasProgInfo{false};    // becomes true if the program has added at least one column
+    bool _doAutoCols{false};     // becomes true if the user requested automatic column assignment
+    bool _allowZeroCols{false};  // becomes true if the automatic column assignment allows zero columns
+    bool _haveZeroCols{false};   // becomes true if there is at least one (explicit or automatic) virtual zero column
 
     vector<ColumnInfo> _colv;  // info for each column, derived from file info and/or program info
     size_t _numLogCols{0};     // number of logical columns, or number of program columns added so far
