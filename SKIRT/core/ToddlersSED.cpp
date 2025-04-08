@@ -15,7 +15,8 @@ const SEDFamily* ToddlersSED::getFamilyAndParameters(Array& parameters)
     NR::assign(parameters, _metallicity, _SFE, _cloudNumDensity, 1.);
 
     // construct the library of SED models
-    return new ToddlersSEDFamily(this, ToddlersSEDFamily::SedMode::SFRNormalized, true,
+    return new ToddlersSEDFamily(this, ToddlersSEDFamily::SedMode::SFRNormalized,
+                                 ToddlersSEDFamily::StellarTemplate::SB99Kroupa100Sin, true,
                                  ToddlersSEDFamily::Resolution::High, ToddlersSEDFamily::SFRPeriod::Period10Myr);
 }
 

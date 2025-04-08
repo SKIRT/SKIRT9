@@ -8,11 +8,12 @@
 
 ////////////////////////////////////////////////////////////////////
 
-ToddlersSEDFamily::ToddlersSEDFamily(SimulationItem* parent, SedMode sedMode, bool includeDust, Resolution resolution,
-                                     SFRPeriod sfrPeriod)
+ToddlersSEDFamily::ToddlersSEDFamily(SimulationItem* parent, SedMode sedMode, StellarTemplate stellarTemplate,
+                                     bool includeDust, Resolution resolution, SFRPeriod sfrPeriod)
 {
     parent->addChild(this);
     _sedMode = sedMode;
+    _stellarTemplate = stellarTemplate;
     _includeDust = includeDust;
     _resolution = resolution;
     _sfrPeriod = sfrPeriod;

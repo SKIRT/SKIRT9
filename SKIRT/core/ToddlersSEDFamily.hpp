@@ -239,8 +239,8 @@ public:
     /** This constructor can be invoked programmatically by classes that use a hard-coded SED
         family. The newly created object is hooked up as a child to the specified parent in the
         simulation hierarchy, and its setup() function has been called. */
-    explicit ToddlersSEDFamily(SimulationItem* parent, SedMode sedMode, bool includeDust, Resolution resolution,
-                               SFRPeriod sfrPeriod = SFRPeriod::Period10Myr);
+    explicit ToddlersSEDFamily(SimulationItem* parent, SedMode sedMode, StellarTemplate stellarTemplate,
+                               bool includeDust, Resolution resolution, SFRPeriod sfrPeriod = SFRPeriod::Period10Myr);
 
 protected:
     /** This function opens the appropriate resource file (in SKIRT stored table format). */
