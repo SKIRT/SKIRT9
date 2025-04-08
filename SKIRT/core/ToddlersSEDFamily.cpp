@@ -75,9 +75,9 @@ vector<SnapshotParameter> ToddlersSEDFamily::parameterInfo() const
         return {
             SnapshotParameter::age(),
             SnapshotParameter::metallicity(),
-            SnapshotParameter::custom("Star formation efficiency"),
-            SnapshotParameter::custom("Cloud number density", "numbervolumedensity", "1/cm3"),
-            SnapshotParameter::custom("Mass", "mass", "Msun"),
+            SnapshotParameter::custom("star formation efficiency"),
+            SnapshotParameter::custom("cloud number density", "numbervolumedensity", "1/cm3"),
+            SnapshotParameter::custom("cloud mass", "mass", "Msun"),
             SnapshotParameter::custom("scaling"),
         };
     }
@@ -85,8 +85,8 @@ vector<SnapshotParameter> ToddlersSEDFamily::parameterInfo() const
     {
         return {
             SnapshotParameter::metallicity(),
-            SnapshotParameter::custom("Star formation efficiency"),
-            SnapshotParameter::custom("Cloud number density", "numbervolumedensity", "1/cm3"),
+            SnapshotParameter::custom("star formation efficiency"),
+            SnapshotParameter::custom("cloud number density", "numbervolumedensity", "1/cm3"),
             SnapshotParameter::custom("star formation rate", "massrate", "Msun/yr"),
         };
     }
