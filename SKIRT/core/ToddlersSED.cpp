@@ -12,13 +12,12 @@
 const SEDFamily* ToddlersSED::getFamilyAndParameters(Array& parameters)
 {
     // set the parameters using arbitrary scaling
-    NR::assign(parameters, _age, _metallicity, _SFE, _cloudNumDensity, 1.);
+    NR::assign(parameters, _metallicity, _SFE, _cloudNumDensity, 1.);
 
     // construct the library of SED models
-    return new ToddlersSEDFamily(
-        this,
-        _pahfraction == PAHFraction::High ? ToddlersSEDFamily::PAHFraction::High : ToddlersSEDFamily::PAHFraction::Low,
-        _resolution == Resolution::Low ? ToddlersSEDFamily::Resolution::Low : ToddlersSEDFamily::Resolution::High);
+    return new ToddlersSEDFamily(this, ToddlersSEDFamily::SedMode::SFRNormalized,
+                                 ToddlersSEDFamily::StellarTemplate::SB99Kroupa100Sin, true,
+                                 ToddlersSEDFamily::Resolution::High, ToddlersSEDFamily::SFRPeriod::Period10Myr);
 }
 
 ////////////////////////////////////////////////////////////////////

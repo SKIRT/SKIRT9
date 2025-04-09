@@ -13,15 +13,18 @@
 # from automated and unattended installation procedures. Therefore, if the first command
 # line argument equals "--force", the script simply installs the resource packs desired
 # by the code regardless of the currently installed versions and without user interaction.
+# Note, however, that some resource packs are very large and may not need to be installed.
 #
 
 # select download command: wget (Linux) or curl (Mac OS X)
 if which wget >/dev/null
 then
-    DOWNLOAD="wget --no-check-certificate https://sciences.ugent.be/skirtextdat/SKIRT9/Resources/"
+    GETSIZE="wget --spider "
+    DOWNLOAD="wget --no-check-certificate "
 elif which curl >/dev/null
 then
-    DOWNLOAD="curl --insecure -O https://sciences.ugent.be/skirtextdat/SKIRT9/Resources/"
+    GETSIZE="curl -sI "
+    DOWNLOAD="curl --insecure -O "
 else
     echo error: no wget or curl available to download files
     exit 1
@@ -33,6 +36,9 @@ then
     echo error: no unzip available to unzip files
     exit 1
 fi
+
+# set remote location
+URLBASE="https://sciences.ugent.be/skirtextdat/SKIRT9/Resources/"
 
 # loop over the list of expected archives and versions given in the text file in the SKIRT repository
 while read -u 3 LINE        # use explicit file descriptor 3 to allow nested read from terminal
@@ -71,6 +77,20 @@ do
                 PROCEED=1
             fi
         fi
+        if [ $PROCEED = 1 ]
+        then
+            echo -n "Retrieving compressed file size: "
+            SIZE="$($GETSIZE$URLBASE$ZIPFILENAME 2>&1 | grep -i Length | awk '{print int(0.5 + $2/1024/1024)}')"
+            echo "$SIZE MB"
+            if [ $SIZE -gt 1024 ]
+            then
+                read -p "This is a large file > $(($SIZE/1024)) GB; do you want to proceed? [y/n] " RESPONSE
+                if [[ ! $RESPONSE =~ ^[Yy] ]]
+                then
+                    PROCEED=0
+                fi
+            fi
+        fi
     fi
 
     # if confirmed by the user, download the archive
@@ -80,7 +100,7 @@ do
         echo "------------------------------------------------"
         mkdir -p ../resources
         cd ../resources
-        $DOWNLOAD$ZIPFILENAME
+        $DOWNLOAD$URLBASE$ZIPFILENAME
         unzip -o $ZIPFILENAME  # overwrite exisiting files
         rm $ZIPFILENAME
         cd ../git
