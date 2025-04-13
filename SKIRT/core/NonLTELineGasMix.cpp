@@ -30,6 +30,10 @@ void NonLTELineGasMix::setupSelfBefore()
         case Species::Hydroxyl: name = "OH"; break;
         case Species::HydroxylHFS: name = "OHhfs"; break;
         case Species::Formyl: name = "HCO+"; break;
+        case Species::HydrogenCyanide:
+            name = "HCN";
+            colNames = {"H2","e-"};
+            break;
         case Species::CarbonMonoxide: name = "CO"; break;
         case Species::AtomicCarbon:
             name = "C";
@@ -38,6 +42,18 @@ void NonLTELineGasMix::setupSelfBefore()
         case Species::IonizedCarbon:
             name = "C+";
             colNames = {"H2", "H", "e-"};
+            break;
+        case Species::IonizedNitrogen:
+            name = "N+";
+            colNames = {"H", "e-"};
+        break;
+        case Species::AtomicOxygen:
+            name = "O";
+            colNames = {"H2", "H", "H+", "e-", "He"};
+            break;
+        case Species::DoublyIonizedOxygen:
+            name = "O++";
+            colNames = {"H", "e-"};
             break;
         case Species::MolecularHydrogen:
             name = "H2";

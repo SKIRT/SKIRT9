@@ -46,9 +46,13 @@
     \f$\mu\mathrm{m}\f$ to 186 \f$\mathrm{mm}\f$. The single collisional interaction partner is
     molecular hydrogen.
 
-    - \c Formyl cation (HCO+): includes rotational energy levels up to \f$J=29\f$. The
-    corresponding transition lines are at wavelengths from 112.4 to 3361 \f$\mu\mathrm{m}\f$. The
+    - \c Formyl cation (HCO+): includes rotational energy levels up to \f$J=21\f$. The
+    corresponding transition lines are at wavelengths from 160.3 to 3361 \f$\mu\mathrm{m}\f$. The
     single collisional interaction partner is molecular hydrogen.
+
+    - \c Formyl cation (HCN): includes rotational energy levels up to \f$J=25\f$. The
+    corresponding transition lines are at wavelengths from 135.6 to 3382 \f$\mu\mathrm{m}\f$. The
+    collisional interaction partners include molecular hydrogen and electrons.
 
     - \c Carbon \c monoxide (CO): includes rotational energy levels up to \f$J=40\f$. The
     corresponding transition lines are at wavelengths from 65.7 to 2601 \f$\mu\mathrm{m}\f$. The
@@ -65,6 +69,22 @@
     \f$\mu\mathrm{m}\f$. The electronic transition lines are at wavelengths from 0.1 to 0.23
     \f$\mu\mathrm{m}\f$. The collisional interaction partners include molecular hydrogen, neutral
     atomic hydrogen, and electrons.
+
+    - \c Ionized \c nitrogen (N+): includes three hyperfine split levels at the electronic ground
+    level of 3P. The corresponding fine-structure transition lines at wavelengths 121.9 and 205.17
+    \f$\mu\mathrm{m}\f$. The collisional interaction partners include neutral atomic hydrogen and
+    electrons.
+
+    - \c Atomic \c oxygen (O): includes three hyperfine split levels at the electronic ground
+    level of 3P. The corresponding fine-structure transition lines at wavelengths 44.05, 63.18,
+    and 145.52 \f$\mu\mathrm{m}\f$. The collisional interaction partners include molecular hydrogen,
+    neutral atomic hydrogen, ionized atomic hydrogen, electrons, and helium.
+
+    - \c Doubly \c ionized \c oxygen (O++): includes four electronic levels (3p and 1D) and the
+    hyperfine split levels in the electronic levels of 3p. The corresponding fine-structure
+    transition lines for levels 3p are at wavelengths 51.81 and 88.35 \f$\mu\mathrm{m}\f$.
+    The electronic transition lines are at wavelengths 0.5008 and 0.4960 \f$\mu\mathrm{m}\f$.
+    The collisional interaction partners include neutral atomic hydrogen and electrons.
 
     - \c Molecular \c hydrogen (H2): includes rotational energy levels up to \f$J=31\f$. The
     corresponding transition lines are at wavelengths from 28.2 to 3.3 \f$\mu\mathrm{m}\f$. The
@@ -290,15 +310,19 @@ class NonLTELineGasMix : public EmittingGasMix
 {
     /** The enumeration type indicating the molecular or atomic species represented by a given
         NonLTELineGasMix instance. See the class header for more information. */
-    ENUM_DEF(Species, Test, Hydroxyl, HydroxylHFS, Formyl, CarbonMonoxide, AtomicCarbon, IonizedCarbon,
-             MolecularHydrogen)
+    ENUM_DEF(Species, Test, Hydroxyl, HydroxylHFS, Formyl, HydrogenCyanide, CarbonMonoxide, AtomicCarbon,
+             IonizedCarbon, IonizedNitrogen, AtomicOxygen, DoublyIonizedOxygen, MolecularHydrogen)
         ENUM_VAL(Species, Test, "Fictive two-level test molecule (TT)")
         ENUM_VAL(Species, Hydroxyl, "Hydroxyl radical (OH)")
         ENUM_VAL(Species, HydroxylHFS, "Hydroxyl radical (OH) with hyperfine structure")
         ENUM_VAL(Species, Formyl, "Formyl cation (HCO+)")
+        ENUM_VAL(Species, HydrogenCyanide, "Hydrogen cyanide (HCN)")
         ENUM_VAL(Species, CarbonMonoxide, "Carbon monoxide (CO)")
         ENUM_VAL(Species, AtomicCarbon, "Atomic carbon (C)")
         ENUM_VAL(Species, IonizedCarbon, "Ionized carbon (C+)")
+        ENUM_VAL(Species, IonizedNitrogen, "Ionized nitrogen (N+)")
+        ENUM_VAL(Species, AtomicOxygen, "Ionized carbon (O)")
+        ENUM_VAL(Species, DoublyIonizedOxygen, "Doubly Ionized Oxygen (O++)")
         ENUM_VAL(Species, MolecularHydrogen, "Molecular hydrogen (H2)")
     ENUM_END()
 
