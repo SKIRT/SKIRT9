@@ -15,7 +15,7 @@ const SEDFamily* BpassSED::getFamilyAndParameters(Array& parameters)
     NR::assign(parameters, 1., _metallicity, _age);
 
     // construct the library of SED models
-    return new BpassSEDFamily(this);
+    return new BpassSEDFamily(this, BpassSEDFamily::IMF::Chabrier300, BpassSEDFamily::Resolution::Original);
 }
 
 ////////////////////////////////////////////////////////////////////
