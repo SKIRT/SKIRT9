@@ -63,13 +63,13 @@ class BpassSEDFamily : public SEDFamily
     ENUM_END()
 
     ITEM_CONCRETE(BpassSEDFamily, SEDFamily, "a BPASS SED family for single stellar populations")
-    
-    PROPERTY_ENUM(imf, IMF, "IMF")
-    ATTRIBUTE_DEFAULT_VALUE(imf, "Chabrier300")
 
-    PROPERTY_ENUM(resolution, Resolution, "the wavelength resolution")
-    ATTRIBUTE_DEFAULT_VALUE(resolution, "Original")
-    
+        PROPERTY_ENUM(imf, IMF, "IMF")
+        ATTRIBUTE_DEFAULT_VALUE(imf, "Chabrier300")
+
+        PROPERTY_ENUM(resolution, Resolution, "the wavelength resolution")
+        ATTRIBUTE_DEFAULT_VALUE(resolution, "Original")
+
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
@@ -80,8 +80,7 @@ public:
         newly created object is hooked up as a child to the specified parent in the simulation
         hierarchy (so it will automatically be deleted), and its setup() function has been called.
         */
-    explicit BpassSEDFamily(SimulationItem* parent, IMF imf,
-                            Resolution resolution);
+    explicit BpassSEDFamily(SimulationItem* parent, IMF imf, Resolution resolution);
 
 protected:
     /** This function opens the appropriate resource file (in SKIRT stored table format). */

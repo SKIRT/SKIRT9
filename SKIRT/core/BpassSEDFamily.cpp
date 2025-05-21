@@ -8,8 +8,7 @@
 
 ////////////////////////////////////////////////////////////////////
 
-BpassSEDFamily::BpassSEDFamily(SimulationItem* parent, IMF imf,
-                               Resolution resolution)
+BpassSEDFamily::BpassSEDFamily(SimulationItem* parent, IMF imf, Resolution resolution)
 {
     parent->addChild(this);
     _imf = imf;
