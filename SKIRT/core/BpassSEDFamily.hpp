@@ -18,14 +18,14 @@
 
     The SED templates are parametrized on metallicity (1e-5 - 0.04) and age (1 Myr - 100 Gyr), and
     scale with the initial mass of the SSP.
- 
+
     This class offers two user-configured options:
 
-    \em IMF determines the IMF, more specifically the upper limit of the stellar mass range:
+    \em imf determines the IMF, more specifically the upper limit of the stellar mass range:
       - Chabrier100: Chabrier IMF with stellar masses from 0.1 to 100 \f$\mathrm{M}_\odot\f$
       - Chabrier300: Chabrier IMF with stellar masses from 0.1 to 300 \f$\mathrm{M}_\odot\f$
 
-    \em resolution determines the spectral resolution and the wavelength coverage
+    \em resolution determines the spectral resolution and the wavelength coverage:
       - Original: the wavelength grid has a resolution of 1 Angstrom over the wavelength range
         between 1 Angstrom and 10 micron. This is the original resolution and wavelength coverage
         of the BPASS library, downloaded from the BPASS web site at
