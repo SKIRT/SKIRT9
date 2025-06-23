@@ -19,15 +19,15 @@ class Starburst99SED : public FamilySED
     ITEM_CONCRETE(Starburst99SED, FamilySED, "a Starburst99 simple stellar population SED")
 
         PROPERTY_DOUBLE(metallicity, "the metallicity of the SSP")
-        ATTRIBUTE_MIN_VALUE(metallicity, "[0.0004")
-        ATTRIBUTE_MAX_VALUE(metallicity, "0.05]")
+        ATTRIBUTE_MIN_VALUE(metallicity, "[0.001")
+        ATTRIBUTE_MAX_VALUE(metallicity, "0.04]")
         ATTRIBUTE_DEFAULT_VALUE(metallicity, "0.02")
 
         PROPERTY_DOUBLE(age, "the age of the SSP")
         ATTRIBUTE_QUANTITY(age, "time")
         ATTRIBUTE_MIN_VALUE(age, "[1e4 yr")
-        ATTRIBUTE_MAX_VALUE(age, "1.53e10 yr]")
-        ATTRIBUTE_DEFAULT_VALUE(age, "5 Gyr")
+        ATTRIBUTE_MAX_VALUE(age, "1.049e+09 yr]")
+        ATTRIBUTE_DEFAULT_VALUE(age, "5 Myr")
 
     ITEM_END()
 
