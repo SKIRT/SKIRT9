@@ -1,4 +1,4 @@
-Core 7
+Core 8
 BPASS 2
 TODDLERS 2
 TODDLERS_Cloud_BPASS_chab100 2
