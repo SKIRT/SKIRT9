@@ -81,7 +81,13 @@ do
         then
             echo -n "Retrieving compressed file size: "
             SIZE="$($GETSIZE$URLBASE$ZIPFILENAME 2>&1 | grep -i Length | awk '{print int(0.5 + $2/1024/1024)}')"
-            echo "$SIZE MB"
+            if [ -z $SIZE ]
+            then
+                echo "unable to retrieve file size"
+                SIZE=0
+            else
+                echo "$SIZE MB"
+            fi
             if [ $SIZE -gt 1024 ]
             then
                 read -p "This is a large file > $(($SIZE/1024)) GB; do you want to proceed? [y/n] " RESPONSE
