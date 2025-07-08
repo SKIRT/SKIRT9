@@ -22,6 +22,7 @@
 #include <climits>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <initializer_list>
 #include <iterator>
@@ -56,6 +57,7 @@ using std::vector;
     | \<climits\>          | C-style integral limits, e.g. INT_MAX
     | \<cmath\>            | mathematical functions, e.g. sin, exp, pow
     | \<cstddef\>          | standard types, e.g. size_t
+    | \<cstdint\>          | fixed integer types, e.g. uint64_t
     | \<cstdlib\>          | c-style functions, e.g. atol, strtol, div
     | \<initializer_list\> | initializer lists
     | \<iterator\>         | iterators and iterator support
