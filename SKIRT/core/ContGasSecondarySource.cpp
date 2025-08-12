@@ -136,7 +136,7 @@ namespace
                 _m = -1;
                 _mix = mix;
                 auto wavelengthGrid = mix->emissionWavelengthGrid();
-                _wavelengthGrid = wavelengthGrid->extlambdav();
+                _wavelengthGrid = wavelengthGrid->lambdav();
                 _wavelengthRange = wavelengthGrid->wavelengthRange();
                 _numWavelengths = _wavelengthGrid.size();
             }
