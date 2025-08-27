@@ -174,6 +174,14 @@ public:
         (\f${\text{m}}^2\f$) to the program's output units. */
     double osection(double C) const;
 
+    /** This function returns a string containing the name of the unit of opacity adopted by the
+        program for output. */
+    string uopacity() const;
+
+    /** This function converts the opacity \f$\kappa\f$ from the internally used SI units (1/m) to
+        the program's output units. */
+    double oopacity(double kappa) const;
+
     /** This function returns a string containing the name of the unit of volume adopted by the
         program for output. */
     string uvolume() const;
