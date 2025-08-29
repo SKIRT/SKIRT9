@@ -6,9 +6,9 @@
 #ifndef OPACITYPROBE_HPP
 #define OPACITYPROBE_HPP
 
-#include "DisjointWavelengthGrid.hpp"
 #include "MaterialWavelengthRangeInterface.hpp"
 #include "SpatialGridWhenFormProbe.hpp"
+#include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -56,7 +56,7 @@ class OpacityProbe : public SpatialGridWhenFormProbe, public MaterialWavelengthR
     ITEM_CONCRETE(OpacityProbe, SpatialGridWhenFormProbe, "internal spatial grid: opacity of the medium")
         ATTRIBUTE_TYPE_DISPLAYED_IF(OpacityProbe, "Medium&SpatialGrid")
 
-        PROPERTY_ITEM(wavelengthGrid, DisjointWavelengthGrid, "the wavelength grid for this probe")
+        PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for this probe")
         ATTRIBUTE_RELEVANT_IF(wavelengthGrid, "Panchromatic")
         ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "!DefaultInstrumentWavelengthGrid")
         ATTRIBUTE_DISPLAYED_IF(wavelengthGrid, "Level2")

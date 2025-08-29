@@ -61,7 +61,7 @@ void OpacityProbe::probe()
         };
 
         // type-level opacity
-        auto typeCell = [numWaves, &wave, &ms](int m, MaterialMix::MaterialType type) {
+        auto typeCell = [numWaves, &wave, &ms](int m, MatType type) {
             Array values(numWaves);
             for (int ell = 0; ell < numWaves; ++ell) values[ell] = ms->opacityExt(wave[ell], m, type);
             return values;
