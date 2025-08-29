@@ -9,6 +9,8 @@
 #include "Indices.hpp"
 #include "MediumSystem.hpp"
 #include "ProbeFormBridge.hpp"
+#include "StringUtils.hpp"
+#include "TextOutFile.hpp"
 #include "Units.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -49,112 +51,122 @@ void OpacityProbe::probe()
             axis[ell] = units->owavelength(wlg->wavelength(ell));
         }
 
-        // use std::optional? or default values?
         using MatType = MaterialMix::MaterialType;
-        auto valueInCell = [numWaves, &wave, &ms](int m, Aggregation agg, MatType* type, int* h, int* f) {
+
+        // system-level opacity
+        auto systemCell = [numWaves, &wave, &ms](int m) {
             Array values(numWaves);
+            for (int ell = 0; ell < numWaves; ++ell) values[ell] = ms->opacityExt(wave[ell], m);
+            return values;
+        };
+
+        // type-level opacity
+        auto typeCell = [numWaves, &wave, &ms](int m, MaterialMix::MaterialType type) {
+            Array values(numWaves);
+            for (int ell = 0; ell < numWaves; ++ell) values[ell] = ms->opacityExt(wave[ell], m, type);
+            return values;
+        };
+
+        // component-level opacity
+        auto componentCell = [numWaves, &wave, &ms](int m, int h) {
+            Array values(numWaves);
+            for (int ell = 0; ell < numWaves; ++ell) values[ell] = ms->opacityExt(wave[ell], m, h);
+            return values;
+        };
+
+        // fragment-level opacity
+        auto fragmentCell = [numWaves, &wave, &ms](int m, int h, int f) {
+            Array values(numWaves);
+            auto mix = ms->mix(0, h)->find<FragmentDustMixDecorator>(false);
             for (int ell = 0; ell < numWaves; ++ell)
             {
-                switch (agg)
-                {
-                    case Aggregation::System: values[ell] = ms->opacityExt(wave[ell], m); break;
-                    case Aggregation::Type: values[ell] = ms->opacityExt(wave[ell], m, *type); break;
-                    case Aggregation::Component: values[ell] = ms->opacityExt(wave[ell], m, *h); break;
-                    case Aggregation::Fragment:
-                        auto mix = ms->mix(0, *h)->find<FragmentDustMixDecorator>(false);
-                        values[ell] = ms->callWithMaterialState(
-                            [mix, f, lambda = wave[ell]](const MaterialState* mst) {
-                                return mix->populationOpacityExt(*f, lambda, mst);
-                            },
-                            m, *h);
-                        break;
-                }
+                values[ell] = ms->callWithMaterialState(
+                    [mix, f, lambda = wave[ell]](const MaterialState* mst) {
+                        return mix->populationOpacityExt(f, lambda, mst);
+                    },
+                    m, h);
             }
             return values;
         };
 
+        // define the call-back function to add column definitions
+        auto addColumnDefinitions = [wlg, units](TextOutFile& outfile) {
+            for (int ell : Indices(wlg->numBins(), units->rwavelength()))
+            {
+                outfile.addColumn("opacity at " + units->swavelength() + " = "
+                                      + StringUtils::toString(units->owavelength(wlg->wavelength(ell)), 'g') + " "
+                                      + units->uwavelength(),
+                                  units->uopacity());
+            }
+        };
+
         ProbeFormBridge bridge(this, form());
-        // produce output depending on aggregation level
         switch (aggregation())
         {
             case Aggregation::System:
             {
-                auto systemValue = [valueInCell](int m) {
-                    return valueInCell(m, Aggregation::System, nullptr, nullptr, nullptr);
-                };
-
                 bridge.writeQuantity("k", "tau", "opacity", "dimensionless", "opacity", "optical depth", axis,
-                                     units->uwavelength(), nullptr, systemValue);
+                                     units->uwavelength(), addColumnDefinitions,
+                                     [systemCell](int m) { return systemCell(m); });
                 break;
             }
+
             case Aggregation::Type:
             {
                 using MatType = MaterialMix::MaterialType;
+
                 if (ms->hasDust())
                 {
                     MatType type = MatType::Dust;
-                    auto dustValue = [valueInCell, &type](int m) {
-                        return valueInCell(m, Aggregation::Type, &type, nullptr, nullptr);
-                    };
-
                     bridge.writeQuantity("dust_k", "dust_tau", "opacity", "dimensionless", "opacity", "optical depth",
-                                         axis, units->uwavelength(), nullptr, dustValue);
+                                         axis, units->uwavelength(), addColumnDefinitions,
+                                         [typeCell, type](int m) { return typeCell(m, type); });
                 }
                 if (ms->hasElectrons())
                 {
                     MatType type = MatType::Electrons;
-                    auto elecValue = [valueInCell, &type](int m) {
-                        return valueInCell(m, Aggregation::Type, &type, nullptr, nullptr);
-                    };
-
                     bridge.writeQuantity("elec_k", "elec_tau", "opacity", "dimensionless", "opacity", "optical depth",
-                                         axis, units->uwavelength(), nullptr, elecValue);
+                                         axis, units->uwavelength(), addColumnDefinitions,
+                                         [typeCell, type](int m) { return typeCell(m, type); });
                 }
                 if (ms->hasGas())
                 {
                     MatType type = MatType::Gas;
-                    auto gasValue = [valueInCell, &type](int m) {
-                        return valueInCell(m, Aggregation::Type, &type, nullptr, nullptr);
-                    };
-
                     bridge.writeQuantity("gas_k", "gas_tau", "opacity", "dimensionless", "opacity", "optical depth",
-                                         axis, units->uwavelength(), nullptr, gasValue);
+                                         axis, units->uwavelength(), addColumnDefinitions,
+                                         [typeCell, type](int m) { return typeCell(m, type); });
                 }
                 break;
             }
+
             case Aggregation::Component:
             {
                 int numMedia = ms->numMedia();
                 for (int h = 0; h != numMedia; ++h)
                 {
-                    auto compValue = [valueInCell, &h](int m) {
-                        return valueInCell(m, Aggregation::Component, nullptr, &h, nullptr);
-                    };
-
-                    string sh = std::to_string(h);
-                    bridge.writeQuantity(sh + "_k", sh + "_tau", "opacity", "dimensionless", "opacity", "optical depth",
-                                         axis, units->uwavelength(), nullptr, compValue);
+                    bridge.writeQuantity(std::to_string(h) + "_k", std::to_string(h) + "_tau", "opacity",
+                                         "dimensionless", "opacity", "optical depth", axis, units->uwavelength(),
+                                         addColumnDefinitions,
+                                         [componentCell, h](int m) { return componentCell(m, h); });
                 }
                 break;
             }
+
             case Aggregation::Fragment:
             {
                 for (int h : ms->dustMediumIndices())
                 {
                     auto mix = ms->mix(0, h)->find<FragmentDustMixDecorator>(false);
-                    if (mix)
-                    {
-                        int numPops = mix->numPopulations();
-                        for (int f = 0; f != numPops; ++f)
-                        {
-                            auto fragValue = [valueInCell, &h, &f](int m) {
-                                return valueInCell(m, Aggregation::Fragment, nullptr, &h, &f);
-                            };
+                    if (!mix) continue;
 
-                            string shf = std::to_string(h) + "_" + std::to_string(f);
-                            bridge.writeQuantity(shf + "_k", shf + "_tau", "opacity", "dimensionless", "opacity",
-                                                 "optical depth", axis, units->uwavelength(), nullptr, fragValue);
-                        }
+                    int numPops = mix->numPopulations();
+                    for (int f = 0; f != numPops; ++f)
+                    {
+                        bridge.writeQuantity(std::to_string(h) + "_" + std::to_string(f) + "_k",
+                                             std::to_string(h) + "_" + std::to_string(f) + "_tau", "opacity",
+                                             "dimensionless", "opacity", "optical depth", axis, units->uwavelength(),
+                                             addColumnDefinitions,
+                                             [fragmentCell, h, f](int m) { return fragmentCell(m, h, f); });
                     }
                 }
                 break;
