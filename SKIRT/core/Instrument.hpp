@@ -54,6 +54,11 @@ class Instrument : public SimulationItem
         ATTRIBUTE_DEFAULT_VALUE(recordStatistics, "false")
         ATTRIBUTE_DISPLAYED_IF(recordStatistics, "Level2")
 
+        PROPERTY_STRING(filter,
+                        "only record photons matching this keyword (none means no filter, ^ inverses the filter)")
+        ATTRIBUTE_DEFAULT_VALUE(filter, "none")
+        ATTRIBUTE_DISPLAYED_IF(filter, "Level3")
+
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

@@ -105,6 +105,12 @@ public:
         launch. */
     void setSecondaryOrigin(int mediumCompIndex);
 
+    /** This function allows specific interactions to tag the photon packet, so that instruments can
+        filter on this tag. This information is used by some instruments to record fluxes seperately
+        based on the interactions they experienced. This function should be called at the interaction
+        of interest. */
+    void setTag(string filterTag);
+
     /** This function initializes a peel off photon packet being sent to an instrument for an
         emission event. The arguments specify the base photon packet from which the peel off
         derives and the direction towards the instrument. The function copies the relevant values
@@ -167,6 +173,10 @@ public:
     /** This function returns the luminosity \f$L\f$ represented by the photon packet, calculated
         from its current wavelength and weight. */
     double luminosity() const { return _W / _lambda; }
+
+    /** This function returns the filter tag, which can then be used by instruments to filter photons.
+        The tag is free-form (e.g. "FL") and may be empty when no filter applies. */
+    const string& filterTag() const { return _filterTag; }
 
     /** This function returns true if the photon packet originated from a primary source, false
         otherwise. */
@@ -333,6 +343,7 @@ private:
     int _compIndex{0};        // sign * (index of the originating source or medium component + 1)
                               //  0: uninitialized   >0: primary   <0: secondary
     size_t _historyIndex{0};  // index of the photon packet's history in the current emission segment
+    string _filterTag{""};    // filter tag on which any instrument can filter, initialised to ""
 
     // information on life cycle
     int _nscatt{0};  // number of experienced scattering events

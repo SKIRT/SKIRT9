@@ -137,6 +137,13 @@ void FluxRecorder::includeSurfaceBrightnessForLocal(int numPixelsX, int numPixel
 
 ////////////////////////////////////////////////////////////////////
 
+void FluxRecorder::setFilter(const std::string& filter)
+{
+    _filter = filter;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void FluxRecorder::finalizeConfiguration()
 {
     // get a pointer to the medium system, if present
@@ -217,6 +224,12 @@ void FluxRecorder::finalizeConfiguration()
 
 void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
 {
+    // If a filter is applied to the instrument, and the photon does not match the filter: abort
+    if (_filter != "none"
+        && ((_filter[0] == '^' && pp->filterTag() == _filter.substr(1)) ||  // skip if tag matches negated filter
+            (_filter[0] != '^' && pp->filterTag() != _filter)))             // skip if tag doesn't match positive filter
+        return;
+
     // abort if we're not recording integrated fluxes and the photon packet arrives outside of the frame
     if (!_includeFluxDensity && l < 0) return;
 

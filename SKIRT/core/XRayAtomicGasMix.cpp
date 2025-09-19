@@ -1201,6 +1201,9 @@ void XRayAtomicGasMix::peeloffScattering(double& I, double& Q, double& U, double
 
         // update the photon packet wavelength to the (possibly sampled) wavelength of this fluorescence transition
         lambda = scatinfo->lambda;
+
+        // tag the photon as being fluorescent, so that the peel-off photon inherits this tag
+        const_cast<PhotonPacket*>(pp)->setTag("FL");
     }
 
     // if we have dispersion, Doppler-shift the outgoing wavelength from the electron rest frame
@@ -1246,6 +1249,9 @@ void XRayAtomicGasMix::performScattering(double lambda, const MaterialState* sta
 
         // clear the stokes vector (only relevant if polarization support is enabled)
         pp->setUnpolarized();
+
+        // tag the photon as being fluorescent
+        pp->setTag("FL");
     }
 
     // if we have dispersion, Doppler-shift the outgoing wavelength from the electron rest frame

@@ -27,6 +27,7 @@ void PhotonPacket::launch(size_t historyIndex, double lambda, double L, Position
     _compIndex = 0;
     _historyIndex = historyIndex;
     _nscatt = 0;
+    _filterTag.clear();
     setPosition(bfr);
     setDirection(bfk);
     if (bvi) _lambda = shiftedEmissionWavelength(lambda, bfk, bvi->velocity());
@@ -54,6 +55,13 @@ void PhotonPacket::setSecondaryOrigin(int mediumCompIndex)
 
 ////////////////////////////////////////////////////////////////////
 
+void PhotonPacket::setTag(string filterTag)
+{
+    _filterTag = filterTag;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
 {
     _lambda = pp->_lambda;
@@ -62,6 +70,7 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
     _compIndex = pp->_compIndex;
     _historyIndex = pp->_historyIndex;
     _nscatt = 0;
+    _filterTag = pp->_filterTag;
     setPosition(pp->position());
     setDirection(bfk);
     if (pp->_bvi) _lambda = shiftedEmissionWavelength(_lambda0, bfk, pp->_bvi->velocity());
@@ -84,6 +93,7 @@ void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk
     _compIndex = pp->_compIndex;
     _historyIndex = pp->_historyIndex;
     _nscatt = pp->_nscatt + 1;
+    _filterTag = pp->_filterTag;
     setPosition(pp->position());
     setDirection(bfk);
     setUnpolarized();

@@ -26,6 +26,7 @@ void Instrument::setupSelfBefore()
     _recorder = new FluxRecorder(this);
     _recorder->setSimulationInfo(instrumentName(), instrumentWavelengthGrid(), hasMedium, hasMediumEmission);
     _recorder->setUserFlags(_recordComponents, _numScatteringLevels, _recordPolarization, _recordStatistics);
+    _recorder->setFilter(_filter);
 }
 
 ////////////////////////////////////////////////////////////////////

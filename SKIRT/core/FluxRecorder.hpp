@@ -232,6 +232,10 @@ public:
                                           double incrementY, double centerX, double centerY,
                                           string quantityXY = string());
 
+    /** This function sets an instrument-specific filter, on which the instrument will filter, only
+     recording photons with this filter tag (none means no filter, ^ inverses the filter)  */
+    void setFilter(const string& filterTag);
+
     /** This function completes the configuration of the recorder. It must be called after any of
         the configuration functions, and before the first invocation of the detect() function. */
     void finalizeConfiguration();
@@ -334,6 +338,7 @@ private:
     bool _recordStatistics{false};
     bool _includeFluxDensity{false};
     bool _includeSurfaceBrightness{false};
+    string _filter{"none"};
 
     // recorder configuration on observer angles, received from client during configuration
     double _inclination{0};
