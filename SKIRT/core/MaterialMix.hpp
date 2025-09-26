@@ -463,9 +463,11 @@ public:
         by the probability that a photon packet would be scattered into the direction
         \f${\bf{k}}_{\text{obs}}\f$ if its original propagation direction was \f${\bf{k}}\f$. For a
         given medium component, this biasing factor is equal to the value of the scattering phase
-        function \f$\Phi({\bf{k}},{\bf{k}}_{\text{obs}})\f$ for that medium component. */
+        function \f$\Phi({\bf{k}},{\bf{k}}_{\text{obs}})\f$ for that medium component.
+
+        The default implementation in this base class throws a fatal error. */
     virtual void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
-                                   Direction bfky, const MaterialState* state, const PhotonPacket* pp) const = 0;
+                                   Direction bfky, const MaterialState* state, const PhotonPacket* pp) const;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified material state and the receiving
@@ -481,8 +483,10 @@ public:
         temperature of a gas medium, and any relevant properties of the incoming photon packet such
         as the polarization state. The first argument specifies the perceived wavelength of the
         photon packet at the scattering location so that this value does not need to be
-        recalculated within the function. */
-    virtual void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const = 0;
+        recalculated within the function.
+
+        The default implementation in this base class throws a fatal error. */
+    virtual void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const;
 
     //======== Secondary continuum emission =======
 
