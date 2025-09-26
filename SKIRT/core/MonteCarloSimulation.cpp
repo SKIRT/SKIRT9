@@ -782,7 +782,7 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
     if (!mediumSystem()->weightsForScattering(wv, lambda, pp)) return;
 
     // now do the actual peel-off
-    if (_config->hasScatteringDispersion())
+    if (_config->needIndividualPeelOff())
     {
         // if wavelengths may change, send a peel-off photon packet per medium component to each instrument
         int numMedia = wv.size();

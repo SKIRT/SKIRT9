@@ -346,6 +346,10 @@ public:
         may (and usually does) adjust the wavelength of the interacting photon packet. */
     bool hasScatteringDispersion() const override;
 
+    /** This function returns true, indicating that a scattering interaction for this material mix
+        may emulate secondary emission. This is used to implement fluorescence as scattering. */
+    bool scatteringEmulatesSecondaryEmission() const override;
+
     //======== Medium state setup =======
 
 public:

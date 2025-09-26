@@ -76,6 +76,13 @@ bool MaterialMix::hasScatteringDispersion() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool MaterialMix::scatteringEmulatesSecondaryEmission() const
+{
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
 MaterialMix::DynamicStateType MaterialMix::hasDynamicMediumState() const
 {
     return DynamicStateType::None;

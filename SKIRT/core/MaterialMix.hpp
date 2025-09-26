@@ -283,6 +283,13 @@ public:
         implementation in this base class returns false. */
     virtual bool hasScatteringDispersion() const;
 
+    /** This function returns true if some of the outgoing photon packets of a scattering
+        interaction for this material mix may emulate secondary emission, and false otherwise.
+        These special photon packets will be recorded by instruments as if they originated during
+        secondary emission. This feature is used, for example, to implement fluorescence as a
+        scattering interaction. The default implementation in this base class returns false. */
+    virtual bool scatteringEmulatesSecondaryEmission() const;
+
     /** This enumeration is used to indicate whether a dynamic medium state (DMS) update algorithm
         is provided, and if so, when it should be executed:
 

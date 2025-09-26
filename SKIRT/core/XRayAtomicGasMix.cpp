@@ -1075,6 +1075,13 @@ bool XRayAtomicGasMix::hasScatteringDispersion() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool XRayAtomicGasMix::scatteringEmulatesSecondaryEmission() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<StateVariable> XRayAtomicGasMix::specificStateVariableInfo() const
 {
     return vector<StateVariable>{StateVariable::numberDensity()};
