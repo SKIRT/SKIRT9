@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "MonteCarloSimulation.hpp"
-#include "FatalError.hpp"
 #include "Log.hpp"
 #include "Parallel.hpp"
 #include "ParallelFactory.hpp"
@@ -559,7 +558,7 @@ void MonteCarloSimulation::performLifeCycle(size_t firstIndex, size_t numIndices
                                 mediumSystem()->setExtinctionOpticalDepths(&pp);
 
                             // advance the packet
-                            if (store) storeRadiationField(&pp);
+                            if (store) storeRadiationField(primary, &pp);
                             simulateForcedPropagation(&pp);
 
                             // if the packet's weight drops below the threshold, terminate it
@@ -623,7 +622,7 @@ void MonteCarloSimulation::peelOffEmission(const PhotonPacket* pp, PhotonPacket*
 
 ////////////////////////////////////////////////////////////////////
 
-void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
+void MonteCarloSimulation::storeRadiationField(bool primary, const PhotonPacket* pp)
 {
     // use a faster version in case there are no kinematics
     if (_config->hasConstantPerceivedWavelength())
@@ -632,8 +631,6 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
         if (ell >= 0)
         {
             double luminosity = pp->luminosity();
-            bool hasPrimaryOrigin = pp->hasPrimaryOrigin();
-
             double lnExtBeg = 0.;  // extinction factor and its logarithm at begin of current segment
             double extBeg = 1.;
             for (const auto& segment : pp->segments())
@@ -646,7 +643,7 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
                     // use this flavor of the lnmean function to avoid recalculating the logarithm of the extinction
                     double extMean = SpecialFunctions::lnmean(extEnd, extBeg, lnExtEnd, lnExtBeg);
                     double Lds = luminosity * extMean * segment.ds();
-                    mediumSystem()->storeRadiationField(hasPrimaryOrigin, m, ell, Lds);
+                    mediumSystem()->storeRadiationField(primary, m, ell, Lds);
                 }
                 lnExtBeg = lnExtEnd;
                 extBeg = extEnd;
@@ -672,7 +669,7 @@ void MonteCarloSimulation::storeRadiationField(const PhotonPacket* pp)
                     // use this flavor of the lnmean function to avoid recalculating the logarithm of the extinction
                     double extMean = SpecialFunctions::lnmean(extEnd, extBeg, lnExtEnd, lnExtBeg);
                     double Lds = pp->perceivedLuminosity(lambda) * extMean * segment.ds();
-                    mediumSystem()->storeRadiationField(pp->hasPrimaryOrigin(), m, ell, Lds);
+                    mediumSystem()->storeRadiationField(primary, m, ell, Lds);
                 }
             }
             lnExtBeg = lnExtEnd;
@@ -782,7 +779,7 @@ void MonteCarloSimulation::peelOffScattering(PhotonPacket* pp, PhotonPacket* ppp
     if (!mediumSystem()->weightsForScattering(wv, lambda, pp)) return;
 
     // now do the actual peel-off
-    if (_config->hasScatteringDispersion())
+    if (_config->needIndividualPeelOff())
     {
         // if wavelengths may change, send a peel-off photon packet per medium component to each instrument
         int numMedia = wv.size();

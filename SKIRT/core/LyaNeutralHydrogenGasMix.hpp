@@ -146,7 +146,7 @@ public:
         For the Lyman-alpha material mix, the function implements resonant scattering without or
         with support for polarization depending on the user-configured \em includePolarization
         property. */
-    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
+    bool peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
                            const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial

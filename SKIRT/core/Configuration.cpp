@@ -11,7 +11,6 @@
 #include "MaterialMix.hpp"
 #include "MaterialWavelengthRangeInterface.hpp"
 #include "MonteCarloSimulation.hpp"
-#include "NR.hpp"
 #include "OligoWavelengthDistribution.hpp"
 #include "OligoWavelengthGrid.hpp"
 #include "ProbeSystem.hpp"
@@ -325,9 +324,13 @@ void Configuration::setupSelfBefore()
     _hasSingleConstantSectionMedium = numMedia == 1 && _hasConstantSectionMedium;
     _hasMultipleConstantSectionMedia = numMedia > 1 && _hasConstantSectionMedium;
 
-    // check for scattering dispersion
+    // check for scattering dispersion and for emulating secondary emission
     for (auto medium : ms->media())
+    {
         if (medium->mix()->hasScatteringDispersion()) _hasScatteringDispersion = true;
+        if (medium->mix()->scatteringEmulatesSecondaryEmission()) _scatteringEmulatesSecondaryEmission = true;
+    }
+    _needIndividualPeelOff = _hasScatteringDispersion | _scatteringEmulatesSecondaryEmission;
 
     // check for magnetic fields
     for (int h = 0; h != numMedia; ++h)

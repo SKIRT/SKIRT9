@@ -105,6 +105,13 @@ public:
         launch. */
     void setSecondaryOrigin(int mediumCompIndex);
 
+    /** This function rebrands the photon packet's origin after it has been involved in a
+        scattering interaction that emulates secondary emission. Specifically, it resets the
+        scattering counter and establishes that the photon packet has been emitted by the specified
+        medium, overwriting the packet's previous origin. This function should be called just after
+        launching the packet outgoing from the scattering interaction. */
+    void setEmulatedSecondaryOrigin(int mediumCompIndex);
+
     /** This function initializes a peel off photon packet being sent to an instrument for an
         emission event. The arguments specify the base photon packet from which the peel off
         derives and the direction towards the instrument. The function copies the relevant values

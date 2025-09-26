@@ -107,7 +107,7 @@ public:
         material mix to the peel-off photon luminosity for the given observer direction. The
         material state, wavelength and photon packet properties other than direction are not used.
         */
-    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
+    bool peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
                            const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event for this material mix on the specified photon

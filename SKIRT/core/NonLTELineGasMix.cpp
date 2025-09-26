@@ -648,19 +648,7 @@ double NonLTELineGasMix::opacityExt(double lambda, const MaterialState* state, c
     return opacityAbs(lambda, state, pp);
 }
 
-////////////////////////////////////////////////////////////////////
-
-void NonLTELineGasMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/, double& /*lambda*/,
-                                         Direction /*bfkobs*/, Direction /*bfky*/, const MaterialState* /*state*/,
-                                         const PhotonPacket* /*pp*/) const
-{}
-
-////////////////////////////////////////////////////////////////////
-
-void NonLTELineGasMix::performScattering(double /*lambda*/, const MaterialState* /*state*/, PhotonPacket* /*pp*/) const
-{}
-
-////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
 
 Array NonLTELineGasMix::lineEmissionCenters() const
 {

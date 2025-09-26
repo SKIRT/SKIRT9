@@ -218,19 +218,6 @@ double SpinFlipHydrogenGasMix::opacityExt(double lambda, const MaterialState* st
 
 ////////////////////////////////////////////////////////////////////
 
-void SpinFlipHydrogenGasMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/,
-                                               double& /*lambda*/, Direction /*bfkobs*/, Direction /*bfky*/,
-                                               const MaterialState* /*state*/, const PhotonPacket* /*pp*/) const
-{}
-
-////////////////////////////////////////////////////////////////////
-
-void SpinFlipHydrogenGasMix::performScattering(double /*lambda*/, const MaterialState* /*state*/,
-                                               PhotonPacket* /*pp*/) const
-{}
-
-////////////////////////////////////////////////////////////////////
-
 Array SpinFlipHydrogenGasMix::lineEmissionCenters() const
 {
     Array centers(1);
