@@ -54,6 +54,13 @@ void PhotonPacket::setSecondaryOrigin(int mediumCompIndex)
 
 ////////////////////////////////////////////////////////////////////
 
+void PhotonPacket::setEmulatedSecondaryOrigin(int mediumCompIndex)
+{
+    // to be implemented
+}
+
+////////////////////////////////////////////////////////////////////
+
 void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
 {
     _lambda = pp->_lambda;

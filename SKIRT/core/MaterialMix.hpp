@@ -456,7 +456,9 @@ public:
         contributions to the Stokes vector components are stored in the \em I, \em Q, \em U, \em V
         arguments, which are guaranteed to be initialized to zero by the caller. If there is a
         wavelength shift, the new wavelength value replaces the incoming value of the \em lambda
-        argument.
+        argument. The function returns true if the scattering interaction emulates secondary
+        emission (e.g., to implement fluorescence as scattering), and false otherwise (i.e. in the
+        vast majority of cases).
 
         Since we force the peel-off photon packet to be scattered from the direction \f${\bf{k}}\f$
         into the direction \f${\bf{k}}_{\text{obs}}\f$, the corresponding biasing factor is given
@@ -466,7 +468,7 @@ public:
         function \f$\Phi({\bf{k}},{\bf{k}}_{\text{obs}})\f$ for that medium component.
 
         The default implementation in this base class throws a fatal error. */
-    virtual void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
+    virtual bool peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
                                    Direction bfky, const MaterialState* state, const PhotonPacket* pp) const;
 
     /** This function performs a scattering event on the specified photon packet in the spatial

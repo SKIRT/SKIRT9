@@ -184,7 +184,7 @@ public:
         the fragment. The contributions to the Stokes vector components are stored in the \em I,
         \em Q, \em U, \em V arguments, which are guaranteed to be initialized to zero by the
         caller. For dust mixes, the wavelength remains unchanged. */
-    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
+    bool peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
                            const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial

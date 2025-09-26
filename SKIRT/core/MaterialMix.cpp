@@ -140,9 +140,9 @@ double MaterialMix::asymmpar(double /*lambda*/) const
 
 ////////////////////////////////////////////////////////////////////
 
-void MaterialMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/, double& /*lambda*/,
-                                         Direction /*bfkobs*/, Direction /*bfky*/, const MaterialState* /*state*/,
-                                         const PhotonPacket* /*pp*/) const
+bool MaterialMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/, double& /*lambda*/,
+                                    Direction /*bfkobs*/, Direction /*bfky*/, const MaterialState* /*state*/,
+                                    const PhotonPacket* /*pp*/) const
 {
     throw FATALERROR("This function implementation should never be called");
 }

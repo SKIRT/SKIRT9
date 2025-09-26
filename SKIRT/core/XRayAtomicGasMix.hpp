@@ -419,7 +419,7 @@ public:
         bias weight is trivially one because emission is isotropic and unpolarized, and the
         outgoing wavelength is determined by Doppler-shifting the rest wavelength of the selected
         fluorescence transition for the selected atom velocity. */
-    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
+    bool peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
                            const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial

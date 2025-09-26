@@ -89,7 +89,7 @@ double TrivialGasMix::opacityExt(double /*lambda*/, const MaterialState* state, 
 
 ////////////////////////////////////////////////////////////////////
 
-void TrivialGasMix::peeloffScattering(double& I, double& /*Q*/, double& /*U*/, double& /*V*/, double& /*lambda*/,
+bool TrivialGasMix::peeloffScattering(double& I, double& /*Q*/, double& /*U*/, double& /*V*/, double& /*lambda*/,
                                       Direction bfkobs, Direction /*bfky*/, const MaterialState* /*state*/,
                                       const PhotonPacket* pp) const
 {
@@ -101,6 +101,8 @@ void TrivialGasMix::peeloffScattering(double& I, double& /*Q*/, double& /*U*/, d
 
     // store this value as the intensity
     I = value;
+
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////
