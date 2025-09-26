@@ -527,7 +527,7 @@ private:
         accumulated over all photon packets contributing to the bin. The resulting mean intensity
         \f$J_\lambda\f$ is expressed as an amount of energy per unit of time, per unit of area, per
         unit of wavelength, and per unit of solid angle. */
-    void storeRadiationField(const PhotonPacket* pp);
+    void storeRadiationField(bool primary, const PhotonPacket* pp);
 
     /** This function determines the next scattering location of a photon packet in a photon life
         cycle with forced scattering and simulates its propagation to that position. The function
