@@ -5,7 +5,6 @@
 
 #include "Instrument.hpp"
 #include "Configuration.hpp"
-#include "FatalError.hpp"
 #include "FluxRecorder.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -20,7 +19,7 @@ void Instrument::setupSelfBefore()
 
     // discover details about the simulation
     bool hasMedium = config->hasMedium();
-    bool hasMediumEmission = config->hasSecondaryEmission();
+    bool hasMediumEmission = config->hasSecondaryEmission() || config->scatteringEmulatesSecondaryEmission();
 
     // partially configure the flux recorder
     _recorder = new FluxRecorder(this);

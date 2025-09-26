@@ -56,7 +56,8 @@ void PhotonPacket::setSecondaryOrigin(int mediumCompIndex)
 
 void PhotonPacket::setEmulatedSecondaryOrigin(int mediumCompIndex)
 {
-    // to be implemented
+    _nscatt = 0;
+    setSecondaryOrigin(mediumCompIndex);
 }
 
 ////////////////////////////////////////////////////////////////////

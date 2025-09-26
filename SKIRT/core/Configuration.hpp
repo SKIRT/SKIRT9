@@ -209,9 +209,12 @@ public:
         weight factors. */
     bool hasMultipleConstantSectionMedia() const { return _hasMultipleConstantSectionMedia; }
 
+    /** Returns true if a scattering interaction for one or more media may emulate secondary
+        emission, and false otherwise. */
+    bool scatteringEmulatesSecondaryEmission() const { return _scatteringEmulatesSecondaryEmission; }
+
     /** Returns true if a scattering interaction for one or more media may adjust the wavelength of
-        the interacting photon packet or may emulate secondary emission during primary emission,
-        and false otherwise. */
+        the interacting photon packet or may emulate secondary emission, and false otherwise. */
     bool needIndividualPeelOff() const { return _needIndividualPeelOff; }
 
     /** Returns true if all media in the simulation support polarization, and false if none of the
