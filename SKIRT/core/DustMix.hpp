@@ -277,7 +277,7 @@ public:
         plane, applies the Mueller matrix on the Stokes vector, and further rotates the Stokes
         vector from the reference direction in the peel-off scattering plane to the x-axis of the
         instrument to which the peel-off photon packet is headed. */
-    void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
+    bool peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
                            const MaterialState* state, const PhotonPacket* pp) const override;
 
     /** This function performs a scattering event on the specified photon packet in the spatial

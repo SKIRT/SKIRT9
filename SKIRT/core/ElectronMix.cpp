@@ -171,7 +171,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
+bool ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
                                     Direction bfky, const MaterialState* state, const PhotonPacket* pp) const
 {
     // if we have dispersion, adjust the incoming wavelength to the electron rest frame
@@ -197,6 +197,7 @@ void ElectronMix::peeloffScattering(double& I, double& Q, double& U, double& V, 
     {
         lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfkobs, scatinfo->velocity);
     }
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -427,7 +427,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
+bool DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
                                 Direction bfky, const MaterialState* /*state*/, const PhotonPacket* pp) const
 {
     switch (scatteringMode())
@@ -482,6 +482,7 @@ void DustMix::peeloffScattering(double& I, double& Q, double& U, double& V, doub
             break;
         }
     }
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////

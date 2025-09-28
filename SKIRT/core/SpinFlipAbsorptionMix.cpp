@@ -131,19 +131,6 @@ double SpinFlipAbsorptionMix::opacityExt(double lambda, const MaterialState* sta
 
 ////////////////////////////////////////////////////////////////////
 
-void SpinFlipAbsorptionMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/,
-                                              double& /*lambda*/, Direction /*bfkobs*/, Direction /*bfky*/,
-                                              const MaterialState* /*state*/, const PhotonPacket* /*pp*/) const
-{}
-
-////////////////////////////////////////////////////////////////////
-
-void SpinFlipAbsorptionMix::performScattering(double /*lambda*/, const MaterialState* /*state*/,
-                                              PhotonPacket* /*pp*/) const
-{}
-
-////////////////////////////////////////////////////////////////////
-
 double SpinFlipAbsorptionMix::indicativeTemperature(const MaterialState* state, const Array& /*Jv*/) const
 {
     return state->temperature();

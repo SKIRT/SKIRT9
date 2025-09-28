@@ -283,6 +283,13 @@ public:
         implementation in this base class returns false. */
     virtual bool hasScatteringDispersion() const;
 
+    /** This function returns true if some of the outgoing photon packets of a scattering
+        interaction for this material mix may emulate secondary emission, and false otherwise.
+        These special photon packets will be recorded by instruments as if they originated during
+        secondary emission. This feature is used, for example, to implement fluorescence as a
+        scattering interaction. The default implementation in this base class returns false. */
+    virtual bool scatteringEmulatesSecondaryEmission() const;
+
     /** This enumeration is used to indicate whether a dynamic medium state (DMS) update algorithm
         is provided, and if so, when it should be executed:
 
@@ -449,16 +456,20 @@ public:
         contributions to the Stokes vector components are stored in the \em I, \em Q, \em U, \em V
         arguments, which are guaranteed to be initialized to zero by the caller. If there is a
         wavelength shift, the new wavelength value replaces the incoming value of the \em lambda
-        argument.
+        argument. The function returns true if the scattering interaction emulates secondary
+        emission (e.g., to implement fluorescence as scattering), and false otherwise (i.e. in the
+        vast majority of cases).
 
         Since we force the peel-off photon packet to be scattered from the direction \f${\bf{k}}\f$
         into the direction \f${\bf{k}}_{\text{obs}}\f$, the corresponding biasing factor is given
         by the probability that a photon packet would be scattered into the direction
         \f${\bf{k}}_{\text{obs}}\f$ if its original propagation direction was \f${\bf{k}}\f$. For a
         given medium component, this biasing factor is equal to the value of the scattering phase
-        function \f$\Phi({\bf{k}},{\bf{k}}_{\text{obs}})\f$ for that medium component. */
-    virtual void peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
-                                   Direction bfky, const MaterialState* state, const PhotonPacket* pp) const = 0;
+        function \f$\Phi({\bf{k}},{\bf{k}}_{\text{obs}})\f$ for that medium component.
+
+        The default implementation in this base class throws a fatal error. */
+    virtual bool peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
+                                   Direction bfky, const MaterialState* state, const PhotonPacket* pp) const;
 
     /** This function performs a scattering event on the specified photon packet in the spatial
         cell and medium component represented by the specified material state and the receiving
@@ -474,8 +485,10 @@ public:
         temperature of a gas medium, and any relevant properties of the incoming photon packet such
         as the polarization state. The first argument specifies the perceived wavelength of the
         photon packet at the scattering location so that this value does not need to be
-        recalculated within the function. */
-    virtual void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const = 0;
+        recalculated within the function.
+
+        The default implementation in this base class throws a fatal error. */
+    virtual void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const;
 
     //======== Secondary continuum emission =======
 
