@@ -209,9 +209,9 @@ string Units::uopacity() const
 
 ////////////////////////////////////////////////////////////////////
 
-double Units::oopacity(double kappa) const
+double Units::oopacity(double k) const
 {
-    return out("opacity", kappa);
+    return out("opacity", k);
 }
 
 ////////////////////////////////////////////////////////////////////
