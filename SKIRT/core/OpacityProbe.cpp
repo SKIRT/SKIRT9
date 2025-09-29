@@ -38,26 +38,27 @@ void OpacityProbe::probe()
 {
     if (find<Configuration>()->hasMedium())
     {
-        // locate the medium system and cache the wavelength grid
+        // locate the medium system and construct lists of wavelength information in **output order**
         auto units = find<Units>();
         auto ms = find<MediumSystem>();
         auto wlg = find<Configuration>()->wavelengthGrid(wavelengthGrid());
         int numWaves = wlg->numBins();
         Array wave(numWaves);  // wavelength in internal units
         Array axis(numWaves);  // wavelength in output units
+        int outell = 0;
         for (int ell : Indices(numWaves, units->rwavelength()))
         {
-            wave[ell] = wlg->wavelength(ell);
-            axis[ell] = units->owavelength(wlg->wavelength(ell));
+            wave[outell] = wlg->wavelength(ell);
+            axis[outell] = units->owavelength(wlg->wavelength(ell));
+            outell++;
         }
 
         // define the call-back function to add column definitions
-        auto addColumnDefinitions = [wlg, units](TextOutFile& outfile) {
-            for (int ell : Indices(wlg->numBins(), units->rwavelength()))
+        auto addColumnDefinitions = [axis, units](TextOutFile& outfile) {
+            for (double outwave : axis)
             {
-                outfile.addColumn("opacity at " + units->swavelength() + " = "
-                                      + StringUtils::toString(units->owavelength(wlg->wavelength(ell)), 'g') + " "
-                                      + units->uwavelength(),
+                outfile.addColumn("opacity at " + units->swavelength() + " = " + StringUtils::toString(outwave, 'g')
+                                      + " " + units->uwavelength(),
                                   units->uopacity());
             }
         };
