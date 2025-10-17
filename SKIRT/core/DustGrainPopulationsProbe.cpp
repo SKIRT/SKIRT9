@@ -43,7 +43,7 @@ void DustGrainPopulationsProbe::probe()
         for (int h = 0; h != numMedia; ++h)
         {
             // get the mix and skip mixes that don't offer multiple dust grain populations
-            auto mix = dynamic_cast<const MultiGrainPopulationInterface*>(ms->media()[h]->mix());
+            auto mix = ms->media()[h]->mix()->interface<MultiGrainPopulationInterface>(0, false);
             if (mix)
             {
                 // create a text file

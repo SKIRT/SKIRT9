@@ -7,12 +7,13 @@
 #define ABSORPTIONONLYMATERIALMIXDECORATOR_HPP
 
 #include "MaterialMix.hpp"
+#include "MultiGrainPopulationInterface.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 /** AbsorptionOnlyMaterialMixDecorator is a material mix decorator that removes scattering and
     secondary emission from any material mix, passing through just the absorption properties. */
-class AbsorptionOnlyMaterialMixDecorator : public MaterialMix
+class AbsorptionOnlyMaterialMixDecorator : public MaterialMix, public MultiGrainPopulationInterface
 {
     ITEM_CONCRETE(AbsorptionOnlyMaterialMixDecorator, MaterialMix,
                   "a decorator that removes scattering from any material mix")
@@ -153,6 +154,52 @@ public:
         field specified by the mean intensities \f$(J_\lambda)_\ell\f$, if available. The
         interpretation of the indicative temperature depends heavily on the material type. */
     virtual double indicativeTemperature(const MaterialState* state, const Array& Jv) const override;
+
+    //=========== Exposing multiple grain populations (MultiGrainPopulationInterface) ============
+
+protected:
+    /** This function is used by the interface() function to ensure that the receiving item can
+        actually offer the specified interface. If the requested interface is the
+        MultiGrainPopulationInterface, the implementation in this class returns true if the
+        decorated material mix offers the MultiGrainPopulationInterface, and false otherwise. For
+        other requested interfaces, the function invokes its counterpart in the base class. */
+    bool offersInterface(const std::type_info& interfaceTypeInfo) const override;
+
+public:
+    /** If the decorated material mix offers the MultiGrainPopulationInterface, this function
+        returns the result returned by the decorated material mix. Otherwise it throws a fatal
+        error. */
+    int numPopulations() const override;
+
+    /** If the decorated material mix offers the MultiGrainPopulationInterface, this function
+        returns the result returned by the decorated material mix. Otherwise it throws a fatal
+        error. */
+    string populationGrainType(int c) const override;
+
+    /** If the decorated material mix offers the MultiGrainPopulationInterface, this function
+        returns the result returned by the decorated material mix. Otherwise it throws a fatal
+        error. */
+    double populationBulkDensity(int c) const override;
+
+    /** If the decorated material mix offers the MultiGrainPopulationInterface, this function
+        returns the result returned by the decorated material mix. Otherwise it throws a fatal
+        error. */
+    Range populationSizeRange(int c) const override;
+
+    /** If the decorated material mix offers the MultiGrainPopulationInterface, this function
+        returns the result returned by the decorated material mix. Otherwise it throws a fatal
+        error. */
+    const GrainSizeDistribution* populationSizeDistribution(int c) const override;
+
+    /** If the decorated material mix offers the MultiGrainPopulationInterface, this function
+        returns the result returned by the decorated material mix. Otherwise it throws a fatal
+        error. */
+    double populationMass(int c) const override;
+
+    /** If the decorated material mix offers the MultiGrainPopulationInterface, this function
+        returns the result returned by the decorated material mix. Otherwise it throws a fatal
+        error. */
+    double totalMass() const override;
 };
 
 ////////////////////////////////////////////////////////////////////
