@@ -47,6 +47,7 @@ class AbsorptionOnlyMaterialMixDecorator : public MaterialMix, public MultiGrain
 {
     ITEM_CONCRETE(AbsorptionOnlyMaterialMixDecorator, MaterialMix,
                   "a decorator that removes scattering from any material mix")
+        ATTRIBUTE_TYPE_ALLOWED_IF(AbsorptionOnlyMaterialMixDecorator, "!Emission")
         ATTRIBUTE_TYPE_DISPLAYED_IF(AbsorptionOnlyMaterialMixDecorator, "Level3")
 
         PROPERTY_ITEM(materialMix, MaterialMix, "the material mix to be decorated")
