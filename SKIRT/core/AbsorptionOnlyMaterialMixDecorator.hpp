@@ -11,8 +11,38 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** AbsorptionOnlyMaterialMixDecorator is a material mix decorator that removes scattering and
-    secondary emission from any material mix, passing through just the absorption properties. */
+/** AbsorptionOnlyMaterialMixDecorator is a material mix decorator that removes scattering from any
+    material mix, passing through just the absorption properties. It can be used to evaluate the
+    effects of scattering on observations. As a result, one can use SKIRT to test different
+    versions of approximate radiation transfer:
+
+    - a version that accounts for scattering out of the line of sight but neglects scattering into
+    the line of sight; this can be obtained from the direct flux offered by the SKIRT instruments.
+
+    - a version that neglects scattering both out of and into the line of sight; this can be
+    obtained by removing all scattering from the material mix using this decorator.
+
+    ## Fragmented dust mixes
+
+    When working with fragmented dust mixes, first apply the FragmentDustMixDecorator to the
+    original MultiGrainDustMix and then apply the AbsorptionOnlyMaterialMixDecorator to the
+    FragmentDustMixDecorator. The other way around doesn't work because the
+    FragmentDustMixDecorator explicitly expects a MultiGrainDustMix while the
+    AbsorptionOnlyMaterialMixDecorator inherits directly from MaterialMix. This is not really a
+    limitation as the intended goal is properly achieved.
+
+    ## Limitations
+
+    The current implementation of this decorator does not support secondary emission. To make this
+    work, the decorator would need to pass through all material mix functions related to dust
+    and/or gas emission, and the dynamic casting of material mix subclasses in the secondary
+    emission framework would need to be replaced by the SimulationItem::interface() mechanism.
+
+    Similarly, the current implementation of the decorator does not support dynamic dust
+    destruction. To make this work, the decorator would need to implement the additional functions
+    in the FragmentDustMixDecorator class provided for this purpose as a separate interface, and
+    the DustDestructionRecipe class would need to use this interface rather than calling the
+    FragmentDustMixDecorator class directly. */
 class AbsorptionOnlyMaterialMixDecorator : public MaterialMix, public MultiGrainPopulationInterface
 {
     ITEM_CONCRETE(AbsorptionOnlyMaterialMixDecorator, MaterialMix,
