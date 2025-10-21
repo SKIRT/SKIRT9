@@ -11,7 +11,6 @@
 #include "GrainPopulation.hpp"
 #include "MultiGrainPopulationInterface.hpp"
 #include "StochasticDustEmissionCalculator.hpp"
-#include "StoredTable.hpp"
 class GrainComposition;
 class GrainSizeDistribution;
 

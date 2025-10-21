@@ -9,6 +9,7 @@
 
 // ---> add new items below in alphabetical order
 
+#include "AbsorptionOnlyMaterialMixDecorator.hpp"
 #include "AdaptiveMeshGeometry.hpp"
 #include "AdaptiveMeshMedium.hpp"
 #include "AdaptiveMeshSource.hpp"
@@ -598,6 +599,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<NonLTELineGasMix>();
     ItemRegistry::add<LyaNeutralHydrogenGasMix>();
     ItemRegistry::add<TrivialGasMix>();
+
+    ItemRegistry::add<AbsorptionOnlyMaterialMixDecorator>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();
