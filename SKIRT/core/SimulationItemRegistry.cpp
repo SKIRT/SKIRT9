@@ -110,6 +110,7 @@
 #include "HirashitaLogNormalGrainSizeDistribution.hpp"
 #include "HofmeisterPericlaseGrainComposition.hpp"
 #include "HollowRadialVectorField.hpp"
+#include "HubbleRadialVectorField.hpp"
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
 #include "ImportedMediumDensityProbe.hpp"
@@ -493,6 +494,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<VectorField>();
     ItemRegistry::add<RadialVectorField>();
     ItemRegistry::add<HollowRadialVectorField>();
+    ItemRegistry::add<HubbleRadialVectorField>();
     ItemRegistry::add<CylindricalVectorField>();
     ItemRegistry::add<UnidirectionalVectorField>();
     ItemRegistry::add<OffsetVectorFieldDecorator>();
