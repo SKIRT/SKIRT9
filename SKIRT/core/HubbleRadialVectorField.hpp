@@ -12,8 +12,8 @@
 
 /** HubbleRadialVectorField represents a vector field with vectors pointing away from the origin
     and a magnitude that varies with radial distance from the origin. Up to the turnover radius
-    \f$(r_t) \ge 0\f$, the velocity is constantly accelerating. Beyond the turnover radius, the
-    velocity is constantly decelarating. Beyond the maximum radius \f$r_\mathrm{max} \ge r_t\f$,
+    \f$(r_t \ge 0)\f$, the velocity is constantly accelerating. Beyond the turnover radius, the
+    velocity is constantly decelarating. Beyond the maximum radius \f$(r_\mathrm{max} \ge r_t)\f$,
     the velocity is zero:
  
     \f[ v(r) = \begin{cases}\frac{r}{r_t} & \mathrm{for}\;r\le r_t \\ \left(1-\frac{r - r_t}{r_\mathrm{max}-r_t}\right)
@@ -41,7 +41,7 @@ class HubbleRadialVectorField : public VectorField
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function verifies that the \f$r_t \le r_\mathrm{max}\f$. */
+    /** This function verifies that \f$r_t \le r_\mathrm{max}\f$. */
     void setupSelfBefore() override;
 
     //======================== Other Functions =======================
