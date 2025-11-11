@@ -51,6 +51,10 @@ void NonLTELineGasMix::setupSelfBefore()
             name = "O";
             colNames = {"H2", "H", "H+", "e-", "He"};
             break;
+        case Species::IonizedOxygen:
+            name = "O+";
+            colNames = {"e-"};
+            break;
         case Species::DoublyIonizedOxygen:
             name = "O++";
             colNames = {"H", "e-"};

@@ -80,6 +80,12 @@
     and 145.52 \f$\mu\mathrm{m}\f$. The collisional interaction partners include molecular hydrogen,
     neutral atomic hydrogen, ionized atomic hydrogen, electrons, and helium.
 
+    - \c Ionized \c oxygen (O+): includes five electronic levels (4S, 2D, and 2P) and hyperfine split
+    levels at the electronic levels (2D and 2P). It contatines the corresponding electronic transition
+    lines at wavelengths 0.372708, 0.372984, 0.247097, 0.733175, 0.732112, 0.247109, 0.733283, 0.732219,
+    and fine-structure lines at 505.050 \f$\mu\mathrm{m}\f$. The collisional interaction partner is
+    electron.
+
     - \c Doubly \c ionized \c oxygen (O++): includes four electronic levels (3p and 1D) and the
     hyperfine split levels in the electronic levels of 3p. The corresponding fine-structure
     transition lines for levels 3p are at wavelengths 51.81 and 88.35 \f$\mu\mathrm{m}\f$.
@@ -311,7 +317,7 @@ class NonLTELineGasMix : public EmittingGasMix
     /** The enumeration type indicating the molecular or atomic species represented by a given
         NonLTELineGasMix instance. See the class header for more information. */
     ENUM_DEF(Species, Test, Hydroxyl, HydroxylHFS, Formyl, HydrogenCyanide, CarbonMonoxide, AtomicCarbon,
-             IonizedCarbon, IonizedNitrogen, AtomicOxygen, DoublyIonizedOxygen, MolecularHydrogen)
+             IonizedCarbon, IonizedNitrogen, AtomicOxygen, IonizedOxygen, DoublyIonizedOxygen, MolecularHydrogen)
         ENUM_VAL(Species, Test, "Fictive two-level test molecule (TT)")
         ENUM_VAL(Species, Hydroxyl, "Hydroxyl radical (OH)")
         ENUM_VAL(Species, HydroxylHFS, "Hydroxyl radical (OH) with hyperfine structure")
@@ -321,7 +327,8 @@ class NonLTELineGasMix : public EmittingGasMix
         ENUM_VAL(Species, AtomicCarbon, "Atomic carbon (C)")
         ENUM_VAL(Species, IonizedCarbon, "Ionized carbon (C+)")
         ENUM_VAL(Species, IonizedNitrogen, "Ionized nitrogen (N+)")
-        ENUM_VAL(Species, AtomicOxygen, "Ionized carbon (O)")
+        ENUM_VAL(Species, AtomicOxygen, "Atomic oxygen (O)")
+        ENUM_VAL(Species, IonizedOxygen, "Ionized oxygen (O+)")
         ENUM_VAL(Species, DoublyIonizedOxygen, "Doubly Ionized Oxygen (O++)")
         ENUM_VAL(Species, MolecularHydrogen, "Molecular hydrogen (H2)")
     ENUM_END()
