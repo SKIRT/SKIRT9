@@ -78,7 +78,7 @@ void CylindricalCellSnapshot::readAndClose()
     // inform the user
     log()->info("  Number of cells: " + std::to_string(_propv.size()));
 
-    // build CylCell objects so we can calculate volume and other geometric properties
+    // build CylindricalCell objects so we can calculate volume and other geometric properties
     _cellv.reserve(_propv.size());
     int bi = boxIndex();
     for (const Array& prop : _propv)
@@ -192,7 +192,7 @@ double CylindricalCellSnapshot::mass() const
 
 Position CylindricalCellSnapshot::position(int m) const
 {
-    return Position(_cellv[m].center());
+    return _cellv[m].center();
 }
 
 ////////////////////////////////////////////////////////////////////

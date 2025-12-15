@@ -9,6 +9,7 @@
 #include "Array.hpp"
 #include "CylinderSpatialGrid.hpp"
 #include "Mesh.hpp"
+class CylindricalCell;
 
 ////////////////////////////////////////////////////////////////////
 

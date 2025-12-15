@@ -533,7 +533,7 @@ public:
         Consider the pdf values \f$p_i\f$ and \f$p_{i+1}\f$ at two consecutive grid points
         \f$x_i\f$ and \f$x_{i+1}\f$. Assuming power-law behavior, the pdf between these two grid
         points can be written as \f[ p(x) = p_i \left(\frac{x}{x_i}\right)^{\alpha_i},
-        \quad\mathrm{with}\; \alpha_i = \frac{\ln p_{i+1}/\ln p_i}{\ln x_{i+1}/\ln x_i} \f]
+        \quad\mathrm{with}\; \alpha_i = \frac{\ln(p_{i+1}/p_i)} {\ln(x_{i+1}/x_i)} \f]
 
         The area under the curve is then \f[ \int_{x_i}^{x_{i+1}} p(x)\,\mathrm{d}x =
         \int_{x_i}^{x_{i+1}} p_i \left(\frac{x}{x_i}\right)^{\alpha_i}\mathrm{d}x = p_i x_i

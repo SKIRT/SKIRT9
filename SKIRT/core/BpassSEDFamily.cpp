@@ -8,9 +8,11 @@
 
 ////////////////////////////////////////////////////////////////////
 
-BpassSEDFamily::BpassSEDFamily(SimulationItem* parent)
+BpassSEDFamily::BpassSEDFamily(SimulationItem* parent, IMF imf, Resolution resolution)
 {
     parent->addChild(this);
+    _imf = imf;
+    _resolution = resolution;
     setup();
 }
 
@@ -20,7 +22,15 @@ void BpassSEDFamily::setupSelfBefore()
 {
     SEDFamily::setupSelfBefore();
 
-    _table.open(this, "BpassSEDFamily_Chabrier300", "lambda(m),Z(1),t(yr)", "Llambda(W/m)", false);
+    string name = "BpassSEDFamily";
+    switch (_imf)
+    {
+        case IMF::Chabrier100: name += "_Chabrier100"; break;
+        case IMF::Chabrier300: name += "_Chabrier300"; break;
+    }
+    if (_resolution == Resolution::Downsampled) name += "_downsampled";
+
+    _table.open(this, name, "lambda(m),Z(1),t(yr)", "Llambda(W/m)", false);
 }
 
 ////////////////////////////////////////////////////////////////////

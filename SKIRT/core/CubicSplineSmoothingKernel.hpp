@@ -50,12 +50,15 @@ public:
         \quad{\text{else}}. \end{cases} \f] */
     double columnDensity(double q) const override;
 
-    /** This function generates a random normalized radius \f$u\f$ from the smoothing kernel, by
-        drawing a number from the one-dimensional probability density \f$p(u)\,{\text{d}}u =
-        4\pi\,W(u)\,u^2\, {\text{d}}u\f$. This is accomplished by generating a uniform deviate
-        \f${\cal{X}}\f$, and solving the equation \f[ {\cal{X}} = 4\pi\,W(u)\,u^2\, {\text{d}}u \f]
-        for \f$u\f$. For the cubic spline smoothing kernel, we use a precomputed grid with values
-        on which we interpolate to solve this equation. */
+    /** This function generates a random normalized radius \f$u\f$ from the smoothing kernel. This
+        is accomplished by generating a uniform deviate \f${\cal{X}}\f$, and solving the equation
+        \f[ {\cal{X}} = \int_0^u 4\pi\,W(u')\,u'^2\, {\text{d}}u' \f] for \f$u\f$. For the cubic
+        spline smoothing kernel, we obtain \f[ \int_0^u 4\pi\,W(u')\,u'^2\, {\text{d}}u' =
+        \begin{cases} \; 32 u^{6}-\dfrac{192}{5} u^{5}+\dfrac{32}{3} u^{3} & \quad\text{if }0\leq u
+        \leq \tfrac12, \\ \; -\dfrac{32}{3} u^{6}+\dfrac{192}{5} u^{5}-48 u^{4}+\dfrac{64}{3}
+        u^{3}-\dfrac{1}{15} & \quad \text{if }\tfrac12 \leq u \leq 1. \end{cases} \f] We precompute
+        a tabulation of this cumulative distribution function on which we interpolate to solve this
+        equation. */
     double generateRadius() const override;
 
     //======================== Data Members ========================

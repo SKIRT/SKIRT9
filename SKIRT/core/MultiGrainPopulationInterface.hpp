@@ -13,7 +13,7 @@ class GrainSizeDistribution;
 
 /** MultiGrainPopulationInterface is a pure interface exposing information about the individual
     grain populations making up a multi-grain dust mixture. It is implemented by the
-    MultiGrainDustMix and CompositeDustMix classes so that probes can retrieve such details. */
+    MultiGrainDustMix and related classes so that probes can retrieve such details. */
 class MultiGrainPopulationInterface
 {
 protected:

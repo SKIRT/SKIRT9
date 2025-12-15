@@ -57,7 +57,7 @@ class CylindricalCellGeometry : public ImportedGeometry
     ENUM_END()
 
     ITEM_CONCRETE(CylindricalCellGeometry, ImportedGeometry, "a geometry imported from cylindrical cell data")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(CylindricalCellMedium, "Level2")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(CylindricalCellGeometry, "Level2")
 
         PROPERTY_BOOL(autoRevolve, "automatically revolve 2D data to a 3D model")
         ATTRIBUTE_DEFAULT_VALUE(autoRevolve, "false")

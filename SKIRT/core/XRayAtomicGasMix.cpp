@@ -1075,6 +1075,13 @@ bool XRayAtomicGasMix::hasScatteringDispersion() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool XRayAtomicGasMix::scatteringEmulatesSecondaryEmission() const
+{
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 vector<StateVariable> XRayAtomicGasMix::specificStateVariableInfo() const
 {
     return vector<StateVariable>{StateVariable::numberDensity()};
@@ -1169,7 +1176,7 @@ void XRayAtomicGasMix::setScatteringInfoIfNeeded(PhotonPacket::ScatteringInfo* s
 
 ////////////////////////////////////////////////////////////////////
 
-void XRayAtomicGasMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
+bool XRayAtomicGasMix::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs,
                                          Direction bfky, const MaterialState* /*state*/, const PhotonPacket* pp) const
 {
     // draw a random scattering channel and atom velocity, unless a previous peel-off stored this already
@@ -1205,6 +1212,9 @@ void XRayAtomicGasMix::peeloffScattering(double& I, double& Q, double& U, double
 
     // if we have dispersion, Doppler-shift the outgoing wavelength from the electron rest frame
     if (temperature() > 0.) lambda = PhotonPacket::shiftedEmissionWavelength(lambda, bfkobs, scatinfo->velocity);
+
+    // return true for fluorescence, false otherwise
+    return scatinfo->species >= static_cast<int>(2 * numAtoms);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -1246,6 +1256,9 @@ void XRayAtomicGasMix::performScattering(double lambda, const MaterialState* sta
 
         // clear the stokes vector (only relevant if polarization support is enabled)
         pp->setUnpolarized();
+
+        // indicate that this packet emulates secondary emission;
+        pp->setEmulatedSecondaryOrigin(state->mediumIndex());
     }
 
     // if we have dispersion, Doppler-shift the outgoing wavelength from the electron rest frame

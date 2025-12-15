@@ -213,7 +213,7 @@ double FragmentDustMixDecorator::opacityExt(double lambda, const MaterialState* 
 
 ////////////////////////////////////////////////////////////////////
 
-void FragmentDustMixDecorator::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda,
+bool FragmentDustMixDecorator::peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda,
                                                  Direction bfkobs, Direction bfky, const MaterialState* state,
                                                  const PhotonPacket* pp) const
 {
@@ -240,6 +240,7 @@ void FragmentDustMixDecorator::peeloffScattering(double& I, double& Q, double& U
             V += Vf * wf;
         }
     }
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////

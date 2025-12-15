@@ -8,15 +8,19 @@
 
 #include "MaterialWavelengthRangeInterface.hpp"
 #include "SpatialGridWhenFormProbe.hpp"
+#include "WavelengthGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** OpacityProbe probes the opacity of the medium at a given wavelength, as discretized on the
+/** OpacityProbe probes the opacity of the medium on a given wavelength grid, as discretized on the
     spatial grid of the simulation. In the context of this probe, the opacity \f$k\f$ of a medium
     (at a given position and wavelength) is defined as the product of the local density and
     extinction cross section, \f$k=n\varsigma=\rho\kappa\f$. The probe can be used with any Form
     subclass. When associated with a form that projects the quantity along a path \f$s\f$, the
     probe outputs optical depth, \f$\tau=\int_s k(s) \mathrm{d}s\f$.
+
+    The resulting opacities are evaluated at the characteristic wavelengths of the provided 
+    wavelength grid. If none is provided, the default wavelength grid is used.
 
     Because probing is performed without the context of a photon packet, default values are used
     for any relevant incoming photon packet properties. For example, the effects of kinematics are
@@ -52,12 +56,10 @@ class OpacityProbe : public SpatialGridWhenFormProbe, public MaterialWavelengthR
     ITEM_CONCRETE(OpacityProbe, SpatialGridWhenFormProbe, "internal spatial grid: opacity of the medium")
         ATTRIBUTE_TYPE_DISPLAYED_IF(OpacityProbe, "Medium&SpatialGrid")
 
-        PROPERTY_DOUBLE(wavelength, "the wavelength at which to determine the opacity")
-        ATTRIBUTE_QUANTITY(wavelength, "wavelength")
-        ATTRIBUTE_MIN_VALUE(wavelength, "1 pm")
-        ATTRIBUTE_MAX_VALUE(wavelength, "1 m")
-        ATTRIBUTE_DEFAULT_VALUE(wavelength, "0.55 micron")
-        ATTRIBUTE_DISPLAYED_IF(wavelength, "Level2")
+        PROPERTY_ITEM(wavelengthGrid, WavelengthGrid, "the wavelength grid for this probe")
+        ATTRIBUTE_RELEVANT_IF(wavelengthGrid, "Panchromatic")
+        ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "!DefaultInstrumentWavelengthGrid")
+        ATTRIBUTE_DISPLAYED_IF(wavelengthGrid, "Level2")
 
         PROPERTY_ENUM(aggregation, Aggregation, "how to aggregate the opacity")
         ATTRIBUTE_DEFAULT_VALUE(aggregation, "Type")
@@ -72,6 +74,11 @@ public:
         indicating that wavelength-dependent material properties may be required for this
         wavelength. */
     Range wavelengthRange() const override;
+
+    /** This function returns a pointer to the user-configured wavelength grid for this probe, if
+        any, indicating that wavelength-dependent material properties may be required for these
+        wavelengths. */
+    WavelengthGrid* materialWavelengthGrid() const override;
 
     //======================== Other Functions =======================
 

@@ -76,6 +76,13 @@ bool MaterialMix::hasScatteringDispersion() const
 
 ////////////////////////////////////////////////////////////////////
 
+bool MaterialMix::scatteringEmulatesSecondaryEmission() const
+{
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
 MaterialMix::DynamicStateType MaterialMix::hasDynamicMediumState() const
 {
     return DynamicStateType::None;
@@ -129,6 +136,22 @@ bool MaterialMix::isSpecificStateConverged(int /*numCells*/, int /*numUpdated*/,
 double MaterialMix::asymmpar(double /*lambda*/) const
 {
     return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool MaterialMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/, double& /*lambda*/,
+                                    Direction /*bfkobs*/, Direction /*bfky*/, const MaterialState* /*state*/,
+                                    const PhotonPacket* /*pp*/) const
+{
+    throw FATALERROR("This function implementation should never be called");
+}
+
+////////////////////////////////////////////////////////////////////
+
+void MaterialMix::performScattering(double /*lambda*/, const MaterialState* /*state*/, PhotonPacket* /*pp*/) const
+{
+    throw FATALERROR("This function implementation should never be called");
 }
 
 ////////////////////////////////////////////////////////////////////

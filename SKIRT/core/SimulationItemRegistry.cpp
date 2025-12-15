@@ -9,6 +9,7 @@
 
 // ---> add new items below in alphabetical order
 
+#include "AbsorptionOnlyMaterialMixDecorator.hpp"
 #include "AdaptiveMeshGeometry.hpp"
 #include "AdaptiveMeshMedium.hpp"
 #include "AdaptiveMeshSource.hpp"
@@ -117,6 +118,7 @@
 #include "HirashitaLogNormalGrainSizeDistribution.hpp"
 #include "HofmeisterPericlaseGrainComposition.hpp"
 #include "HollowRadialVectorField.hpp"
+#include "HubbleRadialVectorField.hpp"
 #include "HyperboloidGeometry.hpp"
 #include "HyperboloidShellGeometry.hpp"
 #include "ImportedMediumDensityProbe.hpp"
@@ -216,6 +218,7 @@
 #include "PredefinedBandWavelengthGrid.hpp"
 #include "ProbeSystem.hpp"
 #include "PseudoSersicGeometry.hpp"
+#include "QuarticSplineSmoothingKernel.hpp"
 #include "QuasarSED.hpp"
 #include "RadialVectorField.hpp"
 #include "RadiationFieldProbe.hpp"
@@ -252,6 +255,9 @@
 #include "Sphere2DSpatialGrid.hpp"
 #include "Sphere3DSpatialGrid.hpp"
 #include "SphericalBackgroundSource.hpp"
+#include "SphericalCellGeometry.hpp"
+#include "SphericalCellMedium.hpp"
+#include "SphericalCellSource.hpp"
 #include "SphericalClipGeometryDecorator.hpp"
 #include "SpheroidalGeometryDecorator.hpp"
 #include "SpheroidalGraphiteGrainComposition.hpp"
@@ -265,6 +271,7 @@
 #include "StellarSurfaceSource.hpp"
 #include "StellarUnits.hpp"
 #include "SunSED.hpp"
+#include "SymCosMesh.hpp"
 #include "SymLogMesh.hpp"
 #include "SymPowMesh.hpp"
 #include "TTauriDiskGeometry.hpp"
@@ -337,6 +344,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ParticleSource>();
     ItemRegistry::add<CellSource>();
     ItemRegistry::add<CylindricalCellSource>();
+    ItemRegistry::add<SphericalCellSource>();
     ItemRegistry::add<MeshSource>();
     ItemRegistry::add<AdaptiveMeshSource>();
     ItemRegistry::add<VoronoiMeshSource>();
@@ -462,6 +470,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ParticleGeometry>();
     ItemRegistry::add<CellGeometry>();
     ItemRegistry::add<CylindricalCellGeometry>();
+    ItemRegistry::add<SphericalCellGeometry>();
     ItemRegistry::add<MeshGeometry>();
     ItemRegistry::add<AdaptiveMeshGeometry>();
     ItemRegistry::add<VoronoiMeshGeometry>();
@@ -485,6 +494,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // smoothing kernels
     ItemRegistry::add<SmoothingKernel>();
     ItemRegistry::add<CubicSplineSmoothingKernel>();
+    ItemRegistry::add<QuarticSplineSmoothingKernel>();
     ItemRegistry::add<ScaledGaussianSmoothingKernel>();
     ItemRegistry::add<UniformSmoothingKernel>();
 
@@ -492,6 +502,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<VectorField>();
     ItemRegistry::add<RadialVectorField>();
     ItemRegistry::add<HollowRadialVectorField>();
+    ItemRegistry::add<HubbleRadialVectorField>();
     ItemRegistry::add<CylindricalVectorField>();
     ItemRegistry::add<UnidirectionalVectorField>();
     ItemRegistry::add<OffsetVectorFieldDecorator>();
@@ -528,6 +539,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<SymPowMesh>();
     ItemRegistry::add<LogMesh>();
     ItemRegistry::add<SymLogMesh>();
+    ItemRegistry::add<SymCosMesh>();
     ItemRegistry::add<TabulatedMesh>();
     ItemRegistry::add<FileMesh>();
     ItemRegistry::add<ListMesh>();
@@ -540,6 +552,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<ParticleMedium>();
     ItemRegistry::add<CellMedium>();
     ItemRegistry::add<CylindricalCellMedium>();
+    ItemRegistry::add<SphericalCellMedium>();
     ItemRegistry::add<MeshMedium>();
     ItemRegistry::add<AdaptiveMeshMedium>();
     ItemRegistry::add<VoronoiMeshMedium>();
@@ -596,6 +609,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<NonLTELineGasMix>();
     ItemRegistry::add<LyaNeutralHydrogenGasMix>();
     ItemRegistry::add<TrivialGasMix>();
+
+    ItemRegistry::add<AbsorptionOnlyMaterialMixDecorator>();
 
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();
