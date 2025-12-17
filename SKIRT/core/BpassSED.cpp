@@ -51,6 +51,10 @@ const SEDFamily* BpassSED::getFamilyAndParameters(Array& parameters)
                                           BpassSEDFamily::Resolution::Original);
         }
     }
+
+    // to keep the compiler happy
+    return new BpassSEDFamily(this,BpassSEDFamily::IMF::Chabrier300,
+                                          BpassSEDFamily::Resolution::Downsampled);
 }
 
 ////////////////////////////////////////////////////////////////////
