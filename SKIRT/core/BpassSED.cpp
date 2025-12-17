@@ -20,16 +20,16 @@ const SEDFamily* BpassSED::getFamilyAndParameters(Array& parameters)
         switch (_imf)
         {
             case IMF::Chabrier100:
-                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Chabrier100,
+                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Chabrier100,
                                           BpassSEDFamily::Resolution::Downsampled);
             case IMF::Chabrier300:
-                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Chabrier300,
+                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Chabrier300,
                                           BpassSEDFamily::Resolution::Downsampled);
             case IMF::Kroupa100:
-                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Kroupa100,
+                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Kroupa100,
                                           BpassSEDFamily::Resolution::Downsampled);
             case IMF::Kroupa300:
-                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Kroupa300,
+                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Kroupa300,
                                           BpassSEDFamily::Resolution::Downsampled);
         }
     }
@@ -38,23 +38,18 @@ const SEDFamily* BpassSED::getFamilyAndParameters(Array& parameters)
         switch (_imf)
         {
             case IMF::Chabrier100:
-                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Chabrier100,
-                                          BpassSEDFamily::Resolution::Original);
+                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Chabrier100, BpassSEDFamily::Resolution::Original);
             case IMF::Chabrier300:
-                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Chabrier300,
-                                          BpassSEDFamily::Resolution::Original);
+                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Chabrier300, BpassSEDFamily::Resolution::Original);
             case IMF::Kroupa100:
-                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Kroupa100,
-                                          BpassSEDFamily::Resolution::Original);
+                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Kroupa100, BpassSEDFamily::Resolution::Original);
             case IMF::Kroupa300:
-                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Kroupa300,
-                                          BpassSEDFamily::Resolution::Original);
+                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Kroupa300, BpassSEDFamily::Resolution::Original);
         }
     }
 
     // to keep the compiler happy
-    return new BpassSEDFamily(this,BpassSEDFamily::IMF::Chabrier300,
-                                          BpassSEDFamily::Resolution::Downsampled);
+    return new BpassSEDFamily(this, BpassSEDFamily::IMF::Chabrier300, BpassSEDFamily::Resolution::Downsampled);
 }
 
 ////////////////////////////////////////////////////////////////////
