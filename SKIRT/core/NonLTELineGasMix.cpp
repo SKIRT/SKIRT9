@@ -330,7 +330,6 @@ namespace
     // solve the square set of linear equations represented by the given matrix using LU decomposition
     // the matrix should have N rows and N+1 columns; its contents is overwritten and
     // the solution is returned as an array of size N
-    // Throws FATALERROR if the matrix is singular or nearly singular.
     Array solveMatrixEquation(vector<vector<double>>& matrix)
     {
         size_t size = matrix.size();
@@ -342,35 +341,11 @@ namespace
         // decomposition
         for (size_t k = 0; k < size - 1; ++k)
         {
-            // Swap rows if necessary
             if (matrix[k][k] == 0.0)
             {
-                // Find the row with the maximum absolute value in column k (partial pivoting)
-                size_t maxRow = k;
-                double maxVal = matrix[k][k];
-                for (size_t i = k + 1; i < size; ++i)
-                {
-                    double absVal = matrix[i][k];
-                    if (absVal != maxVal &&  std::abs(absVal) > 0.0)
-                    {
-                        maxVal = absVal;
-                        maxRow = i;
-                        break;  // Exit early on first difference
-                    }
-                }
-                if (maxRow != k)
-                {
-                    std::swap(matrix[k], matrix[maxRow]);
-                    std::swap(solution[k], solution[maxRow]);
-                }
-                else
-                {
-                    throw FATALERROR("The matrix is 0 in the diagonal at row " + std::to_string(k)
-                    + " (pivot = " + StringUtils::toString(matrix[k][k], 'e', 6)
-                    + " and the replacement was not found");
-                }
+                std::swap(matrix[k], matrix[k + 1]);
+                std::swap(solution[k], solution[k + 1]);
             }
-
             for (size_t i = k + 1; i < size; ++i)
             {
                 double inverse = matrix[i][k] / matrix[k][k];
@@ -388,18 +363,6 @@ namespace
         {
             for (size_t j = i + 1; j < size; ++j) solution[i] -= matrix[i][j] * solution[j];
             solution[i] /= matrix[i][i];
-
-            // Verify that the solution is finite (no NaN or Inf)
-            if (!std::isfinite(solution[i]))
-            {
-                throw FATALERROR("LU decomposition: non-finite solution at index "
-                + std::to_string(i) + " (value = " + StringUtils::toString(solution[i], 'e', 6) + "), matrix("
-                + std::to_string(i) + ") = " + StringUtils::toString(matrix[i][i], 'e', 6) + "). "
-                + "The matrix for the level population is possibly too sparse. It might be due to the number density"
-                + "of the collision partners are zero. It would be helpful to set the number density to zero for cells "
-                + "with the low number density of the gas (e.g., ignore cells with nH < 0.001 cm-3 ).  "
-                + "If it does not help you, it is better to consult with the SKIRT developers. ");
-            }
         }
 
         // return the solution
@@ -481,26 +444,13 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
             if (abs(gsum - 1.) > MAX_GAUSS_ERROR_WARN)
             {
                 auto units = find<Units>();
-                vector<string> message1 = {
+                vector<string> message = {
                     "Integral of Gaussian line profile over radiation field is inaccurate:",
                     "  integral equals " + StringUtils::toString(gsum) + " rather than unity",
                     "  over wavelengths from " + StringUtils::toString(units->owavelength(lambdamin)) + " "
-                    + units->uwavelength() + " to " + StringUtils::toString(units->owavelength(lambdamax)) + " "
-                    + units->uwavelength() + "."
-                };
-                vector<string> message2 = {
-                    " 1. Set the wavelength coverage from a velocity window of ±5 x total turbulent velocity (vturb) "
-                    " (i.e., Vmin = -5 vturb, Vmax = +5 vturb) for the radiation field and sample it with around 100"
-                    " points. The total turbulent velocity includes the micro-turbulent velocity and thermal velocity."
-                };
-
-                vector<string> message3 = {
-                    " 2. When importing the NonLTE gas medium, it is better to limit the velocity domain.",
-                    " For example, set the number density to zero for cells with |v| > vmax(system) + 5 vturb km/s,"
-                    " where vmax(system) is the largest velocity range, when the wavelength range for each line of "
-                    "the wavelengthBiasDistribution is determined."
-                };
-
+                        + units->uwavelength() + " to " + StringUtils::toString(units->owavelength(lambdamax)) + " "
+                        + units->uwavelength(),
+                    "  --> increase the resolution of the radiation field wavelength grid"};
                 if (abs(gsum - 1.) > MAX_GAUSS_ERROR_FAIL)
                 {
                     auto log = find<Log>();
@@ -508,15 +458,11 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
                               + ")=" + StringUtils::toString(gaussian(_lambdav[ellmin], center, sigma)) + "Gausss("
                               + StringUtils::toString(_lambdav[ellmax - 1])
                               + ")=" + StringUtils::toString(gaussian(_lambdav[ellmax - 1], center, sigma)));
-                    log->info(message2[0]);
-                    log->info(message3[0]);
-                    throw FATALERROR(StringUtils::join(message1, "\n"));
+                    throw FATALERROR(StringUtils::join(message, "\n"));
                 }
                 auto log = find<Log>();
-                log->warning(message1[0]);
-                log->info(message2[0]);
-                log->info(message3[0]);
-                for (size_t i = 1; i != message1.size(); ++i) find<Log>()->info(message1[i]);
+                log->warning(message[0]);
+                for (size_t i = 1; i != message.size(); ++i) find<Log>()->info(message[i]);
             }
             double J = Jsum / gsum;
             if (storeMeanIntensities()) state->setMeanIntensity(k, J);
