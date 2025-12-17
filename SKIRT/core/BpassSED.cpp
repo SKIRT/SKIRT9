@@ -15,7 +15,42 @@ const SEDFamily* BpassSED::getFamilyAndParameters(Array& parameters)
     NR::assign(parameters, 1., _metallicity, _age);
 
     // construct the library of SED models
-    return new BpassSEDFamily(this, BpassSEDFamily::IMF::Chabrier300, BpassSEDFamily::Resolution::Original);
+    if (_resolution == Resolution::Downsampled)
+    {
+        switch (_imf)
+        {
+            case IMF::Chabrier100:
+                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Chabrier100,
+                                          BpassSEDFamily::Resolution::Downsampled);
+            case IMF::Chabrier300:
+                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Chabrier300,
+                                          BpassSEDFamily::Resolution::Downsampled);
+            case IMF::Kroupa100:
+                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Kroupa100,
+                                          BpassSEDFamily::Resolution::Downsampled);
+            case IMF::Kroupa300:
+                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Kroupa300,
+                                          BpassSEDFamily::Resolution::Downsampled);
+        }
+    }
+    else
+    {
+        switch (_imf)
+        {
+            case IMF::Chabrier100:
+                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Chabrier100,
+                                          BpassSEDFamily::Resolution::Original);
+            case IMF::Chabrier300:
+                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Chabrier300,
+                                          BpassSEDFamily::Resolution::Original);
+            case IMF::Kroupa100:
+                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Kroupa100,
+                                          BpassSEDFamily::Resolution::Original);
+            case IMF::Kroupa300:
+                return new BpassSEDFamily(this,BpassSEDFamily::IMF::Kroupa300,
+                                          BpassSEDFamily::Resolution::Original);
+        }
+    }
 }
 
 ////////////////////////////////////////////////////////////////////

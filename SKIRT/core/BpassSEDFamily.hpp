@@ -14,7 +14,8 @@
 /** An instance of the BpassSEDFamily class represents a BPASS family of single stellar population
     (SSP) %SED templates (Eldridge, Stanway et al, 2017, PASA 34, 58; Stanway and Eldridge, 2018,
     MNRAS, 479, 75). We use the BPASS data release version 2.2.1 (July 2018) of the model that
-    includes binary stellar systems and that assumes a Chabrier IMF.
+    includes binary stellar systems and that assumes Chabrier and Kroupa IMFs.
+
 
     The SED templates are parametrized on metallicity (1e-5 - 0.04) and age (1 Myr - 100 Gyr), and
     scale with the initial mass of the SSP.
@@ -24,6 +25,8 @@
     \em imf determines the IMF, more specifically the upper limit of the stellar mass range:
       - Chabrier100: Chabrier IMF with stellar masses from 0.1 to 100 \f$\mathrm{M}_\odot\f$
       - Chabrier300: Chabrier IMF with stellar masses from 0.1 to 300 \f$\mathrm{M}_\odot\f$
+      - Kroupa100: Kroupa IMF with stellar masses from 0.1 to 100 \f$\mathrm{M}_\odot\f$
+      - Kroupa300: Kroupa IMF with stellar masses from 0.1 to 100 \f$\mathrm{M}_\odot\f$
 
     \em resolution determines the spectral resolution and the wavelength coverage:
       - Original: the wavelength grid has a resolution of 1 Angstrom over the wavelength range
@@ -51,9 +54,11 @@
 class BpassSEDFamily : public SEDFamily
 {
     /** The enumeration type indicating the IMF to use */
-    ENUM_DEF(IMF, Chabrier100, Chabrier300)
+    ENUM_DEF(IMF, Chabrier100, Chabrier300, Kroupa100, Kroupa300)
         ENUM_VAL(IMF, Chabrier100, "Chabrier IMF (0.1-100 Msun)")
         ENUM_VAL(IMF, Chabrier300, "Chabrier IMF (0.1-300 Msun)")
+        ENUM_VAL(IMF, Kroupa100, "Kroupa IMF (0.1-100 Msun)")
+        ENUM_VAL(IMF, Kroupa300, "Kroupa IMF (0.1-300 Msun)")
     ENUM_END()
 
     /** The enumeration type indicating the wavelength resolution and spectral range */
