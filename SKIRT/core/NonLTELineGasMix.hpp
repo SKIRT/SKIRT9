@@ -295,6 +295,7 @@ class NonLTELineGasMix : public EmittingGasMix
         ENUM_VAL(Species, Test, "Fictive two-level test molecule (TT)")
         ENUM_VAL(Species, Hydroxyl, "Hydroxyl radical (OH)")
         ENUM_VAL(Species, HydroxylHFS, "Hydroxyl radical (OH) with hyperfine structure")
+        ENUM_VAL(Species, Formyl, "Formyl cation (HCO+)")
         ENUM_VAL(Species, CarbonMonoxide, "Carbon monoxide (CO)")
         ENUM_VAL(Species, AtomicCarbon, "Atomic carbon (C)")
         ENUM_VAL(Species, IonizedCarbon, "Ionized carbon (C+)")
