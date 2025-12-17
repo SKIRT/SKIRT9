@@ -69,14 +69,6 @@
 #include "DraineGraphiteGrainComposition.hpp"
 #include "DraineIonizedPAHGrainComposition.hpp"
 #include "DraineLiDustMix.hpp"
-#include "DraineLi2007GraphiteGrainComposition.hpp"
-#include "DraineLi2007IonizedPAHGrainComposition.hpp"
-#include "DraineLi2007NeutralPAHGrainComposition.hpp"
-#include "DraineLi2007SilicateSameExtAbsGrainComposition.hpp"
-#include "DraineLi2007GraphiteSameExtAbsGrainComposition.hpp"
-#include "DraineLi2007IonizedPAHSameExtAbsGrainComposition.hpp"
-#include "DraineLi2007NeutralPAHSameExtAbsGrainComposition.hpp"
-#include "DraineLi2007SilicateGrainComposition.hpp"
 #include "DraineNeutralPAHGrainComposition.hpp"
 #include "DraineSilicateGrainComposition.hpp"
 #include "DustAbsorptionPerCellProbe.hpp"
@@ -638,14 +630,6 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<GrainComposition>();
     ItemRegistry::add<DraineSilicateGrainComposition>();
     ItemRegistry::add<DraineGraphiteGrainComposition>();
-    ItemRegistry::add<DraineLi2007SilicateGrainComposition>();
-    ItemRegistry::add<DraineLi2007GraphiteGrainComposition>();
-    ItemRegistry::add<DraineLi2007NeutralPAHGrainComposition>();
-    ItemRegistry::add<DraineLi2007IonizedPAHGrainComposition>();
-    ItemRegistry::add<DraineLi2007SilicateSameExtAbsGrainComposition>();
-    ItemRegistry::add<DraineLi2007GraphiteSameExtAbsGrainComposition>();
-    ItemRegistry::add<DraineLi2007NeutralPAHSameExtAbsGrainComposition>();
-    ItemRegistry::add<DraineLi2007IonizedPAHSameExtAbsGrainComposition>();
     ItemRegistry::add<DraineNeutralPAHGrainComposition>();
     ItemRegistry::add<DraineIonizedPAHGrainComposition>();
     ItemRegistry::add<MieSilicateGrainComposition>();
