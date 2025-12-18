@@ -14,42 +14,19 @@ const SEDFamily* BpassSED::getFamilyAndParameters(Array& parameters)
     // set the parameters using arbitrary scaling
     NR::assign(parameters, 1., _metallicity, _age);
 
-    // construct the library of SED models
-    if (_resolution == Resolution::Downsampled)
+    // construct the appropriate library of SED models
+    auto imf = BpassSEDFamily::IMF::Chabrier100;
+    switch (_imf)
     {
-        switch (_imf)
-        {
-            case IMF::Chabrier100:
-                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Chabrier100,
-                                          BpassSEDFamily::Resolution::Downsampled);
-            case IMF::Chabrier300:
-                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Chabrier300,
-                                          BpassSEDFamily::Resolution::Downsampled);
-            case IMF::Kroupa100:
-                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Kroupa100,
-                                          BpassSEDFamily::Resolution::Downsampled);
-            case IMF::Kroupa300:
-                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Kroupa300,
-                                          BpassSEDFamily::Resolution::Downsampled);
-        }
+        case IMF::Chabrier100: imf = BpassSEDFamily::IMF::Chabrier100; break;
+        case IMF::Chabrier300: imf = BpassSEDFamily::IMF::Chabrier300; break;
+        case IMF::Kroupa100: imf = BpassSEDFamily::IMF::Kroupa100; break;
+        case IMF::Kroupa300: imf = BpassSEDFamily::IMF::Kroupa300; break;
     }
-    else
-    {
-        switch (_imf)
-        {
-            case IMF::Chabrier100:
-                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Chabrier100, BpassSEDFamily::Resolution::Original);
-            case IMF::Chabrier300:
-                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Chabrier300, BpassSEDFamily::Resolution::Original);
-            case IMF::Kroupa100:
-                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Kroupa100, BpassSEDFamily::Resolution::Original);
-            case IMF::Kroupa300:
-                return new BpassSEDFamily(this, BpassSEDFamily::IMF::Kroupa300, BpassSEDFamily::Resolution::Original);
-        }
-    }
+    auto resolution = _resolution == Resolution::Downsampled ? BpassSEDFamily::Resolution::Downsampled
+                                                             : BpassSEDFamily::Resolution::Original;
 
-    // to keep the compiler happy
-    return new BpassSEDFamily(this, BpassSEDFamily::IMF::Chabrier300, BpassSEDFamily::Resolution::Downsampled);
+    return new BpassSEDFamily(this, imf, resolution);
 }
 
 ////////////////////////////////////////////////////////////////////
