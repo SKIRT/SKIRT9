@@ -27,6 +27,8 @@ void BpassSEDFamily::setupSelfBefore()
     {
         case IMF::Chabrier100: name += "_Chabrier100"; break;
         case IMF::Chabrier300: name += "_Chabrier300"; break;
+        case IMF::Kroupa100: name += "_Kroupa100"; break;
+        case IMF::Kroupa300: name += "_Kroupa300"; break;
     }
     if (_resolution == Resolution::Downsampled) name += "_downsampled";
 
