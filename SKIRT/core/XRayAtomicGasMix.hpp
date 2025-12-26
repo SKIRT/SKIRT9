@@ -323,6 +323,7 @@ class XRayAtomicGasMix : public MaterialMix
         ATTRIBUTE_MIN_VALUE(H2fraction, "[0")
         ATTRIBUTE_MAX_VALUE(H2fraction, "1]")
         ATTRIBUTE_DEFAULT_VALUE(H2fraction, "0")
+        ATTRIBUTE_RELEVANT_IF(H2fraction, "scatterBoundElectronsGood|scatterBoundElectronsExact")
         ATTRIBUTE_DISPLAYED_IF(H2fraction, "Level3")
 
     ITEM_END()
