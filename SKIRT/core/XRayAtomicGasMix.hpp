@@ -87,7 +87,11 @@
     - \em Exact: use anomalous Rayleigh scattering and exact bound-Compton scattering. This
     implementation accurately reflects the physical processes, apart from approximations caused by
     discretization, tabulation, and interpolation.
-
+ 
+    Finally, \em H2fraction sets the fraction of hydrogen atoms locked up in molecular H2, for which
+    the Rayleigh scattering cross section is enhanced due to coherent scattering on the H2 molecule,
+    following the exact same implementation as the MONACO code (Odaka+11).
+ 
     <b>Configuring the simulation</b>
 
     In addition to a medium component configured with the material mix represented by this class,
@@ -126,7 +130,10 @@
     of abundances is left empty in the ski file, default abundancies are used, taken from Table 2
     of Anders & Grevesse (1989), the default abundance table in Xspec. In the default list, the
     abundance of hydrogen is set to unity. However, it is acceptable to specify a hydrogen
-    abundance lower than one, for example to model an ionized hydrogen fraction.
+    abundance lower than one, for example to model an ionized hydrogen fraction. The first element
+    in the abundance list represents all hydrogen atoms, both atomic and those in H2 (i.e. 2 per H2).
+    The \em H2fraction (configured in the ski file) then sets the fraction of these hydrogen atoms
+    that are locked up in molecular H2 (for which the Rayleigh scattering cross section is enhanced).
 
     <b>Photo-absorption cross section</b>
 
@@ -186,17 +193,19 @@
     {\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f]
 
     For smooth Rayleigh scattering, the cross sections \f$\sigma_{RSS, Z}(E)\f$ are available as a
-    table. The normalised scattering phase function for element Z is given by \f[ \Phi_{RSS,
-    Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{RSS, Z}(E)}\Big[ 1 + \cos^2\theta \Big]
-    \cdot F_Z^2(q), \f] with tabulated atomic form factors \f$F_Z(q)\f$, which converge to \f$Z\f$
-    at small \f$q\f$ and decrease to zero for large \f$q\f$.
+    table (for each H atom in H2, we have \f$2\times \f$\sigma_{RSS, H}(E)\f$\f$). The normalised
+    scattering phase function for element Z is given by \f[ \Phi_{RSS, Z}(\theta, E)= \frac{3}{4}\,
+    \frac{\sigma_T}{\sigma_{RSS, Z}(E)}\Big[ 1 + \cos^2\theta \Big] \cdot F_Z^2(q), \f] with
+    tabulated atomic form factors \f$F_Z(q)\f$, which converge to \f$Z\f$ at small \f$q\f$ and
+    decrease to zero for large \f$q\f$.
 
     Similarly, for anomalous Rayleigh scattering, the cross sections \f$\sigma_{RSA, Z}(E)\f$ are
-    available as a table. The normalised scattering phase function for element Z is now given by
-    \f[ \Phi_{RSA, Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{RSA, Z}(E)}\Big[ 1 +
-    \cos^2\theta \Big] \cdot \Big[\big(F_Z(q) + F'_Z(E)\big)^2 + {F''_Z}^2(E)\Big], \f] with the
-    same atomic form factors \f$F_Z(q)\f$ as before, and tabulated real and imaginary anomalous
-    scattering functions \f$F'_Z(E)\f$ and \f$F''_Z(E)\f$.
+    available as a table (for each H atom in H2, we have \f$2\times \f$\sigma_{RSA, H}(E)\f$\f$). The
+    normalised scattering phase function for element Z is now given by \f[ \Phi_{RSA, Z}(\theta,
+    E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{RSA, Z}(E)}\Big[ 1 + \cos^2\theta \Big] \cdot \Big[
+    \big(F_Z(q) + F'_Z(E)\big)^2 + {F''_Z}^2(E)\Big], \f] with the same atomic form factors \f$F_Z(q)\f$
+    as before, and tabulated real and imaginary anomalous scattering functions \f$F'_Z(E)\f$ and
+    \f$F''_Z(E)\f$.
 
     <b>Electron scattering - photon energy shift</b>
 
@@ -309,6 +318,12 @@ class XRayAtomicGasMix : public MaterialMix
         PROPERTY_ENUM(scatterBoundElectrons, BoundElectrons, "implementation of scattering by bound electrons")
         ATTRIBUTE_DEFAULT_VALUE(scatterBoundElectrons, "Good")
         ATTRIBUTE_DISPLAYED_IF(scatterBoundElectrons, "Level3")
+
+        PROPERTY_DOUBLE(H2fraction, "fraction of the H atoms in H2 molecules")
+        ATTRIBUTE_MIN_VALUE(H2fraction, "[0")
+        ATTRIBUTE_MAX_VALUE(H2fraction, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(H2fraction, "0")
+        ATTRIBUTE_DISPLAYED_IF(H2fraction, "Level3")
 
     ITEM_END()
 

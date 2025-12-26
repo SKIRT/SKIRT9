@@ -961,6 +961,8 @@ void XRayAtomicGasMix::setupSelfBefore()
         {
             sigma += (_ray->sectionSca(lambda, Z) + _com->sectionSca(lambda, Z)) * atomv[Z - 1].abund;
         }
+        // enhancement due to coherent scattering on molecular H2 w.r.t. Rayleigh scattering on atomic H
+        sigma += _ray->sectionSca(lambda, 1) * atomv[1 - 1].abund * _H2fraction;
 
         // photo-absorption and fluorescence
         int index = 0;
@@ -1015,6 +1017,8 @@ void XRayAtomicGasMix::setupSelfBefore()
             contribv[Z - 1] = _ray->sectionSca(lambda, Z) * atomv[Z - 1].abund;
             contribv[numAtoms + Z - 1] = _com->sectionSca(lambda, Z) * atomv[Z - 1].abund;
         }
+        // enhancement due to coherent scattering on molecular H2 w.r.t. Rayleigh scattering on atomic H
+        contribv[1 - 1] += _ray->sectionSca(lambda, 1) * atomv[1 - 1].abund * _H2fraction;
 
         // fluorescence: iterate over both cross section and fluorescence parameter sets in sync
         auto flp = fluorescenceParams.begin();
