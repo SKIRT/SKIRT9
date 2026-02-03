@@ -1,13 +1,13 @@
 #ifndef _FITSIO2_H
 #define _FITSIO2_H
- 
+
 #include "fitsio.h"
 
-/* 
+/*
     Threading support using POSIX threads programming interface
-    (supplied by Bruce O'Neel) 
+    (supplied by Bruce O'Neel)
 
-    All threaded programs MUST have the 
+    All threaded programs MUST have the
 
     -D_REENTRANT
 
@@ -50,10 +50,10 @@ extern int Fitsio_Pthread_Status;
 
 #define DBUFFSIZE 28800 /* size of data buffer in bytes */
 
-#define NMAXFILES  10000   /* maximum number of FITS files that can be opened */
+#define NMAXFILES  1000   /* maximum number of FITS files that can be opened */
         /* CFITSIO will allocate (NMAXFILES * 80) bytes of memory */
-	/* plus each file that is opened will use NIOBUF * 2880 bytes of memeory */
-	/* where NIOBUF is defined in fitio.h and has a default value of 40 */
+        /* plus each file that is opened will use NIOBUF * 2880 bytes of memeory */
+        /* where NIOBUF is defined in fitio.h and has a default value of 40 */
 
 #define MINDIRECT 8640   /* minimum size for direct reads and writes */
                          /* MINDIRECT must have a value >= 8640 */
@@ -87,9 +87,9 @@ extern int Fitsio_Pthread_Status;
                                /*  SUN Solaris7 in 64-bit mode */
 #define BYTESWAPPED FALSE
 #define MACHINE NATIVE
-#define LONGSIZE 64   
+#define LONGSIZE 64
 
-                            /* IBM System z mainframe support */ 
+                            /* IBM System z mainframe support */
 #elif defined(__s390x__)
 #define BYTESWAPPED FALSE
 #define LONGSIZE 64
@@ -101,7 +101,7 @@ extern int Fitsio_Pthread_Status;
 #elif defined(__ia64__)  || defined(__x86_64__) || defined(__AARCH64EL__)
                   /*  Intel itanium 64-bit PC, or AMD opteron 64-bit PC */
 #define BYTESWAPPED TRUE
-#define LONGSIZE 64   
+#define LONGSIZE 64
 
 #elif defined(_SX)             /* Nec SuperUx */
 
@@ -155,10 +155,10 @@ extern int Fitsio_Pthread_Status;
 /*  the following are all 32-bit byteswapped platforms            */
 
 #elif defined(vax) && defined(VMS)
- 
+
 #define MACHINE VAXVMS
 #define BYTESWAPPED TRUE
- 
+
 #elif defined(__alpha) && defined(__VMS)
 
 #if (__D_FLOAT == TRUE)
@@ -166,16 +166,16 @@ extern int Fitsio_Pthread_Status;
 /* this float option is the same as for VAX/VMS machines. */
 #define MACHINE VAXVMS
 #define BYTESWAPPED TRUE
- 
+
 #elif  (__G_FLOAT == TRUE)
- 
+
 /*  G_FLOAT is the default for ALPHA VMS systems */
 #define MACHINE ALPHAVMS
 #define BYTESWAPPED TRUE
 #define FLOATTYPE GFLOAT
- 
+
 #elif  (__IEEE_FLOAT == TRUE)
- 
+
 #define MACHINE ALPHAVMS
 #define BYTESWAPPED TRUE
 #define FLOATTYPE IEEEFLOAT
@@ -185,7 +185,7 @@ extern int Fitsio_Pthread_Status;
 #elif defined(ultrix) && defined(unix)
  /* old Dec ultrix machines */
 #define BYTESWAPPED TRUE
- 
+
 #elif defined(__i386) || defined(__i386__) || defined(__i486__) || defined(__i586__) \
   || defined(_MSC_VER) || defined(__BORLANDC__) || defined(__TURBOC__) \
   || defined(_NI_mswin_) || defined(__EMX__)
@@ -201,7 +201,7 @@ extern int Fitsio_Pthread_Status;
 /* (__ARMEL__ would be defined on little-endian, but not on big-endian). */
 
 #define BYTESWAPPED TRUE
- 
+
 #elif defined(__tile__)
 
 /*  64-core 8x8-architecture Tile64 platform */
@@ -225,7 +225,7 @@ extern int Fitsio_Pthread_Status;
 
 #define MACHINE NATIVE
 #define BYTESWAPPED FALSE
- 
+
 #endif
 
 #ifndef MACHINE
@@ -237,15 +237,15 @@ extern int Fitsio_Pthread_Status;
 #define LONGSIZE 32
 #endif
 
-/*       end of block that determine long size and byte swapping        */ 
+/*       end of block that determine long size and byte swapping        */
 /* ==================================================================== */
- 
+
 #define IGNORE_EOF 1
 #define REPORT_EOF 0
 #define DATA_UNDEFINED -1
 #define NULL_UNDEFINED 1234554321
 #define ASCII_NULL_UNDEFINED 1   /* indicate no defined null value */
- 
+
 #define maxvalue(A,B) ((A) > (B) ? (A) : (B))
 #define minvalue(A,B) ((A) < (B) ? (A) : (B))
 
@@ -254,20 +254,20 @@ extern int Fitsio_Pthread_Status;
 #define FSTRNCMP(a,b,n)  ((a)[0]<(b)[0]?-1:(a)[0]>(b)[0]?1:strncmp((a),(b),(n)))
 
 #if defined(__VMS) || defined(VMS)
- 
+
 #define FNANMASK   0xFFFF /* mask all bits  */
 #define DNANMASK   0xFFFF /* mask all bits  */
- 
+
 #else
- 
+
 #define FNANMASK   0x7F80 /* mask bits 1 - 8; all set on NaNs */
                                      /* all 0 on underflow  or 0. */
- 
+
 #define DNANMASK   0x7FF0 /* mask bits 1 - 11; all set on NaNs */
                                      /* all 0 on underflow  or 0. */
- 
+
 #endif
- 
+
 #if MACHINE == CRAY
     /*
       Cray machines:   the large negative integer corresponds
@@ -276,23 +276,23 @@ extern int Fitsio_Pthread_Status;
       a reserved value (i.e., a NaN)
     */
 #define fnan(L) ( (L) >= 0xE000000000000000 ? 1 : 0) )
- 
+
 #else
     /* these functions work for both big and little endian machines */
     /* that use the IEEE floating point format for internal numbers */
- 
+
    /* These functions tests whether the float value is a reserved IEEE     */
    /* value such as a Not-a-Number (NaN), or underflow, overflow, or       */
    /* infinity.   The functions returns 1 if the value is a NaN, overflow  */
    /* or infinity; it returns 2 if the value is an denormalized underflow  */
    /* value; otherwise it returns 0. fnan tests floats, dnan tests doubles */
- 
+
 #define fnan(L) \
       ( (L & FNANMASK) == FNANMASK ?  1 : (L & FNANMASK) == 0 ? 2 : 0)
- 
+
 #define dnan(L) \
       ( (L & DNANMASK) == DNANMASK ?  1 : (L & DNANMASK) == 0 ? 2 : 0)
- 
+
 #endif
 
 #define DSCHAR_MAX  127.49 /* max double value that fits in an signed char */
@@ -384,13 +384,13 @@ int ffgphd(fitsfile *fptr, int maxdim, int *simple, int *bitpix, int *naxis,
           double *bzero, LONGLONG *blank, int *nspace, int *status);
 int ffgttb(fitsfile *fptr, LONGLONG *rowlen, LONGLONG *nrows, LONGLONG *pcount,
           long *tfield, int *status);
- 
+
 int ffmkey(fitsfile *fptr, const char *card, int *status);
- 
+
 /*  ffmbyt has been moved to fitsio.h */
 int ffgbyt(fitsfile *fptr, LONGLONG nbytes, void *buffer, int *status);
 int ffpbyt(fitsfile *fptr, LONGLONG nbytes, void *buffer, int *status);
-int ffgbytoff(fitsfile *fptr, long gsize, long ngroups, long offset, 
+int ffgbytoff(fitsfile *fptr, long gsize, long ngroups, long offset,
            void *buffer, int *status);
 int ffpbytoff(fitsfile *fptr, long gsize, long ngroups, long offset,
            void *buffer, int *status);
@@ -407,12 +407,12 @@ int ffoptplt(fitsfile *fptr, const char *tempname, int *status);
 int fits_is_this_a_copy(char *urltype);
 int fits_store_Fptr(FITSfile *Fptr, int *status);
 int fits_clear_Fptr(FITSfile *Fptr, int *status);
-int fits_already_open(fitsfile **fptr, char *url, 
+int fits_already_open(fitsfile **fptr, char *url,
     char *urltype, char *infile, char *extspec, char *rowfilter,
     char *binspec, char *colspec, int  mode, int noextsyn,
     int  *isopen, int  *status);
 int ffedit_columns(fitsfile **fptr, char *outfile, char *expr, int *status);
-int fits_get_col_minmax(fitsfile *fptr, int colnum, double *datamin, 
+int fits_get_col_minmax(fitsfile *fptr, int colnum, double *datamin,
                      double *datamax, int *status);
 int ffwritehisto(long totaln, long offset, long firstn, long nvalues,
              int narrays, iteratorCol *imagepars, void *userPointer);
@@ -433,13 +433,13 @@ int ffgtbp(fitsfile *fptr, char *name, char *value, int *status);
 int ffiblk(fitsfile *fptr, long nblock, int headdata, int *status);
 int ffshft(fitsfile *fptr, LONGLONG firstbyte, LONGLONG nbytes, LONGLONG nshift,
     int *status);
- 
+
  int ffgcprll(fitsfile *fptr, int colnum, LONGLONG firstrow, LONGLONG firstelem,
            LONGLONG nelem, int writemode, double *scale, double *zero, char *tform,
            long *twidth, int *tcode, int *maxelem, LONGLONG *startpos,
            LONGLONG *elemnum, long *incre, LONGLONG *repeat, LONGLONG *rowlen,
            int *hdutype, LONGLONG *tnull, char *snull, int *status);
-	   
+
 int ffflushx(FITSfile *fptr);
 int ffseek(FITSfile *fptr, LONGLONG position);
 int ffread(FITSfile *fptr, long nbytes, void *buffer,
@@ -450,7 +450,7 @@ int fftrun(fitsfile *fptr, LONGLONG filesize, int *status);
 
 int ffpcluc(fitsfile *fptr, int colnum, LONGLONG firstrow, LONGLONG firstelem,
            LONGLONG nelem, int *status);
-	   
+
 int ffgcll(fitsfile *fptr, int colnum, LONGLONG firstrow, LONGLONG firstelem,
            LONGLONG nelem, int nultyp, char nulval, char *array, char *nularray,
            int *anynul, int *status);
@@ -476,10 +476,10 @@ int ffgcluj(fitsfile *fptr, int colnum, LONGLONG firstrow, LONGLONG firstelem,
            LONGLONG nelem, long elemincre, int nultyp, unsigned long nulval,
            unsigned long *array, char *nularray, int *anynul, int  *status);
 int ffgclujj(fitsfile *fptr, int colnum, LONGLONG firstrow, LONGLONG firstelem,
-           LONGLONG nelem, long elemincre, int nultyp, ULONGLONG nulval, 
+           LONGLONG nelem, long elemincre, int nultyp, ULONGLONG nulval,
            ULONGLONG *array, char *nularray, int *anynul, int  *status);
 int ffgcljj(fitsfile *fptr, int colnum, LONGLONG firstrow, LONGLONG firstelem,
-           LONGLONG nelem, long elemincre, int nultyp, LONGLONG nulval, 
+           LONGLONG nelem, long elemincre, int nultyp, LONGLONG nulval,
            LONGLONG *array, char *nularray, int *anynul, int  *status);
 int ffgclj(fitsfile *fptr, int colnum, LONGLONG firstrow, LONGLONG firstelem,
            LONGLONG nelem, long elemincre, int nultyp, long nulval, long *array,
@@ -496,7 +496,7 @@ int ffgcle(fitsfile *fptr, int colnum, LONGLONG firstrow, LONGLONG firstelem,
 int ffgcld(fitsfile *fptr, int colnum, LONGLONG firstrow, LONGLONG firstelem,
            LONGLONG nelem, long elemincre, int nultyp, double nulval,
            double *array, char *nularray, int *anynul, int  *status);
- 
+
 int ffpi1b(fitsfile *fptr, long nelem, long incre, unsigned char *buffer,
            int *status);
 int ffpi2b(fitsfile *fptr, long nelem, long incre, short *buffer, int *status);
@@ -505,7 +505,7 @@ int ffpi4b(fitsfile *fptr, long nelem, long incre, INT32BIT *buffer,
 int ffpi8b(fitsfile *fptr, long nelem, long incre, long *buffer, int *status);
 int ffpr4b(fitsfile *fptr, long nelem, long incre, float *buffer, int *status);
 int ffpr8b(fitsfile *fptr, long nelem, long incre, double *buffer, int *status);
- 
+
 int ffgi1b(fitsfile *fptr, LONGLONG pos, long nelem, long incre,
           unsigned char *buffer, int *status);
 int ffgi2b(fitsfile *fptr, LONGLONG pos, long nelem, long incre, short *buffer,
@@ -518,14 +518,14 @@ int ffgr4b(fitsfile *fptr, LONGLONG pos, long nelem, long incre, float *buffer,
           int *status);
 int ffgr8b(fitsfile *fptr, LONGLONG pos, long nelem, long incre, double *buffer,
           int *status);
- 
+
 int ffcins(fitsfile *fptr, LONGLONG naxis1, LONGLONG naxis2, LONGLONG nbytes,
            LONGLONG bytepos, int *status);
 int ffcdel(fitsfile *fptr, LONGLONG naxis1, LONGLONG naxis2, LONGLONG nbytes,
            LONGLONG bytepos, int *status);
 int ffkshf(fitsfile *fptr, int firstcol, int tfields, int nshift, int *status);
 int fffvcl(fitsfile *fptr, int *nvarcols, int *colnums, int *status);
- 
+
 int fffi1i1(unsigned char *input, long ntodo, double scale, double zero,
             int nullcheck, unsigned char tnull, unsigned char nullval, char
              *nullarray, int *anynull, unsigned char *output, int *status);
@@ -548,7 +548,7 @@ int fffstri1(char *input, long ntodo, double scale, double zero,
             long twidth, double power, int nullcheck, char *snull,
             unsigned char nullval, char *nullarray, int *anynull,
             unsigned char *output, int *status);
- 
+
 int fffi1s1(unsigned char *input, long ntodo, double scale, double zero,
             int nullcheck, unsigned char tnull, signed char nullval, char
              *nullarray, int *anynull, signed char *output, int *status);
@@ -573,7 +573,7 @@ int fffstrs1(char *input, long ntodo, double scale, double zero,
             signed char *output, int *status);
 
 int fffi1u2(unsigned char *input, long ntodo, double scale, double zero,
-            int nullcheck, unsigned char tnull, unsigned short nullval, 
+            int nullcheck, unsigned char tnull, unsigned short nullval,
             char *nullarray,
             int *anynull, unsigned short *output, int *status);
 int fffi2u2(short *input, long ntodo, double scale, double zero,
@@ -593,7 +593,7 @@ int fffr8u2(double *input, long ntodo, double scale, double zero,
             int *anynull, unsigned short *output, int *status);
 int fffstru2(char *input, long ntodo, double scale, double zero,
             long twidth, double power, int nullcheck, char *snull,
-            unsigned short nullval, char *nullarray, int  *anynull, 
+            unsigned short nullval, char *nullarray, int  *anynull,
             unsigned short *output, int *status);
 
 int fffi1i2(unsigned char *input, long ntodo, double scale, double zero,
@@ -642,7 +642,7 @@ int fffstru4(char *input, long ntodo, double scale, double zero,
             long twidth, double power, int nullcheck, char *snull,
             unsigned long nullval, char *nullarray, int *anynull,
             unsigned long *output, int *status);
- 
+
 int fffi1i4(unsigned char *input, long ntodo, double scale, double zero,
             int nullcheck, unsigned char tnull, long nullval, char *nullarray,
             int *anynull, long *output, int *status);
@@ -665,7 +665,7 @@ int fffstri4(char *input, long ntodo, double scale, double zero,
             long twidth, double power, int nullcheck, char *snull,
             long nullval, char *nullarray, int *anynull, long *output,
             int *status);
- 
+
 int fffi1int(unsigned char *input, long ntodo, double scale, double zero,
             int nullcheck, unsigned char tnull, int nullval, char *nullarray,
             int *anynull, int *output, int *status);
@@ -688,7 +688,7 @@ int fffstrint(char *input, long ntodo, double scale, double zero,
             long twidth, double power, int nullcheck, char *snull,
             int nullval, char *nullarray, int *anynull, int *output,
             int *status);
- 
+
 int fffi1uint(unsigned char *input, long ntodo, double scale, double zero,
             int nullcheck, unsigned char tnull, unsigned int nullval,
             char *nullarray, int *anynull, unsigned int *output, int *status);
@@ -711,9 +711,9 @@ int fffstruint(char *input, long ntodo, double scale, double zero,
             long twidth, double power, int nullcheck, char *snull,
             unsigned int nullval, char *nullarray, int *anynull,
             unsigned int *output, int *status);
- 
+
 int fffi1i8(unsigned char *input, long ntodo, double scale, double zero,
-            int nullcheck, unsigned char tnull, LONGLONG nullval, 
+            int nullcheck, unsigned char tnull, LONGLONG nullval,
             char *nullarray, int *anynull, LONGLONG *output, int *status);
 int fffi2i8(short *input, long ntodo, double scale, double zero,
             int nullcheck, short tnull, LONGLONG nullval, char *nullarray,
@@ -736,7 +736,7 @@ int fffstri8(char *input, long ntodo, double scale, double zero,
             int *status);
 
 int fffi1u8(unsigned char *input, long ntodo, double scale, double zero,
-            int nullcheck, unsigned char tnull, ULONGLONG nullval, 
+            int nullcheck, unsigned char tnull, ULONGLONG nullval,
             char *nullarray, int *anynull, ULONGLONG *output, int *status);
 int fffi2u8(short *input, long ntodo, double scale, double zero,
             int nullcheck, short tnull, ULONGLONG nullval, char *nullarray,
@@ -781,7 +781,7 @@ int fffstrr4(char *input, long ntodo, double scale, double zero,
             long twidth, double power, int nullcheck, char *snull,
             float nullval, char *nullarray, int *anynull, float *output,
             int *status);
- 
+
 int fffi1r8(unsigned char *input, long ntodo, double scale, double zero,
             int nullcheck, unsigned char tnull, double nullval, char *nullarray,
             int *anynull, double *output, int *status);
@@ -804,7 +804,7 @@ int fffstrr8(char *input, long ntodo, double scale, double zero,
             long twidth, double power, int nullcheck, char *snull,
             double nullval, char *nullarray, int *anynull, double *output,
             int *status);
- 
+
 int ffi1fi1(unsigned char *array, long ntodo, double scale, double zero,
             unsigned char *buffer, int *status);
 int ffs1fi1(signed char *array, long ntodo, double scale, double zero,
@@ -829,7 +829,7 @@ int ffr4fi1(float *array, long ntodo, double scale, double zero,
             unsigned char *buffer, int *status);
 int ffr8fi1(double *array, long ntodo, double scale, double zero,
             unsigned char *buffer, int *status);
- 
+
 int ffi1fi2(unsigned char *array, long ntodo, double scale, double zero,
             short *buffer, int *status);
 int ffs1fi2(signed char *array, long ntodo, double scale, double zero,
@@ -854,7 +854,7 @@ int ffr4fi2(float *array, long ntodo, double scale, double zero,
             short *buffer, int *status);
 int ffr8fi2(double *array, long ntodo, double scale, double zero,
             short *buffer, int *status);
- 
+
 int ffi1fi4(unsigned char *array, long ntodo, double scale, double zero,
             INT32BIT *buffer, int *status);
 int ffs1fi4(signed char *array, long ntodo, double scale, double zero,
@@ -929,7 +929,7 @@ int ffr4fr4(float *array, long ntodo, double scale, double zero,
             float *buffer, int *status);
 int ffr8fr4(double *array, long ntodo, double scale, double zero,
             float *buffer, int *status);
- 
+
 int ffi1fr8(unsigned char *array, long ntodo, double scale, double zero,
             double *buffer, int *status);
 int ffs1fr8(signed char *array, long ntodo, double scale, double zero,
@@ -989,16 +989,16 @@ void ieevur(float *inarray, float *outarray, long *nvals);
 /*  routines related to the lexical parser  */
 int  ffselect_table(fitsfile **fptr, char *outfile, char *expr,  int *status);
 int  ffiprs( fitsfile *fptr, int compressed, char *expr, int maxdim,
-	     int *datatype, long *nelem, int *naxis, long *naxes,
-	     int *status );
+             int *datatype, long *nelem, int *naxis, long *naxes,
+             int *status );
 void ffcprs( void );
 int  ffcvtn( int inputType, void *input, char *undef, long ntodo,
-	     int outputType, void *nulval, void *output,
-	     int *anynull, int *status );
+             int outputType, void *nulval, void *output,
+             int *anynull, int *status );
 int  parse_data( long totalrows, long offset, long firstrow,
                  long nrows, int nCols, iteratorCol *colData,
                  void *userPtr );
-int  uncompress_hkdata( fitsfile *fptr, long ntimes, 
+int  uncompress_hkdata( fitsfile *fptr, long ntimes,
                         double *times, int *status );
 int  ffffrw_work( long totalrows, long offset, long firstrow,
                   long nrows, int nCols, iteratorCol *colData,
@@ -1009,17 +1009,17 @@ int fits_translate_pixkeyword(char *inrec, char *outrec,char *patterns[][2],
       int *j, int *n, int *m, int *l, int *status);
 
 /*  image compression routines */
-int fits_write_compressed_img(fitsfile *fptr, 
-            int  datatype, long  *fpixel, long *lpixel,   
+int fits_write_compressed_img(fitsfile *fptr,
+            int  datatype, long  *fpixel, long *lpixel,
             int nullcheck, void *array,  void *nulval,
             int  *status);
-int fits_write_compressed_pixels(fitsfile *fptr, 
-            int  datatype, LONGLONG  fpixel, LONGLONG npixels,   
+int fits_write_compressed_pixels(fitsfile *fptr,
+            int  datatype, LONGLONG  fpixel, LONGLONG npixels,
             int nullcheck,  void *array, void *nulval,
             int  *status);
-int fits_write_compressed_img_plane(fitsfile *fptr, int  datatype, 
-      int  bytesperpixel,  long   nplane, long *firstcoord, long *lastcoord, 
-      long *naxes,  int  nullcheck, 
+int fits_write_compressed_img_plane(fitsfile *fptr, int  datatype,
+      int  bytesperpixel,  long   nplane, long *firstcoord, long *lastcoord,
+      long *naxes,  int  nullcheck,
       void *array,  void *nullval, long *nread, int  *status);
 
 int imcomp_init_table(fitsfile *outfptr,
@@ -1028,12 +1028,12 @@ int imcomp_calc_max_elem (int comptype, int nx, int zbitpix, int blocksize);
 int imcomp_copy_imheader(fitsfile *infptr, fitsfile *outfptr,
                 int *status);
 int imcomp_copy_img2comp(fitsfile *infptr, fitsfile *outfptr, int *status);
-int imcomp_copy_comp2img(fitsfile *infptr, fitsfile *outfptr, 
+int imcomp_copy_comp2img(fitsfile *infptr, fitsfile *outfptr,
                           int norec, int *status);
 int imcomp_copy_prime2img(fitsfile *infptr, fitsfile *outfptr, int *status);
 int imcomp_compress_image (fitsfile *infptr, fitsfile *outfptr,
                  int *status);
-int imcomp_compress_tile (fitsfile *outfptr, long row, 
+int imcomp_compress_tile (fitsfile *outfptr, long row,
     int datatype,  void *tiledata, long tilelen, long nx, long ny,
     int nullcheck, void *nullval, int *status);
 int imcomp_nullscale(int *idata, long tilelen, int nullflagval, int nullval,
@@ -1042,30 +1042,30 @@ int imcomp_nullvalues(int *idata, long tilelen, int nullflagval, int nullval,
      int * status);
 int imcomp_scalevalues(int *idata, long tilelen, double scale, double zero,
      int * status);
-int imcomp_nullscalefloats(float *fdata, long tilelen, int *idata, 
+int imcomp_nullscalefloats(float *fdata, long tilelen, int *idata,
     double scale, double zero, int nullcheck, float nullflagval, int nullval,
     int *status);
 int imcomp_nullfloats(float *fdata, long tilelen, int *idata, int nullcheck,
     float nullflagval, int nullval, int *status);
-int imcomp_nullscaledoubles(double *fdata, long tilelen, int *idata, 
+int imcomp_nullscaledoubles(double *fdata, long tilelen, int *idata,
     double scale, double zero, int nullcheck, double nullflagval, int nullval,
     int *status);
 int imcomp_nulldoubles(double *fdata, long tilelen, int *idata, int nullcheck,
     double nullflagval, int nullval, int *status);
-    
- 
+
+
 /*  image decompression routines */
-int fits_read_compressed_img(fitsfile *fptr, 
-            int  datatype, LONGLONG  *fpixel,LONGLONG  *lpixel,long *inc,   
+int fits_read_compressed_img(fitsfile *fptr,
+            int  datatype, LONGLONG  *fpixel,LONGLONG  *lpixel,long *inc,
             int nullcheck, void *nulval,  void *array, char *nullarray,
             int  *anynul, int  *status);
-int fits_read_compressed_pixels(fitsfile *fptr, 
-            int  datatype, LONGLONG  fpixel, LONGLONG npixels,   
+int fits_read_compressed_pixels(fitsfile *fptr,
+            int  datatype, LONGLONG  fpixel, LONGLONG npixels,
             int nullcheck, void *nulval,  void *array, char *nullarray,
             int  *anynul, int  *status);
-int fits_read_compressed_img_plane(fitsfile *fptr, int  datatype, 
-      int  bytesperpixel,  long   nplane, LONGLONG *firstcoord, LONGLONG *lastcoord, 
-      long *inc,  long *naxes,  int  nullcheck,  void *nullval, 
+int fits_read_compressed_img_plane(fitsfile *fptr, int  datatype,
+      int  bytesperpixel,  long   nplane, LONGLONG *firstcoord, LONGLONG *lastcoord,
+      long *inc,  long *naxes,  int  nullcheck,  void *nullval,
       void *array, char *nullarray, int  *anynul, long *nread, int  *status);
 
 int imcomp_get_compressed_image_par(fitsfile *infptr, int *status);
@@ -1077,7 +1077,7 @@ int imcomp_copy_overlap (char *tile, int pixlen, int ndim,
          long *tfpixel, long *tlpixel, char *bnullarray, char *image,
          long *fpixel, long *lpixel, long *inc, int nullcheck, char *nullarray,
          int *status);
-int imcomp_test_overlap (int ndim, long *tfpixel, long *tlpixel, 
+int imcomp_test_overlap (int ndim, long *tfpixel, long *tlpixel,
          long *fpixel, long *lpixel, long *inc, int *status);
 int imcomp_merge_overlap (char *tile, int pixlen, int ndim,
          long *tfpixel, long *tlpixel, char *bnullarray, char *image,
@@ -1085,7 +1085,7 @@ int imcomp_merge_overlap (char *tile, int pixlen, int ndim,
 int imcomp_decompress_img(fitsfile *infptr, fitsfile *outfptr, int datatype,
          int  *status);
 int fits_quantize_float (long row, float fdata[], long nx, long ny, int nullcheck,
-         float in_null_value, float quantize_level, 
+         float in_null_value, float quantize_level,
            int dither_method, int idata[], double *bscale, double *bzero,
            int *iminval, int *imaxval);
 int fits_quantize_double (long row, double fdata[], long nx, long ny, int nullcheck,
@@ -1116,22 +1116,22 @@ void fits_dwnld_prog_bar(int flag);
 int fits_net_timeout(int sec);
 
 int fits_register_driver( char *prefix,
-	int (*init)(void),
-	int (*fitsshutdown)(void),
-	int (*setoptions)(int option),
-	int (*getoptions)(int *options),
-	int (*getversion)(int *version),
-	int (*checkfile) (char *urltype, char *infile, char *outfile),
-	int (*fitsopen)(char *filename, int rwmode, int *driverhandle),
-	int (*fitscreate)(char *filename, int *driverhandle),
-	int (*fitstruncate)(int driverhandle, LONGLONG filesize),
-	int (*fitsclose)(int driverhandle),
-	int (*fremove)(char *filename),
+        int (*init)(void),
+        int (*fitsshutdown)(void),
+        int (*setoptions)(int option),
+        int (*getoptions)(int *options),
+        int (*getversion)(int *version),
+        int (*checkfile) (char *urltype, char *infile, char *outfile),
+        int (*fitsopen)(char *filename, int rwmode, int *driverhandle),
+        int (*fitscreate)(char *filename, int *driverhandle),
+        int (*fitstruncate)(int driverhandle, LONGLONG filesize),
+        int (*fitsclose)(int driverhandle),
+        int (*fremove)(char *filename),
         int (*size)(int driverhandle, LONGLONG *sizex),
-	int (*flush)(int driverhandle),
-	int (*seek)(int driverhandle, LONGLONG offset),
-	int (*fitsread) (int driverhandle, void *buffer, long nbytes),
-	int (*fitswrite)(int driverhandle, void *buffer, long nbytes));
+        int (*flush)(int driverhandle),
+        int (*seek)(int driverhandle, LONGLONG offset),
+        int (*fitsread) (int driverhandle, void *buffer, long nbytes),
+        int (*fitswrite)(int driverhandle, void *buffer, long nbytes));
 
 /* file driver I/O routines */
 
@@ -1198,7 +1198,7 @@ int mem_read(int hdl, void *buffer, long nbytes);
 int mem_write(int hdl, void *buffer, long nbytes);
 int mem_uncompress2mem(char *filename, FILE *diskfile, int hdl);
 
-int iraf2mem(char *filename, char **buffptr, size_t *buffsize, 
+int iraf2mem(char *filename, char **buffptr, size_t *buffsize,
       size_t *filesize, int *status);
 
 /* root driver I/O routines */
@@ -1248,33 +1248,33 @@ int uncompress2mem(char *filename, FILE *diskfile,
              void *(*mem_realloc)(void *p, size_t newsize),
              size_t *filesize, int *status);
 
-int uncompress2mem_from_mem(                                                
-             char *inmemptr,     
-             size_t inmemsize, 
-             char **buffptr,  
-             size_t *buffsize,  
-             void *(*mem_realloc)(void *p, size_t newsize), 
-             size_t *filesize,  
+int uncompress2mem_from_mem(
+             char *inmemptr,
+             size_t inmemsize,
+             char **buffptr,
+             size_t *buffsize,
+             void *(*mem_realloc)(void *p, size_t newsize),
+             size_t *filesize,
              int *status);
 
-int uncompress2file(char *filename, 
-             FILE *indiskfile, 
-             FILE *outdiskfile, 
+int uncompress2file(char *filename,
+             FILE *indiskfile,
+             FILE *outdiskfile,
              int *status);
 
-int compress2mem_from_mem(                                                
-             char *inmemptr,     
-             size_t inmemsize, 
-             char **buffptr,  
-             size_t *buffsize,  
-             void *(*mem_realloc)(void *p, size_t newsize), 
-             size_t *filesize,  
+int compress2mem_from_mem(
+             char *inmemptr,
+             size_t inmemsize,
+             char **buffptr,
+             size_t *buffsize,
+             void *(*mem_realloc)(void *p, size_t newsize),
+             size_t *filesize,
              int *status);
 
-int compress2file_from_mem(                                                
-             char *inmemptr,     
-             size_t inmemsize, 
-             FILE *outdiskfile, 
+int compress2file_from_mem(
+             char *inmemptr,
+             size_t inmemsize,
+             FILE *outdiskfile,
              size_t *filesize,   /* O - size of file, in bytes              */
              int *status);
 
