@@ -227,10 +227,6 @@ void FluxRecorder::finalizeConfiguration()
 
             if (_hasMediumEmission)
             {
-                _sed[SecondaryTransparentQ].resize(lenSED);
-                _sed[SecondaryTransparentU].resize(lenSED);
-                _sed[SecondaryTransparentV].resize(lenSED);
-
                 _sed[SecondaryDirectQ].resize(lenSED);
                 _sed[SecondaryDirectU].resize(lenSED);
                 _sed[SecondaryDirectV].resize(lenSED);
@@ -238,6 +234,10 @@ void FluxRecorder::finalizeConfiguration()
                 _sed[SecondaryScatteredQ].resize(lenSED);
                 _sed[SecondaryScatteredU].resize(lenSED);
                 _sed[SecondaryScatteredV].resize(lenSED);
+
+                _sed[SecondaryTransparentQ].resize(lenSED);
+                _sed[SecondaryTransparentU].resize(lenSED);
+                _sed[SecondaryTransparentV].resize(lenSED);
             }
         }
     }
@@ -373,12 +373,12 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
                     {
                         if (numScatt == 0)
                         {
-                            LockFree::add(_sed[SecondaryTransparentQ][ell], L * pp->stokesQ());
-                            LockFree::add(_sed[SecondaryTransparentU][ell], L * pp->stokesU());
-                            LockFree::add(_sed[SecondaryTransparentV][ell], L * pp->stokesV());
                             LockFree::add(_sed[SecondaryDirectQ][ell], Lext * pp->stokesQ());
                             LockFree::add(_sed[SecondaryDirectU][ell], Lext * pp->stokesU());
                             LockFree::add(_sed[SecondaryDirectV][ell], Lext * pp->stokesV());
+                            LockFree::add(_sed[SecondaryTransparentQ][ell], L * pp->stokesQ());
+                            LockFree::add(_sed[SecondaryTransparentU][ell], L * pp->stokesU());
+                            LockFree::add(_sed[SecondaryTransparentV][ell], L * pp->stokesV());
                         }
                         else
                         {
