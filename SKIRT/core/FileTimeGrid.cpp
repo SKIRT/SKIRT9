@@ -19,14 +19,7 @@ void FileTimeGrid::setupSelfBefore()
     infile.readAllColumns(timeLags);
     infile.close();
 
-    if (_relativeHalfWidth)
-    {
-        setTimeBins(timeLags, _relativeHalfWidth);
-    }
-    else
-    {
-        setTimeRange(timeLags, _log);
-    }
+    setTimeRange(timeLags, _log);
 }
 
 //////////////////////////////////////////////////////////////////////

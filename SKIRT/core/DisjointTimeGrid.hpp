@@ -27,12 +27,7 @@
     associated bin width, \f[\time^\mathrm{right}_\ell - \time^\mathrm{left}_\ell > 0, \quad
     \ell=0\dots N-1.\f]
 
-    A DisjointTimeGrid subclass is expected to invoke one of the settimeXXX() functions
-    during setup to initialize the time grid. The current implementation offers two such
-    functions: one to specify a consecutive range of adjacent time bins given a list of
-    characteric times, and another one to specify distinct, nonadjacent time bins given
-    a list of characteric times and a relative bin width. Other options can be added as the
-    need arises. */
+    */
 class DisjointTimeGrid : public TimeGrid
 {
     ITEM_ABSTRACT(DisjointTimeGrid, TimeGrid, "a time grid with non-overlapping bins")
@@ -78,21 +73,6 @@ protected:
         \time^\mathrm{c}_{0}(1-1/1000)\f$ and \f$\time^\mathrm{right}_0 =
         \time^\mathrm{c}_{0}(1+1/1000)\f$. */
     void setTimeRange(const Array& timev, bool logScale);
-
-    /** This function initializes the time grid to a set of distinct, nonadjacent time
-        bins given a list of characteric times and a relative half bin width. The subclass
-        determines a list of characteric times and a relative half bin width, and the bin
-        borders and bin widths are automatically calculated from that information by this function.
-        If the specified time list is empty, or if the calculated bins overlap, the function throws a fatal error.
-
-        Specifically, the function first sorts the specified characteristic times in
-        ascending order and then calculates the bin borders using \f$\time^\mathrm{left}_\ell =
-        \time^\mathrm{c}_\ell(1-w)\f$ and \f$\time^\mathrm{right}_\ell =
-        \time^\mathrm{c}_\ell(1+w)\;, \ell=0\dots N-1\f$, where \f$w\f$ is the specified relative
-        half bin width. If the \em constantWidth flag is true, the width for the shortest
-        time is used for all bin widths instead. Finally the function trivially calculates
-        the time bin widths from the bin borders. */
-    void setTimeBins(const Array& timev, double relativeHalfWidth, bool constantWidth = false);
 
     /** This function initializes the time grid to a consecutive range of \f$N>0\f$ adjacent
         time bins given a list of \f$N+1\f$ time bin borders. The subclass determines a

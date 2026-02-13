@@ -79,57 +79,6 @@ void DisjointTimeGrid::setTimeRange(const Array& timev, bool logScale)
 
 ////////////////////////////////////////////////////////////////////
 
-void DisjointTimeGrid::setTimeBins(const Array& timev, double relativeHalfWidth, bool constantWidth)
-{
-    // copy and sort the specified characteristic time
-    _timev = timev;
-    std::sort(begin(_timev), end(_timev));
-    size_t n = _timev.size();
-
-    // verify that there is at least one time
-    if (!n) throw FATALERROR("There must be at least one time in the grid");
-
-    // calculate the bin borders
-    _timeleftv.resize(n);
-    _timerightv.resize(n);
-    _borderv.resize(2 * n);
-    if (!constantWidth)
-    {
-        for (size_t ell = 0; ell != n; ++ell)
-        {
-            _borderv[2 * ell] = _timeleftv[ell] = _timev[ell] * (1. - relativeHalfWidth);
-            _borderv[2 * ell + 1] = _timerightv[ell] = _timev[ell] * (1. + relativeHalfWidth);
-        }
-    }
-    else
-    {
-        double delta = _timev[0] * relativeHalfWidth;
-        for (size_t ell = 0; ell != n; ++ell)
-        {
-            _borderv[2 * ell] = _timeleftv[ell] = _timev[ell] - delta;
-            _borderv[2 * ell + 1] = _timerightv[ell] = _timev[ell] + delta;
-        }
-    }
-
-    // verify that the bins do not overlap
-    if (!std::is_sorted(begin(_borderv), end(_borderv)))
-        throw FATALERROR("Non-adjacent time bins should not overlap");
-
-    // calculate the bin widths
-    _dtimev = _timerightv - _timeleftv;
-
-    // setup the mapping from border bin indices to actual time bin indices (see bin() function)
-    _ellv.resize(2 * n + 1);
-    _ellv[0] = -1;
-    for (size_t ell = 0; ell != n; ++ell)
-    {
-        _ellv[2 * ell + 1] = ell;
-        _ellv[2 * ell + 2] = -1;  // regions between the bins are considered out of range
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
 void DisjointTimeGrid::setTimeBorders(const Array& borderv, bool logScale)
 {
     // copy and sort the specified bin borders

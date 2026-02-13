@@ -214,7 +214,7 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("time", "Myr", 1e6 * year);
     addUnit("time", "Gyr", 1e9 * year);
 
-    // time  lag (1/s)
+    // time lag
     addUnit("timetime", "s", 1.);
 
     // transition rate
