@@ -11,6 +11,7 @@
 #include "SimulationItem.hpp"
 class DisjointWavelengthGrid;
 class SpatialCellLibrary;
+class TimeGrid;
 class WavelengthDistribution;
 class WavelengthGrid;
 
@@ -130,6 +131,11 @@ public:
         wavelength grid and the default instrument wavelength grid are the null pointer, the
         function throws a fatal error. */
     WavelengthGrid* wavelengthGrid(WavelengthGrid* localWavelengthGrid) const;
+
+    /** Returns the time grid to be used for an instrument, given the time
+        grid configured locally for the calling instrument (which may the null pointer to
+        indicate that no local grid was configured).  */
+    TimeGrid* timeGrid(TimeGrid* localTimeGrid) const;
 
     /** For oligochromatic simulations, this function returns the wavelength bias distribution to
         be used by all primary sources. For panchromatic simulations, the function returns the null
@@ -456,6 +462,9 @@ private:
     Range _sourceWavelengthRange;
     WavelengthGrid* _defaultWavelengthGrid{nullptr};
     WavelengthDistribution* _oligoWavelengthBiasDistribution{nullptr};
+
+    // times
+    TimeGrid* _defaultTimeGrid{nullptr};
 
     // probes
     bool _snapshotsNeedGetEntities{false};

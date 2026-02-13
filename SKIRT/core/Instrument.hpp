@@ -9,6 +9,7 @@
 #include "Direction.hpp"
 #include "Position.hpp"
 #include "SimulationItem.hpp"
+#include "TimeGrid.hpp"
 #include "WavelengthGrid.hpp"
 class FluxRecorder;
 class PhotonPacket;
@@ -22,7 +23,8 @@ class PhotonPacket;
     from the simulation. It also includes facilities for configuring user properties that are
     common to all instruments, such as which flux contributions need to be recorded. A wavelength
     grid is established either by specifying a grid for this instrument specifically, or by
-    defaulting to the common grid specified for the instrument system. */
+    defaulting to the common grid specified for the instrument system. A time grid is established
+    by specifying a grid as file for this instrument specifically.*/
 class Instrument : public SimulationItem
 {
     ITEM_ABSTRACT(Instrument, SimulationItem, "an instrument")
@@ -33,6 +35,11 @@ class Instrument : public SimulationItem
         ATTRIBUTE_RELEVANT_IF(wavelengthGrid, "Panchromatic")
         ATTRIBUTE_REQUIRED_IF(wavelengthGrid, "!DefaultInstrumentWavelengthGrid")
         ATTRIBUTE_DISPLAYED_IF(wavelengthGrid, "Level2")
+
+        PROPERTY_ITEM(timeGrid, TimeGrid, "the time grid for this instrument")
+        ATTRIBUTE_RELEVANT_IF(timeGrid, "Panchromatic")
+        ATTRIBUTE_REQUIRED_IF(timeGrid, "!DefaultInstrumentTimeGrid")
+        ATTRIBUTE_DISPLAYED_IF(timeGrid, "Level2")
 
         ATTRIBUTE_SUB_PROPERTIES_HERE(Instrument)
 
@@ -91,6 +98,11 @@ public:
         setupSelfBefore() throws a fatal error if neither of these grids are specified. */
     const WavelengthGrid* instrumentWavelengthGrid() const { return _instrumentWavelengthGrid; }
 
+    /** This function returns the time grid for the instrument as determined during setup that
+        the grid specified for this instrument. After setup has completed, the function never returns
+        a nullptr because setupSelfBefore() throws a fatal error if the grid is not specified. */
+    const TimeGrid* instrumentTimeGrid() const { return _instrumentTimeGrid; }
+
     /** This function flushes any information buffered by the detect() function. It simply calls
         the corresponding function of the FluxRecorder instance associated with this instrument. */
     void flush();
@@ -143,6 +155,7 @@ public:
 
 private:
     const WavelengthGrid* _instrumentWavelengthGrid{nullptr};
+    const TimeGrid* _instrumentTimeGrid{nullptr};
     FluxRecorder* _recorder{nullptr};
     bool _isSameObserverAsPreceding{false};
 };

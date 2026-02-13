@@ -214,6 +214,9 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("time", "Myr", 1e6 * year);
     addUnit("time", "Gyr", 1e9 * year);
 
+    // time  lag (1/s)
+    addUnit("timetime", "s", 1.);
+
     // transition rate
     addUnit("transitionrate", "1/s", 1.);
 
@@ -460,6 +463,26 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("energyfluxdensity", "/s/cm2/keV", 10. / Qel);
     addUnit("energyfluxdensity", "/s/keV/cm2", 10. / Qel);
 
+    // time flux density (F_t)
+    addUnit("timefluxdensity", "1/s/m2/s", 1.);
+    addUnit("timefluxdensity", "1/s/s/m2", 1.);
+    addUnit("timefluxdensity", "1/s/cm2/s", 1e4);
+    addUnit("timefluxdensity", "1/s/s/cm2", 1e4);
+    addUnit("timefluxdensity", "/s/m2/s", 1.);
+    addUnit("timefluxdensity", "/s/s/m2", 1.);
+    addUnit("timefluxdensity", "/s/cm2/s", 1e4);
+    addUnit("timefluxdensity", "/s/s/cm2", 1e4);
+
+    // energy time flux density (F_{E,t})
+    addUnit("spectraltimefluxdensity", "1/s/m2/keV/s", 10. / Qel);
+    addUnit("spectraltimefluxdensity", "1/s/keV/m2/s", 10. / Qel);
+    addUnit("spectraltimefluxdensity", "1/s/cm2/keV/s", 1e4 * 10. / Qel);
+    addUnit("spectraltimefluxdensity", "1/s/keV/cm2/s", 1e4 * 10. / Qel);
+    addUnit("spectraltimefluxdensity", "/s/m2/keV/s", 10. / Qel);
+    addUnit("spectraltimefluxdensity", "/s/keV/m2/s", 10. / Qel);
+    addUnit("spectraltimefluxdensity", "/s/cm2/keV/s", 1e4 * 10. / Qel);
+    addUnit("spectraltimefluxdensity", "/s/keV/cm2/s", 1e4 * 10. / Qel);
+
     // energy surface brightness (f_E)
     addUnit("energysurfacebrightness", "1/s/m2/J/sr", 1.);
     addUnit("energysurfacebrightness", "1/s/J/m2/sr", 1.);
@@ -538,6 +561,9 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("SIUnits", "masscoefficient", "m2/kg");
     addDefaultUnit("SIUnits", "opacity", "1/m");
     addDefaultUnit("SIUnits", "time", "s");
+    addDefaultUnit("SIUnits", "timetime", "s");
+    addDefaultUnit("SIUnits", "timefluxdensity", "1/s/m2/s");
+    addDefaultUnit("SIUnits", "spectraltimefluxdensity", "1/s/cm2/keV/s");
     addDefaultUnit("SIUnits", "temperature", "K");
     addDefaultUnit("SIUnits", "energy", "J");
     addDefaultUnit("SIUnits", "magneticfield", "T");
@@ -597,6 +623,9 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "masscoefficient", "m2/kg");
     addDefaultUnit("StellarUnits", "opacity", "1/AU");
     addDefaultUnit("StellarUnits", "time", "Gyr");
+    addDefaultUnit("StellarUnits", "timetime", "s");
+    addDefaultUnit("StellarUnits", "timefluxdensity", "1/s/cm2/s");
+    addDefaultUnit("StellarUnits", "spectraltimefluxdensity", "1/s/cm2/keV/s");
     addDefaultUnit("StellarUnits", "temperature", "K");
     addDefaultUnit("StellarUnits", "energy", "J");
     addDefaultUnit("StellarUnits", "magneticfield", "uG");
@@ -656,6 +685,9 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "masscoefficient", "m2/kg");
     addDefaultUnit("ExtragalacticUnits", "opacity", "1/pc");
     addDefaultUnit("ExtragalacticUnits", "time", "Gyr");
+    addDefaultUnit("ExtragalacticUnits", "timetime", "s");
+    addDefaultUnit("ExtragalacticUnits", "timefluxdensity", "1/s/cm2/s");
+    addDefaultUnit("ExtragalacticUnits", "spectraltimefluxdensity", "1/s/cm2/keV/s");
     addDefaultUnit("ExtragalacticUnits", "temperature", "K");
     addDefaultUnit("ExtragalacticUnits", "energy", "J");
     addDefaultUnit("ExtragalacticUnits", "magneticfield", "uG");

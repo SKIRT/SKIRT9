@@ -93,6 +93,7 @@
 #include "FilePolarizedPointSource.hpp"
 #include "FileSED.hpp"
 #include "FileSSPSEDFamily.hpp"
+#include "FileTimeGrid.hpp"
 #include "FileTreeSpatialGrid.hpp"
 #include "FileWavelengthDistribution.hpp"
 #include "FileWavelengthGrid.hpp"
@@ -128,6 +129,7 @@
 #include "IsotropicAngularDistribution.hpp"
 #include "LaserAngularDistribution.hpp"
 #include "LaunchedPacketsProbe.hpp"
+#include "LightCurveInstrument.hpp"
 #include "LinBorderWavelengthGrid.hpp"
 #include "LinMesh.hpp"
 #include "LinWavelengthDistribution.hpp"
@@ -242,6 +244,7 @@
 #include "SpatialGridPlotProbe.hpp"
 #include "SpatialGridSourceDensityProbe.hpp"
 #include "SpecificLuminosityNormalization.hpp"
+#include "SpectralTimeMapInstrument.hpp"
 #include "SphePowerLawRedistributeGeometryDecorator.hpp"
 #include "Sphere1DSpatialGrid.hpp"
 #include "Sphere2DSpatialGrid.hpp"
@@ -679,6 +682,11 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<PredefinedBandWavelengthGrid>();
     ItemRegistry::add<ConfigurableBandWavelengthGrid>();
 
+    // time grids
+    ItemRegistry::add<TimeGrid>();
+    ItemRegistry::add<DisjointTimeGrid>();
+    ItemRegistry::add<FileTimeGrid>();
+
     // instrument system and instruments
     ItemRegistry::add<InstrumentSystem>();
     ItemRegistry::add<Instrument>();
@@ -689,6 +697,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<AllSkyInstrument>();
     ItemRegistry::add<HEALPixSkyInstrument>();
     ItemRegistry::add<PerspectiveInstrument>();
+    ItemRegistry::add<LightCurveInstrument>();
+    ItemRegistry::add<SpectralTimeMapInstrument>();
 
     // all-sky projections
     ItemRegistry::add<AllSkyProjection>();

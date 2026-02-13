@@ -160,6 +160,50 @@ double Units::owavelength(double lambda) const
 
 ////////////////////////////////////////////////////////////////////
 
+string Units::stime() const
+{
+    switch (_timeOutputStyle)
+    {
+        case TimeOutputStyle::Time: return "t";
+    }
+    return string();
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool Units::rtime() const
+{
+    switch (_timeOutputStyle)
+    {
+        case TimeOutputStyle::Time: return false;
+    }
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
+string Units::utime() const
+{
+    switch (_timeOutputStyle)
+    {
+        case TimeOutputStyle::Time: return unit("timetime");
+    }
+    return string();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::otime(double time) const
+{
+    switch (_timeOutputStyle)
+    {
+        case TimeOutputStyle::Time: return out("timetime", time);
+    }
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
 string Units::ugrainsize() const
 {
     return unit("grainsize");
@@ -540,6 +584,20 @@ string Units::ufluxdensity() const
 
 ////////////////////////////////////////////////////////////////////
 
+string Units::stimedensity() const
+{
+    return "F_t";
+}
+
+////////////////////////////////////////////////////////////////////
+
+string Units::utimedensity() const
+{
+    return unit("timefluxdensity");
+}
+
+////////////////////////////////////////////////////////////////////
+
 double Units::ofluxdensity(double lambda, double Flambda) const
 {
     switch (_fluxOutputStyle)
@@ -550,6 +608,13 @@ double Units::ofluxdensity(double lambda, double Flambda) const
         case FluxOutputStyle::Energy: return out("energyfluxdensity", lambda * lambda * lambda * Flambda / hc2);
     }
     return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::otimedensity(double Ftime) const
+{
+    return out("timefluxdensity", Ftime);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -578,6 +643,13 @@ string Units::usurfacebrightness() const
         case FluxOutputStyle::Energy: return unit("energysurfacebrightness");
     }
     return string();
+}
+
+////////////////////////////////////////////////////////////////////
+
+string Units::uspectraltimefluxdensity() const
+{
+    return unit("spectraltimefluxdensity");
 }
 
 ////////////////////////////////////////////////////////////////////

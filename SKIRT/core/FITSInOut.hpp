@@ -51,6 +51,17 @@ public:
                       string dataUnits, int nx, int ny, double incx, double incy, double xc, double yc, string xyUnits,
                       const Array& z = Array(), string zUnits = string(), const ObserverInfo* obsInfo = nullptr);
 
+    /** This function writes a 2D data frame to a FITS file in the context of the
+        simulation item hierarchy specified through the first argument. This allows the function to
+        issue log messages using the human-readable description of the data given as the second
+        argument, to skip writing in non-root processes of a multi-process similation, and to
+        determine a full path from the output filename specified as the third argument, relative to
+        the simulation's output path. The output filename should \em not include the filename
+        extension nor the simulation prefix. The remaining arguments of this function are the same
+        as those described for the basic write() function in this class. */
+     static void writeforSpectralTimeMap(const SimulationItem* item, string description, string filename, const Array& data,
+                      string dataUnits, int nx, int ny, string xUnits, string yUnits, const ObserverInfo* obsInfo = nullptr);
+
     // ================== Basic read/write ==================
 
 private:
@@ -104,6 +115,18 @@ private:
         data structure holding observer information (or the null pointer). */
     static void write(string filepath, const Array& data, string dataUnits, int nx, int ny, double incx, double incy,
                       double xc, double yc, string xyUnits, const Array& z, string zUnits, const ObserverInfo* obsInfo);
+
+    /** This function writes a 2D data frame to the primary data unit of a FITS
+        file. The x and y axes are assumed to discretize the wavelength grid and time grid respectively.
+        The z axis is not present. The first argument specifies a relative or absolute file path;
+        if a file with that name already exists, it is overwritten. The subsequent arguments specify
+        the contents of the file. \em data contains the actual values in the frame; the values in this
+        array must be ordered such that the index along the x-axis varies most rapidly and the index
+        along the y-axis varies less rapidly. \em dataUnits describes the units of the data values;
+        \em nx and \em ny specify the number of values in each direction and \em xUnits describes
+        the units of the x-grid increments and \em yUnits describes the units of the y-grid increments.
+        */
+    static void writeforSpectralTimeMap(string filepath, const Array& data, string dataUnits, int nx, int ny, string xUnits, string yUnits, const ObserverInfo* obsInfo);
 };
 
 ////////////////////////////////////////////////////////////////////

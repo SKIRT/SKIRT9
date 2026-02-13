@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "FluxRecorder.hpp"
+#include "Constants.hpp"
 #include "FITSInOut.hpp"
 #include "Indices.hpp"
 #include "LockFree.hpp"
@@ -14,8 +15,11 @@
 #include "ProcessManager.hpp"
 #include "StringUtils.hpp"
 #include "TextOutFile.hpp"
+#include "TimeGrid.hpp"
 #include "Units.hpp"
 #include "WavelengthGrid.hpp"
+#include <algorithm>
+#include <iostream>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -67,11 +71,12 @@ FluxRecorder::FluxRecorder(const SimulationItem* parentItem) : _parentItem{paren
 
 ////////////////////////////////////////////////////////////////////
 
-void FluxRecorder::setSimulationInfo(string instrumentName, const WavelengthGrid* lambdagrid, bool hasMedium,
-                                     bool hasMediumEmission)
+void FluxRecorder::setSimulationInfo(string instrumentName, const WavelengthGrid* lambdagrid,
+                                    const TimeGrid* timegrid, bool hasMedium, bool hasMediumEmission)
 {
     _instrumentName = instrumentName;
     _lambdagrid = lambdagrid;
+    _timegrid = timegrid;
     _hasMedium = hasMedium;
     _hasMediumEmission = hasMediumEmission;
 }
@@ -123,6 +128,13 @@ void FluxRecorder::includeFluxDensityForDistant()
 
 ////////////////////////////////////////////////////////////////////
 
+void FluxRecorder::includeLightCurveForDistant()
+{
+    _includeLightCurve = true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void FluxRecorder::includeSurfaceBrightnessForDistant(int numPixelsX, int numPixelsY, double pixelSizeX,
                                                       double pixelSizeY, double centerX, double centerY)
 {
@@ -133,6 +145,13 @@ void FluxRecorder::includeSurfaceBrightnessForDistant(int numPixelsX, int numPix
     _pixelSizeY = pixelSizeY;
     _centerX = centerX;
     _centerY = centerY;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void FluxRecorder::includeSpectralTimeMap()
+{
+    _includeSpectralTimeMap = true;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -164,6 +183,11 @@ void FluxRecorder::finalizeConfiguration()
     _numPixelsInFrame = _numPixelsX * _numPixelsY;  // convert to size_t before calculating lenIFU
     size_t lenSED = _includeFluxDensity ? _lambdagrid->numBins() : 0;
     size_t lenIFU = _includeSurfaceBrightness ? _numPixelsInFrame * _lambdagrid->numBins() : 0;
+    size_t lenLC = _includeLightCurve ? _timegrid->numBins() : 0;
+
+    _numWavelengthX = _lambdagrid->numBins();
+    _numTimeY = _timegrid->numBins();
+    size_t lenSTM = _includeSpectralTimeMap ? _numWavelengthX * _numTimeY : 0;
 
     // do not try to record components if there is no medium
     _recordTotalOnly = !_recordComponents || !_hasMedium;
@@ -171,6 +195,11 @@ void FluxRecorder::finalizeConfiguration()
     // allocate the appropriate number of flux detector arrays
     _sed.resize(PrimaryScatteredLevel + _numScatteringLevels);
     _ifu.resize(PrimaryScatteredLevel + _numScatteringLevels);
+    _lc.resize(PrimaryScatteredLevel + _numScatteringLevels);
+    _stm.resize(PrimaryScatteredLevel + _numScatteringLevels);
+
+    _lc[Total].resize(lenLC);
+    _stm[Total].resize(lenSTM);
 
     // resize the flux detector arrays according to the configuration
     if (_recordTotalOnly)
@@ -247,16 +276,24 @@ void FluxRecorder::finalizeConfiguration()
     {
         _wsed.resize(maxContributionPower + 1);
         _wifu.resize(maxContributionPower + 1);
+        _wlc.resize(maxContributionPower + 1);
+        _wstm.resize(maxContributionPower + 1);
         for (auto& array : _wsed) array.resize(lenSED);
         for (auto& array : _wifu) array.resize(lenIFU);
+        for (auto& array : _wlc) array.resize(lenLC);
+        for (auto& array : _wstm) array.resize(lenSTM);
     }
 
     // calculate and log allocated memory size
     size_t allocatedSize = 0;
     for (const auto& array : _sed) allocatedSize += array.size();
     for (const auto& array : _ifu) allocatedSize += array.size();
+    for (const auto& array : _lc) allocatedSize += array.size();
+    for (const auto& array : _stm) allocatedSize += array.size();
     for (const auto& array : _wsed) allocatedSize += array.size();
     for (const auto& array : _wifu) allocatedSize += array.size();
+    for (const auto& array : _wlc) allocatedSize += array.size();
+    for (const auto& array : _wstm) allocatedSize += array.size();
     _parentItem->find<Log>()->info(_parentItem->typeAndName() + " allocated "
                                    + StringUtils::toMemSizeString(allocatedSize * sizeof(double)) + " of memory");
 }
@@ -270,6 +307,9 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
 
     // get the photon packet's redshifted wavelength
     double wavelength = pp->wavelength() * (1. + _redshift);
+
+    // get the photon packet's relative time
+    double time = pp->distance() / Constants::c();
 
     // get the wavelength bin indices that overlap the photon packet wavelength and perform recording for each
     for (int ell : _lambdagrid->bins(wavelength))
@@ -449,6 +489,58 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
             contributionList->addContribution(ell, l, Lext);
         }
     }
+
+    for (int tll : _timegrid->bins(time))
+    {
+        for (int wll : _lambdagrid->bins(wavelength))
+        {
+            // get the luminosity contribution from the photon packet,
+            // taking into account the transmission for the detector bin at this wavelength and the transmission for the detector bin at this time
+            double L = pp->luminosity() * _lambdagrid->transmission(wll, wavelength) * _timegrid->transmission(tll, time);
+
+            // adjust the luminosity for near distance if needed
+            if (_local)
+            {
+                L /= distance * distance;
+            }
+
+            // apply the extinction along the path to the recorder
+            double Lext = L;
+            if (_hasMedium)
+            {
+                // if this photon packet has already been launched towards an instrument with the same observer type,
+                // position and viewing direction, simply recover the stored optical depth from the photon packet;
+                // otherwise calculate the optical depth and store it in the photon packet for the next instrument
+                double tau;
+                if (pp->hasObservedOpticalDepth())
+                {
+                    tau = pp->observedOpticalDepth();
+                }
+                else
+                {
+                    tau = _ms->getExtinctionOpticalDepth(pp, distance);
+                    pp->setObservedOpticalDepth(tau);
+                }
+                Lext *= exp(-tau);
+            }
+
+            // record in LC arrays
+            if (_includeLightCurve)
+            {
+                double hc = Constants::h() * Constants::c();
+                double photonsPerSecond = Lext * wavelength / hc;
+                LockFree::add(_lc[Total][tll], photonsPerSecond);
+            }
+
+            // record in STM arrays
+            if (_includeSpectralTimeMap)
+            {
+                size_t lell = wll + tll * _numWavelengthX;
+                LockFree::add(_stm[Total][lell], Lext);
+            }
+        }
+    }
+
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -470,9 +562,12 @@ void FluxRecorder::calibrateAndWrite()
     // collect recorded data from all processes
     for (auto& array : _sed) ProcessManager::sumToRoot(array);
     for (auto& array : _ifu) ProcessManager::sumToRoot(array);
+    for (auto& array : _lc) ProcessManager::sumToRoot(array);
+    for (auto& array : _stm) ProcessManager::sumToRoot(array);
     for (auto& array : _wsed) ProcessManager::sumToRoot(array);
     for (auto& array : _wifu) ProcessManager::sumToRoot(array);
-
+    for (auto& array : _wlc) ProcessManager::sumToRoot(array);
+    for (auto& array : _wstm) ProcessManager::sumToRoot(array);
     // calibrate and write only in the root process
     if (!ProcessManager::isRoot()) return;
 
@@ -516,6 +611,7 @@ void FluxRecorder::calibrateAndWrite()
         // Build a list of column names and corresponding pointers to sed arrays (which may be empty)
         vector<string> sedNames;
         vector<Array*> sedArrays;
+        vector<Array*> sedLCArrays;
 
         // add the total flux; if we didn't record it directly, calculate it now
         sedNames.push_back("total flux");
@@ -793,6 +889,149 @@ void FluxRecorder::calibrateAndWrite()
                 cn *= c;
             }
         }
+    }
+
+    // write LCs to a single text file (with multiple columns)
+    int numTimes = _timegrid->numBins();
+    for (int tll = 0; tll != numTimes; ++tll)
+    {
+        // LCs
+        if (_includeLightCurve)
+        {
+            double factor = 1. / fourpid2 / _timegrid->effectiveWidth(tll)
+                            * units->otimedensity(1.);
+            for (auto& array : _lc)
+                if (array.size()) array[tll] *= factor;
+        }
+    }
+    if (_includeLightCurve)
+    {
+        // Build a list of column names and corresponding pointers to lc arrays (which may be empty)
+        vector<string> lcNames;
+        vector<Array*> lcArrays;
+
+        // add the total flux; if we didn't record it directly, calculate it now
+        lcNames.push_back("total flux");
+        lcArrays.push_back(&_lc[Total]);
+
+        // construct header comment line
+        string header = "# LC at ";
+        header += "inclination " + StringUtils::toString(units->oposangle(_inclination)) + " " + units->uposangle();
+        header += ", azimuth " + StringUtils::toString(units->oposangle(_azimuth)) + " " + units->uposangle();
+        if (_recordPolarization)
+        {
+            header += ", roll " + StringUtils::toString(units->oposangle(_roll)) + " " + units->uposangle();
+        }
+        if (_redshift)
+        {
+            header += ", redshift " + StringUtils::toString(_redshift);
+            header += ", luminosity distance " + StringUtils::toString(units->odistance(_luminosityDistance)) + " "
+                      + units->udistance();
+        }
+        else
+        {
+            header +=
+                ", distance " + StringUtils::toString(units->odistance(_luminosityDistance)) + " " + units->udistance();
+        }
+
+        // open the file and add the column headers
+        TextOutFile lcFile(_parentItem, _instrumentName + "_lc", "LC");
+        lcFile.writeLine(header);
+        lcFile.addColumn("time; " + units->stime(), units->utime());
+        for (const string& name : lcNames)
+        {
+            lcFile.addColumn(name + "; " + units->stimedensity(), units->utimedensity());
+        }
+
+        // write the column data
+        for (int ell : Indices(numTimes, units->rtime()))
+        {
+            vector<double> values({units->otime(_timegrid->time(ell))});
+            for (const Array* array : lcArrays) values.push_back(array->size() ? (*array)[ell] : 0.);
+            lcFile.writeRow(values);
+        }
+        lcFile.close();
+    }
+
+    // write STMs to FITS files (one file per STM)
+    for (int tll = 0; tll != numTimes; ++tll)
+    {
+        for (int wll = 0; wll != numWavelengths; ++wll)
+        {
+            int ell = wll + tll * numWavelengths;
+            // STMs
+            if (_includeSpectralTimeMap)
+            {
+                double factor = 1. / fourpid2 / _lambdagrid->effectiveWidth(wll) /_timegrid->effectiveWidth(tll)
+                                * units->ofluxdensity(_lambdagrid->wavelength(wll), 1.);
+                for (auto& array : _stm)
+                    if (array.size()) array[ell] *= factor;
+            }
+        }
+    }
+    if (_includeSpectralTimeMap)
+    {
+        // Build a list of file names and corresponding pointers to ifu arrays (which may be empty)
+        vector<string> stmNames;
+        vector<Array*> stmArrays;
+
+        // add the total flux; if we didn't record it directly, calculate it now
+        stmNames.push_back("stm");
+        Array stmTotal;
+        stmArrays.push_back(&_stm[Total]);
+        // copy the wavelength grid in output units
+        Array wavegrid(numWavelengths);
+        Array timegrid(numTimes);
+        for (int ell = 0; ell != numWavelengths; ++ell)
+            wavegrid[ell] = units->owavelength(_lambdagrid->wavelength(ell));
+        for (int tll = 0; tll != numTimes; ++tll)
+            timegrid[tll] = units->otime(_timegrid->time(tll));
+        // reverse the ordering of the wavelength grid and frames if necessary
+        if (units->rwavelength())
+        {
+            // reverse the wavelength grid
+            NR::reverse(wavegrid);
+
+            // reverse the flux data
+            for (auto& array : _stm)
+            {
+                if (array.size())
+                {
+                    for (int t = 0; t < _numTimeY; ++t)
+                    {
+                        size_t startOffset = t * _numWavelengthX;
+                        double* startPtr = &array[startOffset];
+                        double* endPtr   = startPtr + _numWavelengthX;
+                        std::reverse(startPtr, endPtr);
+                    }
+                }
+            }
+        }
+
+        // determine observer info for distant instruments
+        std::unique_ptr<FITSInOut::ObserverInfo> obsInfo;
+        if (!_local)
+        {
+            obsInfo = std::make_unique<FITSInOut::ObserverInfo>();
+            obsInfo->inclination = _inclination * (180. / M_PI);
+            obsInfo->azimuth = _azimuth * (180. / M_PI);
+            obsInfo->roll = _roll * (180. / M_PI);
+            obsInfo->redshift = _redshift;
+            obsInfo->luminosityDistance = units->odistance(_luminosityDistance);
+            obsInfo->angularDiameterDistance = units->odistance(_angularDiameterDistance);
+            obsInfo->distanceUnits = units->udistance();
+        }
+
+        // output the files (ignoring empty arrays)
+        int numFiles = stmNames.size();
+        for (int q = 0; q != numFiles; ++q)
+            if (stmArrays[q]->size())
+            {
+                string filename = _instrumentName + "_" + stmNames[q];
+                string description = stmNames[q] + " flux";
+                FITSInOut::writeforSpectralTimeMap(_parentItem, description, filename, *(stmArrays[q]), units->uspectraltimefluxdensity(),
+                                 _numWavelengthX, _numTimeY, units->uwavelength(), units->utime(), obsInfo.get());
+            }
     }
 }
 

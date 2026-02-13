@@ -175,6 +175,9 @@ public:
         from its current wavelength and weight. */
     double luminosity() const { return _W / _lambda; }
 
+    /**This function returns the distance travelled by the photon packet. */
+    double distance() const { return _D; }
+
     /** This function returns true if the photon packet originated from a primary source, false
         otherwise. */
     bool hasPrimaryOrigin() const { return _compIndex > 0; }
@@ -329,6 +332,7 @@ private:
     // current physical properties (in addition to inherited data members)
     double _lambda{0};  // current wavelength relative to the model coordinate system
     double _W{0};       // current weight, defined as L*lambda to avoid division and multiplication by hc
+    double _D{0};       // current relative travelled distance
 
     // physical information on radiation source; the interfaces are not used in peel-off photon packets
     double _lambda0{0};  // original wavelength in the rest-frame of the source

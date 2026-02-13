@@ -19,13 +19,13 @@
     Firstly, the Units base class and its derived classes enable the SMILE units mechanism in SKIRT
     parameter files, as described in the documentation of the UnitDef class.
 
-    Secondly, the Units class allows the user to configure the wavelength and flux output styles as
+    Secondly, the Units class allows the user to configure the wavelength, time, and flux output styles as
     attributes in the SKIRT parameter file.
 
     Finally, the Units class offers functionality for use by other classes in the simulation item
     hierarchy. It provides functions for converting physical quantities from internal SI units to
     external output units depending on the unit system (determined by the name of the subclass
-    being called) and, where applicable, on the selected wavelength and flux output styles. */
+    being called) and, where applicable, on the selected wavelength, time, and flux output styles. */
 class Units : public SimulationItem
 {
     /** The enumeration type indicating the output style for spectral values, i.e. as photon
@@ -34,6 +34,11 @@ class Units : public SimulationItem
         ENUM_VAL(WavelengthOutputStyle, Wavelength, "as photon wavelength: λ")
         ENUM_VAL(WavelengthOutputStyle, Frequency, "as photon frequency: ν")
         ENUM_VAL(WavelengthOutputStyle, Energy, "as photon energy: E")
+    ENUM_END()
+
+    /** The enumeration type indicating the output style for time values, as photon time. */
+    ENUM_DEF(TimeOutputStyle, Time)
+        ENUM_VAL(TimeOutputStyle, Time, "as photon time: s")
     ENUM_END()
 
     /** The enumeration type indicating the output style for flux density and surface brightness.
@@ -50,6 +55,9 @@ class Units : public SimulationItem
 
         PROPERTY_ENUM(wavelengthOutputStyle, WavelengthOutputStyle, "the output style for wavelengths")
         ATTRIBUTE_DEFAULT_VALUE(wavelengthOutputStyle, "Wavelength")
+
+        PROPERTY_ENUM(timeOutputStyle, TimeOutputStyle, "the output style for time")
+        ATTRIBUTE_DEFAULT_VALUE(timeOutputStyle, "Time")
 
         PROPERTY_ENUM(fluxOutputStyle, FluxOutputStyle, "the output style for flux density and surface brightness")
         ATTRIBUTE_DEFAULT_VALUE(fluxOutputStyle, "wavelengthOutputStyleEnergy:Energy;Frequency")
@@ -149,6 +157,21 @@ public:
     /** This function converts the wavelength \f$\lambda\f$ from the internal style (wavelength)
         and the internally used SI units (m) to the program's adopted output style and units. */
     double owavelength(double lambda) const;
+
+    /** This function returns a string describing the time output style adopted by the
+        program. */
+    string stime() const;
+
+    /** This function returns false for the output style 'time'. */
+    bool rtime() const;
+
+    /** This function returns a string containing the name of the style and unit of time
+        adopted by the program for output. */
+    string utime() const;
+
+    /** This function converts the time \f$t\f$ from the internal style (time)
+        and the internally used SI units (s) to the program's adopted output style and units. */
+    double otime(double time) const;
 
     /** This function returns a string containing the name of the unit of dust grain size adopted
         by the program for output. */
@@ -337,10 +360,21 @@ public:
         the program for output, depending on the selected flux output style. */
     string ufluxdensity() const;
 
+    /** This function returns a string describing the time flux density output style adopted by the
+        program. */
+    string stimedensity() const;
+
+    /** This function returns a string containing the name of the unit of flux density adopted by
+        the program for output, depending on the selected flux output style. */
+    string utimedensity() const;
+
     /** This function converts the per-wavelength flux density \f$F_\lambda\f$ for wavelength
         \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-3}\f$) to the
         program's flux output style and units. */
     double ofluxdensity(double lambda, double Flambda) const;
+
+    /** This function converts the per-time flux density \f$F_t\f$ for time \f$\t\f$*/
+    double otimedensity(double Ftime) const;
 
     /** This function returns a string describing the surface brightness output style adopted by
         the program. */
@@ -349,6 +383,10 @@ public:
     /** This function returns a string containing the name of the unit of surface brightness
         adopted by the program for output, depending on the selected flux output style. */
     string usurfacebrightness() const;
+
+    /** This function returns a string containing the name of the unit of energy time flux density
+        adopted by the program for output, depending on the selected flux output style. */
+    string uspectraltimefluxdensity() const;
 
     /** This function converts the per-wavelength surface brightness \f$f_\lambda\f$ for wavelength
         \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-3}\,

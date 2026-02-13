@@ -13,9 +13,10 @@ void Instrument::setupSelfBefore()
 {
     SimulationItem::setupSelfBefore();
 
-    // select "local" or default wavelength grid
+    // select "local" or default wavelength grid or time grid
     auto config = find<Configuration>();
     _instrumentWavelengthGrid = config->wavelengthGrid(wavelengthGrid());
+    _instrumentTimeGrid = config->timeGrid(timeGrid());
 
     // discover details about the simulation
     bool hasMedium = config->hasMedium();
@@ -23,7 +24,7 @@ void Instrument::setupSelfBefore()
 
     // partially configure the flux recorder
     _recorder = new FluxRecorder(this);
-    _recorder->setSimulationInfo(instrumentName(), instrumentWavelengthGrid(), hasMedium, hasMediumEmission);
+    _recorder->setSimulationInfo(instrumentName(), instrumentWavelengthGrid(), instrumentTimeGrid(), hasMedium, hasMediumEmission);
     _recorder->setUserFlags(_recordComponents, _numScatteringLevels, _recordPolarization, _recordStatistics);
 }
 
