@@ -180,11 +180,16 @@ public:
     FluxRecorder(const SimulationItem* parentItem);
 
     /** This function configures information on the simulation in which the recorder is embedded.
-        In order of appearance, the arguments specify the name of the associated instrument, the
-        wavelength and time grid of the instrument, whether the simulation includes at least some media, and
-        whether the simulation includes emission from those media. */
-    void setSimulationInfo(string instrumentName, const WavelengthGrid* lambdagrid, const TimeGrid* timegrid,
-                            bool hasMedium, bool hasMediumEmission);
+        In order of appearance, the arguments specify the name of the associated instrument,
+        whether the simulation includes at least some media, and whether the simulation includes
+        emission from those media. */
+    void setSimulationInfo(string instrumentName, bool hasMedium, bool hasMediumEmission);
+
+    /** This function configures the wavelength grid for the instrument, if applicable. */
+    void setWavelengthGrid(const WavelengthGrid* lambdagrid);
+
+    /** This function configures the time lag grid for the instrument, if applicable. */
+    void setTimeGrid(const TimeGrid* timegrid);
 
     /** This function configures the user requirements for recording, respectively, flux
         components, individual scattering level contributions, polarization, and information for
@@ -223,13 +228,13 @@ public:
     void includeSurfaceBrightnessForDistant(int numPixelsX, int numPixelsY, double pixelSizeX, double pixelSizeY,
                                             double centerX, double centerY);
 
-    /** This function enables recording of light curves for a distant instrument. */
-    void includeLightCurveForDistant();
+    /** This function enables recording of light curves for a distant instrument. This requires a
+        time grid to be configured. */
+    void includeLightCurve();
 
-    /** This function enables recording of STM data, i.e. a energy time flux density for a distant instrument.
-        The number of pixels and the grid sizes are used to set the wavelength grid in x axis and time grid in y axis.
-        The coordinates and pixel sizes are converted to angular sizes before being written to the metadata of the output file.
-        This function should not be called for a local instrument. */
+    /** This function enables recording of a spectral-time map for a distant instrument, i.e. a 2D
+        map of the spatially integrated flux density for each wavelength and time. This requires a
+        time grid to be configured. */
     void includeSpectralTimeMap();
 
     /** This function enables recording of IFU data cubes, i.e. a surface brightness image frame
@@ -333,8 +338,8 @@ private:
     // information on the simulation being recorded, received from client during configuration
     const SimulationItem* _parentItem{nullptr};
     string _instrumentName;
-    const TimeGrid* _timegrid{nullptr};
     const WavelengthGrid* _lambdagrid{nullptr};
+    const TimeGrid* _timegrid{nullptr};
     bool _hasMedium{false};
     bool _hasMediumEmission{false};  // relevant only when hasMedium is true
 
@@ -371,13 +376,6 @@ private:
     double _incrementY{0};
     string _quantityXY;
 
-    int _numWavelengthX{0};
-    int _numTimeY{0};
-    double _wavelengthSizeX{0};
-    double _timeSizeY{0};
-    double _centerWavelength{0};
-    double _centerTime{0};
-
     // cached info, initialized when configuration is finalized
     MediumSystem* _ms{nullptr};   // pointer to medium system, if present (used only if hasMedium is true)
     bool _recordTotalOnly{true};  // becomes false if recordComponents and hasMedium are both true
@@ -392,8 +390,6 @@ private:
     // detector arrays for statistics that should not be calibrated, initialized when configuration is finalized
     vector<Array> _wsed;
     vector<Array> _wifu;
-    vector<Array> _wlc;
-    vector<Array> _wstm;
 
     // thread-local contribution list
     ThreadLocalMember<ContributionList> _contributionLists;

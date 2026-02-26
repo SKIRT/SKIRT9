@@ -7,14 +7,12 @@
 #define INSTRUMENTSYSTEM_HPP
 
 #include "Instrument.hpp"
-#include "TimeGrid.hpp"
 #include "WavelengthGrid.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
 /** An InstrumentSystem instance keeps a list of zero or more instruments and an optional default
-    wavelength grid that will be used by an instrument unless it specifies its own wavelength grid
-    and an optional default time grid that will be used by an instrument unless it specifies its own time grid.
+    wavelength grid that will be used by an instrument unless it specifies its own wavelength grid.
     The instruments can be of various nature and do not need to be located at the same observing
     position. */
 class InstrumentSystem : public SimulationItem
@@ -26,12 +24,6 @@ class InstrumentSystem : public SimulationItem
         ATTRIBUTE_RELEVANT_IF(defaultWavelengthGrid, "Panchromatic")
         ATTRIBUTE_REQUIRED_IF(defaultWavelengthGrid, "!Level2")
         ATTRIBUTE_INSERT(defaultWavelengthGrid, "defaultWavelengthGrid:DefaultInstrumentWavelengthGrid")
-
-        PROPERTY_ITEM(defaultTimeGrid, TimeGrid, "the default instrument time grid")
-        ATTRIBUTE_DEFAULT_VALUE(defaultTimeGrid, "FileTimeGrid")
-        ATTRIBUTE_RELEVANT_IF(defaultTimeGrid, "Panchromatic")
-        ATTRIBUTE_REQUIRED_IF(defaultTimeGrid, "!Level2")
-        ATTRIBUTE_INSERT(defaultTimeGrid, "defaultTimeGrid:DefaultInstrumentTimeGrid")
 
         PROPERTY_ITEM_LIST(instruments, Instrument, "the instruments")
         ATTRIBUTE_DEFAULT_VALUE(instruments, "SEDInstrument")

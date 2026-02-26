@@ -14,8 +14,8 @@ void LightCurveInstrument::setupSelfBefore()
     DistantInstrument::setupSelfBefore();
 
     // configure flux recorder
-    instrumentFluxRecorder()->includeLightCurveForDistant();
-    
+    instrumentFluxRecorder()->includeLightCurve();
+
     // precalculate information needed by detect() function
     _radius2 = radius() * radius();
     _costheta = cos(inclination());

@@ -18,8 +18,6 @@
 #include "TimeGrid.hpp"
 #include "Units.hpp"
 #include "WavelengthGrid.hpp"
-#include <algorithm>
-#include <iostream>
 
 ////////////////////////////////////////////////////////////////////
 
@@ -71,14 +69,25 @@ FluxRecorder::FluxRecorder(const SimulationItem* parentItem) : _parentItem{paren
 
 ////////////////////////////////////////////////////////////////////
 
-void FluxRecorder::setSimulationInfo(string instrumentName, const WavelengthGrid* lambdagrid,
-                                    const TimeGrid* timegrid, bool hasMedium, bool hasMediumEmission)
+void FluxRecorder::setSimulationInfo(string instrumentName, bool hasMedium, bool hasMediumEmission)
 {
     _instrumentName = instrumentName;
-    _lambdagrid = lambdagrid;
-    _timegrid = timegrid;
     _hasMedium = hasMedium;
     _hasMediumEmission = hasMediumEmission;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void FluxRecorder::setWavelengthGrid(const WavelengthGrid* lambdagrid)
+{
+    _lambdagrid = lambdagrid;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void FluxRecorder::setTimeGrid(const TimeGrid* timegrid)
+{
+    _timegrid = timegrid;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -128,13 +137,6 @@ void FluxRecorder::includeFluxDensityForDistant()
 
 ////////////////////////////////////////////////////////////////////
 
-void FluxRecorder::includeLightCurveForDistant()
-{
-    _includeLightCurve = true;
-}
-
-////////////////////////////////////////////////////////////////////
-
 void FluxRecorder::includeSurfaceBrightnessForDistant(int numPixelsX, int numPixelsY, double pixelSizeX,
                                                       double pixelSizeY, double centerX, double centerY)
 {
@@ -145,13 +147,6 @@ void FluxRecorder::includeSurfaceBrightnessForDistant(int numPixelsX, int numPix
     _pixelSizeY = pixelSizeY;
     _centerX = centerX;
     _centerY = centerY;
-}
-
-////////////////////////////////////////////////////////////////////
-
-void FluxRecorder::includeSpectralTimeMap()
-{
-    _includeSpectralTimeMap = true;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -174,6 +169,20 @@ void FluxRecorder::includeSurfaceBrightnessForLocal(int numPixelsX, int numPixel
 
 ////////////////////////////////////////////////////////////////////
 
+void FluxRecorder::includeLightCurve()
+{
+    _includeLightCurve = true;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void FluxRecorder::includeSpectralTimeMap()
+{
+    _includeSpectralTimeMap = true;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void FluxRecorder::finalizeConfiguration()
 {
     // get a pointer to the medium system, if present
@@ -184,10 +193,7 @@ void FluxRecorder::finalizeConfiguration()
     size_t lenSED = _includeFluxDensity ? _lambdagrid->numBins() : 0;
     size_t lenIFU = _includeSurfaceBrightness ? _numPixelsInFrame * _lambdagrid->numBins() : 0;
     size_t lenLC = _includeLightCurve ? _timegrid->numBins() : 0;
-
-    _numWavelengthX = _lambdagrid->numBins();
-    _numTimeY = _timegrid->numBins();
-    size_t lenSTM = _includeSpectralTimeMap ? _numWavelengthX * _numTimeY : 0;
+    size_t lenSTM = _includeLightCurve ? _lambdagrid->numBins() * _timegrid->numBins() : 0;
 
     // do not try to record components if there is no medium
     _recordTotalOnly = !_recordComponents || !_hasMedium;
@@ -197,9 +203,6 @@ void FluxRecorder::finalizeConfiguration()
     _ifu.resize(PrimaryScatteredLevel + _numScatteringLevels);
     _lc.resize(PrimaryScatteredLevel + _numScatteringLevels);
     _stm.resize(PrimaryScatteredLevel + _numScatteringLevels);
-
-    _lc[Total].resize(lenLC);
-    _stm[Total].resize(lenSTM);
 
     // resize the flux detector arrays according to the configuration
     if (_recordTotalOnly)
@@ -271,17 +274,17 @@ void FluxRecorder::finalizeConfiguration()
         }
     }
 
+    // for time-lag tracking, the current implementation supports just the Total flux
+    _lc[Total].resize(lenLC);
+    _stm[Total].resize(lenSTM);
+
     // allocate and resize the statistics detector arrays
     if (_recordStatistics)
     {
         _wsed.resize(maxContributionPower + 1);
         _wifu.resize(maxContributionPower + 1);
-        _wlc.resize(maxContributionPower + 1);
-        _wstm.resize(maxContributionPower + 1);
         for (auto& array : _wsed) array.resize(lenSED);
         for (auto& array : _wifu) array.resize(lenIFU);
-        for (auto& array : _wlc) array.resize(lenLC);
-        for (auto& array : _wstm) array.resize(lenSTM);
     }
 
     // calculate and log allocated memory size
@@ -292,8 +295,6 @@ void FluxRecorder::finalizeConfiguration()
     for (const auto& array : _stm) allocatedSize += array.size();
     for (const auto& array : _wsed) allocatedSize += array.size();
     for (const auto& array : _wifu) allocatedSize += array.size();
-    for (const auto& array : _wlc) allocatedSize += array.size();
-    for (const auto& array : _wstm) allocatedSize += array.size();
     _parentItem->find<Log>()->info(_parentItem->typeAndName() + " allocated "
                                    + StringUtils::toMemSizeString(allocatedSize * sizeof(double)) + " of memory");
 }
@@ -307,9 +308,6 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
 
     // get the photon packet's redshifted wavelength
     double wavelength = pp->wavelength() * (1. + _redshift);
-
-    // get the photon packet's relative time
-    double time = pp->distance() / Constants::c();
 
     // get the wavelength bin indices that overlap the photon packet wavelength and perform recording for each
     for (int ell : _lambdagrid->bins(wavelength))
@@ -489,6 +487,9 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
             contributionList->addContribution(ell, l, Lext);
         }
     }
+/*
+    // get the photon packet's relative time
+    double time = pp->distance() / Constants::c();
 
     for (int tll : _timegrid->bins(time))
     {
@@ -540,7 +541,7 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
             }
         }
     }
-
+*/
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -566,8 +567,7 @@ void FluxRecorder::calibrateAndWrite()
     for (auto& array : _stm) ProcessManager::sumToRoot(array);
     for (auto& array : _wsed) ProcessManager::sumToRoot(array);
     for (auto& array : _wifu) ProcessManager::sumToRoot(array);
-    for (auto& array : _wlc) ProcessManager::sumToRoot(array);
-    for (auto& array : _wstm) ProcessManager::sumToRoot(array);
+
     // calibrate and write only in the root process
     if (!ProcessManager::isRoot()) return;
 
@@ -890,7 +890,7 @@ void FluxRecorder::calibrateAndWrite()
             }
         }
     }
-
+/*
     // write LCs to a single text file (with multiple columns)
     int numTimes = _timegrid->numBins();
     for (int tll = 0; tll != numTimes; ++tll)
@@ -1033,6 +1033,7 @@ void FluxRecorder::calibrateAndWrite()
                                  _numWavelengthX, _numTimeY, units->uwavelength(), units->utime(), obsInfo.get());
             }
     }
+*/
 }
 
 ////////////////////////////////////////////////////////////////////

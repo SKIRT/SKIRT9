@@ -71,10 +71,6 @@ void Configuration::setupSelfBefore()
         if (is) _defaultWavelengthGrid = is->defaultWavelengthGrid();
     }
 
-    // retrieve time
-    auto is = find<InstrumentSystem>(false);
-    _defaultTimeGrid = is->defaultTimeGrid();
-
     // determine model dimension based on sources only (we'll redo this later if there are media)
     _modelDimension = ss->dimension();
 
@@ -663,9 +659,3 @@ WavelengthGrid* Configuration::wavelengthGrid(WavelengthGrid* localWavelengthGri
 }
 
 ////////////////////////////////////////////////////////////////////
-
-TimeGrid* Configuration::timeGrid(TimeGrid* localTimeGrid) const
-{
-    auto result = localTimeGrid ? localTimeGrid : _defaultTimeGrid;
-    return result;
-}
