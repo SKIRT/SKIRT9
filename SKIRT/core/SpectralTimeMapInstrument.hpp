@@ -7,11 +7,12 @@
 #define SPECTRALTIMEMAPINSTRUMENT_HPP
 
 #include "DistantInstrument.hpp"
+#include "TimeGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** A SpectralTimeMapInstrument object represents a distant instrument that records the spatially integrated
-    flux density for each wavelength and time, and outputs a 2D image FITS file.
+/** A SpectralTimeMapInstrument object represents a distant instrument that records the spatially
+    integrated flux density for each wavelength and time, and outputs a 2D image FITS file.
 
     The instrument allows configuring the radius of a circular aperture centered on the origin of
     the model coordinate system and in the plane perpendicular to the instrument's line of sight.
@@ -22,13 +23,15 @@ class SpectralTimeMapInstrument : public DistantInstrument
 {
     ITEM_CONCRETE(SpectralTimeMapInstrument, DistantInstrument,
                   "a distant instrument that outputs the spatially integrated flux density as a spectral time map")
+        ATTRIBUTE_TYPE_ALLOWED_IF(SpectralTimeMapInstrument, "ExtinctionOnly")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(SpectralTimeMapInstrument, "Level2")
+
+        PROPERTY_ITEM(timeGrid, TimeGrid, "the time grid for this instrument")
 
         PROPERTY_DOUBLE(radius, "the radius of the circular aperture, or zero for no aperture")
         ATTRIBUTE_QUANTITY(radius, "length")
         ATTRIBUTE_MIN_VALUE(radius, "[0")
         ATTRIBUTE_DEFAULT_VALUE(radius, "0")
-        ATTRIBUTE_DISPLAYED_IF(radius, "Level2")
-        ATTRIBUTE_TYPE_ALLOWED_IF(SpectralTimeMapInstrument, "ExtinctionOnly")
 
     ITEM_END()
 

@@ -14,6 +14,7 @@ void SpectralTimeMapInstrument::setupSelfBefore()
     DistantInstrument::setupSelfBefore();
 
     // configure flux recorder
+    instrumentFluxRecorder()->setTimeGrid(timeGrid());
     instrumentFluxRecorder()->includeSpectralTimeMap();
 
     // precalculate information needed by detect() function

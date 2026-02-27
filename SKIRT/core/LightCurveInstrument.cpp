@@ -14,7 +14,8 @@ void LightCurveInstrument::setupSelfBefore()
     DistantInstrument::setupSelfBefore();
 
     // configure flux recorder
-    instrumentFluxRecorder()->includeLightCurve();
+    instrumentFluxRecorder()->setTimeGrid(timeGrid());
+    instrumentFluxRecorder()->includeSpectralTimeMap();
 
     // precalculate information needed by detect() function
     _radius2 = radius() * radius();
