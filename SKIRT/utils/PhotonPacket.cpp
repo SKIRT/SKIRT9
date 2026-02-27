@@ -68,8 +68,7 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
     _lambda = pp->_lambda;
     _W = pp->_W;
     _lambda0 = pp->_lambda0;
-    _D = 0;
-    _D -= Vec::dot(bfk, pp->position());
+    _D = -Vec::dot(bfk, pp->position());
     _compIndex = pp->_compIndex;
     _historyIndex = pp->_historyIndex;
     _nscatt = 0;
