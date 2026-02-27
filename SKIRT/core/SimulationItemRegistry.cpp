@@ -691,6 +691,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<InstrumentSystem>();
     ItemRegistry::add<Instrument>();
     ItemRegistry::add<DistantInstrument>();
+    ItemRegistry::add<ApertureInstrument>();
     ItemRegistry::add<SEDInstrument>();
     ItemRegistry::add<FrameInstrument>();
     ItemRegistry::add<FullInstrument>();
