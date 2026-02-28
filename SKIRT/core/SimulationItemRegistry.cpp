@@ -124,6 +124,7 @@
 #include "ImportedSourceMetallicityProbe.hpp"
 #include "ImportedSourceVelocityProbe.hpp"
 #include "InstrumentSystem.hpp"
+#include "InstrumentTimeGridProbe.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "IntegratedLuminosityNormalization.hpp"
 #include "IsotropicAngularDistribution.hpp"
@@ -701,6 +702,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<AllSkyInstrument>();
     ItemRegistry::add<HEALPixSkyInstrument>();
     ItemRegistry::add<PerspectiveInstrument>();
+    ItemRegistry::add<TimeInstrument>();
     ItemRegistry::add<LightCurveInstrument>();
     ItemRegistry::add<SpectralTimeMapInstrument>();
 
@@ -748,6 +750,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
     ItemRegistry::add<DustEmissionWavelengthGridProbe>();
     ItemRegistry::add<InstrumentWavelengthGridProbe>();
+    //   .. time grid
+    ItemRegistry::add<InstrumentTimeGridProbe>();
     //   .. specialty
     ItemRegistry::add<DustAbsorptionPerCellProbe>();
     ItemRegistry::add<SpatialGridSourceDensityProbe>();

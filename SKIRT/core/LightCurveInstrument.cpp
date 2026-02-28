@@ -11,10 +11,9 @@
 
 void LightCurveInstrument::setupSelfBefore()
 {
-    ApertureInstrument::setupSelfBefore();
+    TimeInstrument::setupSelfBefore();
 
     // configure flux recorder
-    instrumentFluxRecorder()->setTimeGrid(timeGrid());
     instrumentFluxRecorder()->includeLightCurve();
 }
 

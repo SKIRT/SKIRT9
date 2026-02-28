@@ -6,23 +6,17 @@
 #ifndef SPECTRALTIMEMAPINSTRUMENT_HPP
 #define SPECTRALTIMEMAPINSTRUMENT_HPP
 
-#include "ApertureInstrument.hpp"
-#include "TimeGrid.hpp"
+#include "TimeInstrument.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 /** A SpectralTimeMapInstrument object represents a distant instrument with an optional circular
     aperture that records the spatially integrated flux density per wavelength interval and per
     time lag interval, and outputs a FITS file a 2D spectral-time map. */
-class SpectralTimeMapInstrument : public ApertureInstrument
+class SpectralTimeMapInstrument : public TimeInstrument
 {
-    ITEM_CONCRETE(SpectralTimeMapInstrument, ApertureInstrument,
+    ITEM_CONCRETE(SpectralTimeMapInstrument, TimeInstrument,
                   "a distant instrument that outputs the spatially integrated flux density as a spectral time map")
-        ATTRIBUTE_TYPE_ALLOWED_IF(SpectralTimeMapInstrument, "ExtinctionOnly")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(SpectralTimeMapInstrument, "Level2")
-
-        PROPERTY_ITEM(timeGrid, TimeGrid, "the time grid for this instrument")
-
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

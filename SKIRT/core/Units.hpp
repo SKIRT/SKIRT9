@@ -363,7 +363,7 @@ public:
         {\text{sr}}^{-1}\f$) to the program's flux output style and units. */
     double osurfacebrightness(double lambda, double flambda) const;
 
-     /** This function returns a string describing the mean intensity output style adopted by
+    /** This function returns a string describing the mean intensity output style adopted by
         the program. */
     string smeanintensity() const;
 

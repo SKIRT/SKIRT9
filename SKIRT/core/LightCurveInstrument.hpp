@@ -6,8 +6,7 @@
 #ifndef LIGHTCURVEINSTRUMENT_HPP
 #define LIGHTCURVEINSTRUMENT_HPP
 
-#include "ApertureInstrument.hpp"
-#include "TimeGrid.hpp"
+#include "TimeInstrument.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -32,15 +31,10 @@
     built-in BroadBand or custom FileBand instances.
 
     */
-class LightCurveInstrument : public ApertureInstrument
+class LightCurveInstrument : public TimeInstrument
 {
-    ITEM_CONCRETE(LightCurveInstrument, ApertureInstrument,
+    ITEM_CONCRETE(LightCurveInstrument, TimeInstrument,
                   "a distant instrument that outputs the spatially integrated flux density as a light curve")
-        ATTRIBUTE_TYPE_ALLOWED_IF(LightCurveInstrument, "ExtinctionOnly")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(SpectralTimeMapInstrument, "Level2")
-
-        PROPERTY_ITEM(timeGrid, TimeGrid, "the time grid for this instrument")
-
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
