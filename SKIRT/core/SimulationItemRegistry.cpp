@@ -132,6 +132,7 @@
 #include "LightCurveInstrument.hpp"
 #include "LinBorderWavelengthGrid.hpp"
 #include "LinMesh.hpp"
+#include "LinTimeGrid.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "LinWavelengthGrid.hpp"
 #include "LineLuminosityNormalization.hpp"
@@ -148,6 +149,7 @@
 #include "LocalUniverseCosmology.hpp"
 #include "LogBorderWavelengthGrid.hpp"
 #include "LogMesh.hpp"
+#include "LogTimeGrid.hpp"
 #include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
 #include "LuminosityProbe.hpp"
@@ -684,7 +686,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
 
     // time grids
     ItemRegistry::add<TimeGrid>();
-    ItemRegistry::add<DisjointTimeGrid>();
+    ItemRegistry::add<LinTimeGrid>();
+    ItemRegistry::add<LogTimeGrid>();
     ItemRegistry::add<FileTimeGrid>();
 
     // instrument system and instruments

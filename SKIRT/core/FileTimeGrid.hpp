@@ -6,39 +6,40 @@
 #ifndef FILETIMEGRID_HPP
 #define FILETIMEGRID_HPP
 
-#include "DisjointTimeGrid.hpp"
+#include "TimeGrid.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** FileTimeGrid is a subclass of the DisjointTimeGrid class representing time
-    grids loaded from an input file. The floating point numbers in the first column of the text
-    file specify the characteristic times. The unit is second.
-    In all cases, the times loaded from the file represent the characteristic times of
-    the grid bins, and the bin borders are derived automatically. Note that the outermost bin
-    borders are placed beyond the outermost characteristic times.
+/** FileTimeGrid represents time grids loaded from an input file. The floating point numbers in the
+    first three columns of the text file specify respectively the characteristic time, the left
+    border, and the right border of each bin. The default unit is second (s), but this can be
+    overridden by a column header (see TextInFile). Any additional columns in the file are ignored.
 
-    Note that the grid value of the characteristic times allows the negative time lags,
-    which can be useful for setting multiple sources. If you would like to use logarithmic spacing for negative time lags,
-    you can criate a logarithmic grid which is positive and then shift the grid to negative values by setting the time lags
-    to negative values in the input file.
+    The bins must be non-empty and non-overlapping, and must be sorted in increasing time order. It
+    is allowed to have gaps between the bins. For a formal statement of the requirements, see
+    TimeGrid. Note that time values are allowed to be negative.
+
+    \note When specifying consecutive "touching" bins, make sure that the right border of the first
+    bin is exactly equal to the left border of the second bin to the precision of the values listed
+    in the input file. if not, the import might fail because the bins are considered to overlap, or
+    there will be an unintended (small) gap in the time grid.
+
     */
-class FileTimeGrid : public DisjointTimeGrid
+class FileTimeGrid : public TimeGrid
 {
-    ITEM_CONCRETE(FileTimeGrid, DisjointTimeGrid, "a time grid loaded from a text file")
+    ITEM_CONCRETE(FileTimeGrid, TimeGrid, "a time grid loaded from a text file")
         ATTRIBUTE_TYPE_DISPLAYED_IF(FileTimeGrid, "Level2")
 
-        PROPERTY_STRING(filename, "the name of the file with the characteristic time")
-
-        PROPERTY_BOOL(log, "use logarithmic scale")
-        ATTRIBUTE_DEFAULT_VALUE(log, "true")
+        PROPERTY_STRING(filename, "the name of the file with the time bins")
 
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function reads the time grid points from the specified file. */
-    void setupSelfBefore() override;
+    /** This function is invoked during setup. It places the time bins for this grid in the
+        specified vector, which is guaranteed to be empty upon invocation. */
+    void getTimeBins(vector<Bin>& bins) const override;
 };
 
 ////////////////////////////////////////////////////////////////////

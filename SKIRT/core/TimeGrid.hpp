@@ -6,101 +6,102 @@
 #ifndef TIMEGRID_HPP
 #define TIMEGRID_HPP
 
-#include "Array.hpp"
 #include "Range.hpp"
 #include "SimulationItem.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** TimeGrid is an abstract class that defines the interface for time grids that can be
-    used, for example, to specify the time bins used for detecting photon packets in
-    instruments.
+/** TimeGrid is an abstract class that defines the interface for time grids that can be used, for
+    example, to specify the time bins in a light curve instrument.
 
-    A time grid consists of \f$N>0\f$ possibly overlapping time bins. Generally
-    speaking, each of these bins is defined through a transmission determining the
-    contribution fraction of a detected photon packet to the bin as a function of time. This
-    class defines the public interface for a time grid in these general terms. Subclasses can
-    implement several bin types, including bins that mimic a particular broadband, or
-    straightforward bins with constant transmission across some time interval.
+    A time grid consists of one or more non-overlapping, nonempty time bins in increasing time
+    order. Each bin is defined by its left and right borders and has a characteristic time that
+    falls inside the bin. The left border is considered to be inside the bin; the right border is
+    considered to be outside of the bin. Neighboring bins may have a common border but can also be
+    disconnected. Note that time values can be negative.
 
-    Key properties of a time bin include its left and right borders, defining a time
-    interval, and time lag. The TimeGrid class requires that the
-    time lag of a bin falls inside the bin, i.e. \f$t^\mathrm{left}_\ell \le
-    t^\mathrm{c}_\ell \le t^\mathrm{right}_\ell, \ell=0\dots N-1\f$, and that no two bins
-    have the same time lag. This allows the TimeGrid class to meaningfully
-    sort bins in increasing order of time lag, and assign bin indices accordingly.
+    Formally, assuming \f$N>0\f$ bins with zero-based indices, we have \f[ t^\mathrm{left}_k \le
+    t^\mathrm{c}_k < t^\mathrm{right}_k, \quad k=0\dots N-1 \f] and if \f$N>1\f$, we additionally
+    have \f[ t^\mathrm{right}_k \le t^\mathrm{left}_{k+1}, \quad k=0\dots N-2. \f] Finally, each
+    bin of course has an associated bin width, \f[t^\mathrm{right}_k - t^\mathrm{left}_k > 0, \quad
+    k=0\dots N-1.\f]
 
-    The public interface also includes functions to obtain the relative transmission for a given
-    bin as a function of time, defined as the transmission at that time divided by the
-    maximum transmission value, and to obtain a bin's effective width, defined as the horizontal size of
-    a rectangle with height equal to the maximum transmission value and with the same area as the one
-    covered by the band's transmission.
+    The public interface offers functions to obtain the properties of each bin, and to determine
+    the (index of) the bin that contains a given time point.
 
-    Finally, and most importantly, the public interface offers a function to determine the (indices
-    of) the bin(s) that may have a nonzero transmission at a given time. */
+    A TimeGrid subclass is expected to implement the getTimeBins() function, which is invoked by
+    this base class during setup to initialize the time grid. */
 class TimeGrid : public SimulationItem
 {
     ITEM_ABSTRACT(TimeGrid, SimulationItem, "a time grid")
     ITEM_END()
 
+    //============= Construction - Setup - Destruction =============
+
+protected:
+    /** This function invokes the getTimeBins() function, implemented in each subclass, to obtain a
+        list of time bins. After verifying that the bins are properly formed and sorted, the
+        function builds a data structure that allows the bin() function, implemented here, to
+        efficiently locate the bin containing a given time point. */
+    void setupSelfBefore() override;
+
+    /** This local class represents a single time bin. */
+    class Bin
+    {
+    private:
+        double _left, _time, _right;
+
+    public:
+        Bin(double left, double time, double right) : _left{left}, _time{time}, _right{right} {}
+        double left() const { return _left; }
+        double time() const { return _time; }
+        double right() const { return _right; }
+    };
+
+    /** This function must be implemented in a subclass; it is invoked by this base class during
+        setup. The function must place the time bins for this grid in the specified vector, which
+        is guaranteed to be empty upon invocation. The bins must be sorted in increasing order and
+        must otherwise conform to the restrictions listed in the class header. */
+    virtual void getTimeBins(vector<Bin>& bins) const = 0;
+
     //======================== Public interface =======================
 
 public:
-    /** This function returns the number of bins \f$N\f$ in the grid, or equivalently, the number
-        of time lags. Bins are always sorted in order of increasing time lag. */
-    virtual int numBins() const = 0;
+    /** This function returns the number of bins \f$N\f$ in the grid. */
+    int numBins() const;
 
-    /** This function returns the time lag \f$t^\mathrm{c}_\ell\f$
-       corresponding to the index \f$\ell\f$. The time lag of a bin is always
-       inside the bin, i.e. \f$t^\mathrm{left}_\ell \le t^\mathrm{c}_\ell \le
-       t^\mathrm{right}_\ell\f$. Bins are always sorted in order of
-       increasing time lag. */
-    virtual double time(int ell) const = 0;
+    /** This function returns the characteristic time \f$t^\mathrm{c}_k\f$ for the bin
+        corresponding to the index \f$k\f$. */
+    double time(int k) const;
 
-    /** This function returns the left border of the time bin corresponding to the index
-        \f$\ell\f$, i.e. \f$t^\mathrm{left}_\ell\f$. The transmission for this bin is
-        guaranteed to be zero for all times shorter than the left border. */
-    virtual double leftBorder(int ell) const = 0;
+    /** This function returns the left border \f$t^\mathrm{left}_k\f$ of the bin corresponding to
+        the index \f$k\f$. */
+    double left(int k) const;
 
-    /** This function returns the right border of the time bin corresponding to the index
-        \f$\ell\f$, i.e. \f$t^\mathrm{right}_\ell\f$. The transmission for this bin is
-        guaranteed to be zero for all times longer than the right border. */
-    virtual double rightBorder(int ell) const = 0;
+    /** This function returns the right border \f$t^\mathrm{right}_k\f$ of the bin corresponding to
+        the index \f$k\f$. */
+    double right(int k) const;
 
-    /** This function returns the effective width of the time bin corresponding to the index
-        \f$\ell\f$. The effective width is defined as the horizontal size of a rectangle with
-        height equal to the maximum transmission and with the same area as the one covered by the
-        band's transmission curve. For bins with a constant transmission over the complete
-        interval, the effective width is simply \f$t^\mathrm{right}_\ell -
-        t^\mathrm{left}_\ell\f$. For bins with non-constant transmission, this is no longer
-        true. */
-    virtual double effectiveWidth(int ell) const = 0;
+    /** This function returns width \f$t^\mathrm{right}_k - t^\mathrm{left}_k\f$ of the bin
+        corresponding to the index \f$k\f$. */
+    double width(int k) const;
 
-    /** This function returns the relative transmission for the time bin corresponding to the
-        index \f$\ell\f$ at the time \f$t\f$. The relative transmission is defined as
-        the transmission at that time divided by the maximum transmission for the bin. */
-    virtual double transmission(int ell, double time) const = 0;
+    /** This function returns the range covered by the time grid, running from the left border of
+        the leftmost bin to the right border of the rightmost bin. */
+    Range range() const;
 
-    /** This function returns a list of indices \f$\ell_k\f$ of the time bins that may have a
-        nonzero transmission at the specified time \f$t\f$, i.e. for which
-        \f$t^\mathrm{left}_\ell \le t \le t^\mathrm{right}_\ell\f$. If no
-        times bins match this condition, the function returns an empty list. */
-    virtual vector<int> bins(double time) const = 0;
+    /** This function returns the index \f$k\f$ of the time bin that contains the specified time
+        \f$t\f$, i.e. for which \f$t^\mathrm{left}_k \le t < t^\mathrm{right}_k\f$. If no times
+        bins match this condition, the function returns -1. */
+    int bin(double time) const;
 
-    /** This function returns the index \f$\ell\f$ of one the time bins that may have a
-        nonzero transmission at the specified time \f$t\f$, i.e. for which
-        \f$t^\mathrm{left}_\ell \le t \le t^\mathrm{right}_\ell\f$. If no
-        times bins match this condition, the function returns -1. If multiple bins match this
-        condition, the function returns the index for the bin with the shortest characteristic
-        time. */
-    virtual int bin(double time) const = 0;
+    //======================== Data Members ========================
 
-    /** This function returns the time range covered by the time grid, which is defined
-        as the range from the left border of the leftmost bin to the right border of the rightmost
-        bin. This range includes all times possibly covered by the time grid except in
-        the rare case of overlapping bins where an inner bin is so wide that it outer limit extends
-        beyond the outer bin. */
-    Range timeRange() const;
+private:
+    // initialized in setupSelfBefore()
+    vector<Bin> _bins;        // ordered time bins
+    vector<double> _borders;  // ordered unique border points (nr of entries depends on whether bins are adjacent)
+    vector<int> _indices;     // indices of the  bins defined by the border points, or -1 if not inside bin
 };
 
 //////////////////////////////////////////////////////////////////////

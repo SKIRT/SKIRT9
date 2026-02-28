@@ -8,18 +8,22 @@
 
 ////////////////////////////////////////////////////////////////////
 
-void FileTimeGrid::setupSelfBefore()
+void FileTimeGrid::getTimeBins(vector<Bin>& bins) const
 {
-    DisjointTimeGrid::setupSelfBefore();
-
-    // read the times from the input file
+    // setup the columns for the input file
     TextInFile infile(this, _filename, "time grid");
-    infile.addColumn("time", "time", "s");
-    Array timeLags;
-    infile.readAllColumns(timeLags);
-    infile.close();
+    infile.addColumn("time", "timelag", "s");
+    infile.addColumn("left", "timelag", "s");
+    infile.addColumn("right", "timelag", "s");
 
-    setTimeRange(timeLags, _log);
+    // read the time bins from the input file
+    while (true)
+    {
+        double time, left, right;
+        if (!infile.readRow(time, left, right)) break;
+        bins.emplace_back(time, left, right);
+    }
+    infile.close();
 }
 
 //////////////////////////////////////////////////////////////////////
