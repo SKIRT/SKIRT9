@@ -189,11 +189,12 @@ void FluxRecorder::finalizeConfiguration()
     _ms = _parentItem->find<MediumSystem>(false);
 
     // get array lengths
+    _numWavelengths = _lambdagrid->numBins();
     _numPixelsInFrame = _numPixelsX * _numPixelsY;  // convert to size_t before calculating lenIFU
-    size_t lenSED = _includeFluxDensity ? _lambdagrid->numBins() : 0;
-    size_t lenIFU = _includeSurfaceBrightness ? _numPixelsInFrame * _lambdagrid->numBins() : 0;
+    size_t lenSED = _includeFluxDensity ? _numWavelengths : 0;
+    size_t lenIFU = _includeSurfaceBrightness ? _numPixelsInFrame * _numWavelengths : 0;
     size_t lenLC = _includeLightCurve ? _timegrid->numBins() : 0;
-    size_t lenSTM = _includeLightCurve ? _lambdagrid->numBins() * _timegrid->numBins() : 0;
+    size_t lenSTM = _includeLightCurve ? _numWavelengths * _timegrid->numBins() : 0;
 
     // do not try to record components if there is no medium
     _recordTotalOnly = !_recordComponents || !_hasMedium;
@@ -202,6 +203,7 @@ void FluxRecorder::finalizeConfiguration()
     _sed.resize(PrimaryScatteredLevel + _numScatteringLevels);
     _ifu.resize(PrimaryScatteredLevel + _numScatteringLevels);
     _lc.resize(PrimaryScatteredLevel + _numScatteringLevels);
+    _lcw.resize(PrimaryScatteredLevel + _numScatteringLevels);
     _stm.resize(PrimaryScatteredLevel + _numScatteringLevels);
 
     // resize the flux detector arrays according to the configuration
@@ -276,6 +278,7 @@ void FluxRecorder::finalizeConfiguration()
 
     // for time-lag tracking, the current implementation supports just the Total flux
     _lc[Total].resize(lenLC);
+    _lcw[Total].resize(lenLC);
     _stm[Total].resize(lenSTM);
 
     // allocate and resize the statistics detector arrays
@@ -292,6 +295,7 @@ void FluxRecorder::finalizeConfiguration()
     for (const auto& array : _sed) allocatedSize += array.size();
     for (const auto& array : _ifu) allocatedSize += array.size();
     for (const auto& array : _lc) allocatedSize += array.size();
+    for (const auto& array : _lcw) allocatedSize += array.size();
     for (const auto& array : _stm) allocatedSize += array.size();
     for (const auto& array : _wsed) allocatedSize += array.size();
     for (const auto& array : _wifu) allocatedSize += array.size();
@@ -309,41 +313,44 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
     // get the photon packet's redshifted wavelength
     double wavelength = pp->wavelength() * (1. + _redshift);
 
+    // get the luminosity contribution from the photon packet, without taking into account the instrument transmission
+    double luminosity = pp->luminosity();
+
+    // adjust the luminosity for near distance if needed
+    if (_local)
+    {
+        luminosity /= distance * distance;
+    }
+
+    // obtain the extinction along the path to the recorder
+    double extinction = 1.;
+    if (_hasMedium)
+    {
+        // if this photon packet has already been launched towards an instrument with the same observer type,
+        // position and viewing direction, simply recover the stored optical depth from the photon packet;
+        // otherwise calculate the optical depth and store it in the photon packet for the next instrument
+        double tau;
+        if (pp->hasObservedOpticalDepth())
+        {
+            tau = pp->observedOpticalDepth();
+        }
+        else
+        {
+            tau = _ms->getExtinctionOpticalDepth(pp, distance);
+            pp->setObservedOpticalDepth(tau);
+        }
+        extinction = exp(-tau);
+    }
+
+    // get number of scatterings (because we use it a lot)
+    int numScatt = pp->numScatt();
+
     // get the wavelength bin indices that overlap the photon packet wavelength and perform recording for each
     for (int ell : _lambdagrid->bins(wavelength))
     {
-        // get the luminosity contribution from the photon packet,
-        // taking into account the transmission for the detector bin at this wavelength
-        double L = pp->luminosity() * _lambdagrid->transmission(ell, wavelength);
-
-        // adjust the luminosity for near distance if needed
-        if (_local)
-        {
-            L /= distance * distance;
-        }
-
-        // apply the extinction along the path to the recorder
-        double Lext = L;
-        if (_hasMedium)
-        {
-            // if this photon packet has already been launched towards an instrument with the same observer type,
-            // position and viewing direction, simply recover the stored optical depth from the photon packet;
-            // otherwise calculate the optical depth and store it in the photon packet for the next instrument
-            double tau;
-            if (pp->hasObservedOpticalDepth())
-            {
-                tau = pp->observedOpticalDepth();
-            }
-            else
-            {
-                tau = _ms->getExtinctionOpticalDepth(pp, distance);
-                pp->setObservedOpticalDepth(tau);
-            }
-            Lext *= exp(-tau);
-        }
-
-        // get number of scatterings (because we use it a lot)
-        int numScatt = pp->numScatt();
+        // adjust the luminosity for the instrument transmission at this wavelength
+        double L = luminosity * _lambdagrid->transmission(ell, wavelength);
+        double Lext = L * extinction;
 
         // record in SED arrays
         if (_includeFluxDensity)
@@ -475,6 +482,29 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
             }
         }
 
+        // if this is a time instrument
+        if (_includeLightCurve || _includeSpectralTimeMap)
+        {
+            // get the time grid bin index corresponding to the distance travelled by the photon packet
+            int k = _timegrid->binForDistance(pp->distance());
+
+            // record in LC arrays
+            if (_includeLightCurve && k >= 0)
+            {
+                // record both the plain contribution and the contribution multiplied by the wavelength
+                // to allow converting the aggregated value between an amount of energy and a number of photons
+                LockFree::add(_lc[Total][k], L);
+                LockFree::add(_lcw[Total][k], L * wavelength);
+            }
+
+            // record in STM arrays
+            if (_includeSpectralTimeMap && k >= 0)
+            {
+                size_t kell = ell + k * _numWavelengths;
+                LockFree::add(_stm[Total][kell], Lext);
+            }
+        }
+
         // record statistics for both SEDs and IFUs
         if (_recordStatistics)
         {
@@ -487,61 +517,6 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
             contributionList->addContribution(ell, l, Lext);
         }
     }
-/*
-    // get the photon packet's relative time
-    double time = pp->distance() / Constants::c();
-
-    for (int tll : _timegrid->bins(time))
-    {
-        for (int wll : _lambdagrid->bins(wavelength))
-        {
-            // get the luminosity contribution from the photon packet,
-            // taking into account the transmission for the detector bin at this wavelength and the transmission for the detector bin at this time
-            double L = pp->luminosity() * _lambdagrid->transmission(wll, wavelength) * _timegrid->transmission(tll, time);
-
-            // adjust the luminosity for near distance if needed
-            if (_local)
-            {
-                L /= distance * distance;
-            }
-
-            // apply the extinction along the path to the recorder
-            double Lext = L;
-            if (_hasMedium)
-            {
-                // if this photon packet has already been launched towards an instrument with the same observer type,
-                // position and viewing direction, simply recover the stored optical depth from the photon packet;
-                // otherwise calculate the optical depth and store it in the photon packet for the next instrument
-                double tau;
-                if (pp->hasObservedOpticalDepth())
-                {
-                    tau = pp->observedOpticalDepth();
-                }
-                else
-                {
-                    tau = _ms->getExtinctionOpticalDepth(pp, distance);
-                    pp->setObservedOpticalDepth(tau);
-                }
-                Lext *= exp(-tau);
-            }
-
-            // record in LC arrays
-            if (_includeLightCurve)
-            {
-                double hc = Constants::h() * Constants::c();
-                double photonsPerSecond = Lext * wavelength / hc;
-                LockFree::add(_lc[Total][tll], photonsPerSecond);
-            }
-
-            // record in STM arrays
-            if (_includeSpectralTimeMap)
-            {
-                size_t lell = wll + tll * _numWavelengthX;
-                LockFree::add(_stm[Total][lell], Lext);
-            }
-        }
-    }
-*/
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -581,8 +556,7 @@ void FluxRecorder::calibrateAndWrite()
     // convert from recorded quantities to output quantities and from internal units to user-selected output units
     // (for performance reasons, determine the units scaling factor only once for each wavelength)
     Units* units = _parentItem->find<Units>();
-    int numWavelengths = _lambdagrid->numBins();
-    for (int ell = 0; ell != numWavelengths; ++ell)
+    for (int ell = 0; ell != _numWavelengths; ++ell)
     {
         // SEDs
         if (_includeFluxDensity)
@@ -706,7 +680,7 @@ void FluxRecorder::calibrateAndWrite()
         }
 
         // write the column data
-        for (int ell : Indices(numWavelengths, units->rwavelength()))
+        for (int ell : Indices(_numWavelengths, units->rwavelength()))
         {
             vector<double> values({units->owavelength(_lambdagrid->wavelength(ell))});
             for (const Array* array : sedArrays) values.push_back(array->size() ? (*array)[ell] : 0.);
@@ -727,7 +701,7 @@ void FluxRecorder::calibrateAndWrite()
             statFile.writeLine("# --> w_i is luminosity contribution (in W) from i_th launched photon");
 
             // write the column data
-            for (int ell : Indices(numWavelengths, units->rwavelength()))
+            for (int ell : Indices(_numWavelengths, units->rwavelength()))
             {
                 vector<double> values({units->owavelength(_lambdagrid->wavelength(ell))});
                 for (int k = 0; k <= maxContributionPower; ++k) values.push_back(_wsed[k][ell]);
@@ -789,8 +763,8 @@ void FluxRecorder::calibrateAndWrite()
             }
 
         // copy the wavelength grid in output units
-        Array wavegrid(numWavelengths);
-        for (int ell = 0; ell != numWavelengths; ++ell)
+        Array wavegrid(_numWavelengths);
+        for (int ell = 0; ell != _numWavelengths; ++ell)
             wavegrid[ell] = units->owavelength(_lambdagrid->wavelength(ell));
 
         // reverse the ordering of the wavelength grid and frames if necessary
@@ -890,22 +864,21 @@ void FluxRecorder::calibrateAndWrite()
             }
         }
     }
-/*
-    // write LCs to a single text file (with multiple columns)
-    int numTimes = _timegrid->numBins();
-    for (int tll = 0; tll != numTimes; ++tll)
-    {
-        // LCs
-        if (_includeLightCurve)
-        {
-            double factor = 1. / fourpid2 / _timegrid->effectiveWidth(tll)
-                            * units->otimedensity(1.);
-            for (auto& array : _lc)
-                if (array.size()) array[tll] *= factor;
-        }
-    }
+
+    // write LC
     if (_includeLightCurve)
     {
+        int numTimes = _timegrid->numBins();
+        int numArrays = _lc.size();
+
+        // calibrate and convert values to output units
+        for (int k = 0; k != numTimes; ++k)
+        {
+            double factor = 1. / fourpid2 / _timegrid->width(k);
+            for (int i = 0; i != numArrays; ++i)
+                if (_lc[i].size()) _lc[i][k] = factor * units->otimefluxdensity(_lc[i][k], _lcw[i][k]);
+        }
+
         // Build a list of column names and corresponding pointers to lc arrays (which may be empty)
         vector<string> lcNames;
         vector<Array*> lcArrays;
@@ -937,22 +910,23 @@ void FluxRecorder::calibrateAndWrite()
         // open the file and add the column headers
         TextOutFile lcFile(_parentItem, _instrumentName + "_lc", "LC");
         lcFile.writeLine(header);
-        lcFile.addColumn("time; " + units->stime(), units->utime());
+        lcFile.addColumn("time lag", units->utimelag());
         for (const string& name : lcNames)
         {
-            lcFile.addColumn(name + "; " + units->stimedensity(), units->utimedensity());
+            lcFile.addColumn(name + "; " + units->stimefluxdensity(), units->utimefluxdensity());
         }
 
         // write the column data
-        for (int ell : Indices(numTimes, units->rtime()))
+        for (int k = 0; k != numTimes; ++k)
         {
-            vector<double> values({units->otime(_timegrid->time(ell))});
-            for (const Array* array : lcArrays) values.push_back(array->size() ? (*array)[ell] : 0.);
+            vector<double> values({units->otimelag(_timegrid->time(k))});
+            for (const Array* array : lcArrays) values.push_back(array->size() ? (*array)[k] : 0.);
             lcFile.writeRow(values);
         }
         lcFile.close();
     }
 
+    /*
     // write STMs to FITS files (one file per STM)
     for (int tll = 0; tll != numTimes; ++tll)
     {
@@ -969,6 +943,7 @@ void FluxRecorder::calibrateAndWrite()
             }
         }
     }
+
     if (_includeSpectralTimeMap)
     {
         // Build a list of file names and corresponding pointers to ifu arrays (which may be empty)

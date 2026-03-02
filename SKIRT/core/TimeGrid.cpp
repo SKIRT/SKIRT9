@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "TimeGrid.hpp"
+#include "Constants.hpp"
 #include "FatalError.hpp"
 #include "NR.hpp"
 
@@ -112,10 +113,17 @@ Range TimeGrid::range() const
 
 //////////////////////////////////////////////////////////////////////
 
-int TimeGrid::bin(double time) const
+int TimeGrid::binForTime(double time) const
 {
     int i = NR::locate(_borders, time);
     return i >= 0 ? _indices[i] : -1;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+int TimeGrid::binForDistance(double distance) const
+{
+    return binForTime(distance / Constants::c());
 }
 
 //////////////////////////////////////////////////////////////////////

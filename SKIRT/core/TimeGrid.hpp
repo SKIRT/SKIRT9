@@ -93,7 +93,13 @@ public:
     /** This function returns the index \f$k\f$ of the time bin that contains the specified time
         \f$t\f$, i.e. for which \f$t^\mathrm{left}_k \le t < t^\mathrm{right}_k\f$. If no times
         bins match this condition, the function returns -1. */
-    int bin(double time) const;
+    int binForTime(double time) const;
+
+    /** This function returns the index \f$k\f$ of the time bin that contains the time
+        corresponding to the specified distance \f$d\f$ at the speed of light, i.e. the bin for
+        which \f$t^\mathrm{left}_k \le d/c < t^\mathrm{right}_k\f$. If no times bins match this
+        condition, the function returns -1. */
+    int binForDistance(double distance) const;
 
     //======================== Data Members ========================
 
