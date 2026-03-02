@@ -21,7 +21,7 @@ void FileTimeGrid::getTimeBins(vector<Bin>& bins) const
     {
         double time, left, right;
         if (!infile.readRow(time, left, right)) break;
-        bins.emplace_back(time, left, right);
+        bins.emplace_back(left, time, right);
     }
     infile.close();
 }
