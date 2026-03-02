@@ -51,8 +51,9 @@ void FITSInOut::write(const SimulationItem* item, string description, string fil
 
 ////////////////////////////////////////////////////////////////////
 
-void FITSInOut::writeforSpectralTimeMap(const SimulationItem* item, string description, string filename, const Array& data,
-                      string dataUnits, int nx, int ny, string xUnits, string yUnits, const ObserverInfo* obsInfo)
+void FITSInOut::writeMap(const SimulationItem* item, string description, string filename, const Array& data,
+                         string dataUnits, const Array& x, const Array& y, string xUnits, string yUnits,
+                         const ObserverInfo* obsInfo)
 {
     // Only write the FITS file if this process is the root
     if (ProcessManager::isRoot())
@@ -61,7 +62,7 @@ void FITSInOut::writeforSpectralTimeMap(const SimulationItem* item, string descr
         string filepath = item->find<FilePaths>()->output(filename + ".fits");
 
         // Write the FITS file
-        FITSInOut::writeforSpectralTimeMap(filepath, data, dataUnits, nx, ny, xUnits, yUnits, obsInfo);
+        FITSInOut::writeMap(filepath, data, dataUnits, x, y, xUnits, yUnits, obsInfo);
 
         // Log the file path
         item->find<Log>()->info(item->typeAndName() + " wrote " + description + " to FITS file " + filepath);
@@ -216,16 +217,17 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits, int 
 
 ////////////////////////////////////////////////////////////////////
 
-void FITSInOut::writeforSpectralTimeMap(string filepath, const Array& data, string dataUnits, int nx, int ny, string xUnits, string yUnits, const ObserverInfo* obsInfo)
+void FITSInOut::writeMap(string filepath, const Array& data, string dataUnits, const Array& x, const Array& y,
+                         string xUnits, string yUnits, const ObserverInfo* obsInfo)
 {
-    // z axis is not used
-    int nz = 0;
+    // Get the axis sizes
+    long nx = x.size();
+    long ny = y.size();
 
     // Verify the data size
-    size_t nelements = data.size();
-    if (nelements != static_cast<size_t>(nx) * static_cast<size_t>(ny) * static_cast<size_t>(nz ? nz : 1))
-        throw FATALERROR("Inconsistent data size when creating FITS file " + filepath);
-    long naxes[3] = {nx, ny, nz};
+    long nelements = data.size();
+    if (nelements != nx * ny) throw FATALERROR("Inconsistent data size when creating FITS file " + filepath);
+    long naxes[2] = {nx, ny};
 
     // Acquire a global lock since the cfitsio library is not guaranteed to be reentrant
     // (only when it is built with ./configure --enable-reentrant; make)
@@ -245,7 +247,7 @@ void FITSInOut::writeforSpectralTimeMap(string filepath, const Array& data, stri
     if (status) report_error(filepath, "creating", status);
 
     // Create the primary image (32-bit floating point pixels)
-    ffcrim(fptr, FLOAT_IMG, (nz ? 3 : 2), naxes, &status);
+    ffcrim(fptr, FLOAT_IMG, 2, naxes, &status);
     if (status) report_error(filepath, "creating", status);
 
     // Add the relevant keywords
@@ -256,9 +258,7 @@ void FITSInOut::writeforSpectralTimeMap(string filepath, const Array& data, stri
            &status);
     ffpkys(fptr, "BUNIT", const_cast<char*>(dataUnits.c_str()), "Physical unit of the array values", &status);
     ffpkys(fptr, "CUNIT1", const_cast<char*>(xUnits.c_str()), "Physical units of the X-axis", &status);
-    ffpkys(fptr, "CTYPE1", " ", "Linear X coordinates", &status);
     ffpkys(fptr, "CUNIT2", const_cast<char*>(yUnits.c_str()), "Physical units of the Y-axis", &status);
-    ffpkys(fptr, "CTYPE2", " ", "Linear Y coordinates", &status);
     if (obsInfo)
     {
         ffpkyd(fptr, "CROTA1", obsInfo->inclination, 9, "Inclination angle, in deg", &status);
@@ -275,20 +275,33 @@ void FITSInOut::writeforSpectralTimeMap(string filepath, const Array& data, stri
     ffpprd(fptr, 0, 1, nelements, const_cast<double*>(&data[0]), &status);
     if (status) report_error(filepath, "writing", status);
 
-    // If the data has 3 dimensions, write a FITS table extension with the values of the third axis
-    if (nz)
+    // Write a FITS table extension with the values of the x axis
     {
         // Create the table
         char* ttypev[] = {const_cast<char*>("GRID_POINTS")};
         char* tformv[] = {const_cast<char*>("E16.9")};
         char* tunitv[] = {const_cast<char*>("")};
-        ffcrtb(fptr, ASCII_TBL, 0, 1, ttypev, tformv, tunitv, "Z-axis coordinate values", &status);
+        ffcrtb(fptr, ASCII_TBL, 0, 1, ttypev, tformv, tunitv, "X-axis coordinate values", &status);
         if (status) report_error(filepath, "writing", status);
 
         // Write the single column
-        // void* gridpoints = const_cast<void*>(static_cast<const void*>(begin(z)));
-        void* gridpoints = nullptr;
-        ffpcl(fptr, TDOUBLE, 1, 1, 1, nz, gridpoints, &status);
+        void* gridpoints = const_cast<void*>(static_cast<const void*>(begin(x)));
+        ffpcl(fptr, TDOUBLE, 1, 1, 1, nx, gridpoints, &status);
+        if (status) report_error(filepath, "writing", status);
+    }
+
+    // Write a FITS table extension with the values of the y axis
+    {
+        // Create the table
+        char* ttypev[] = {const_cast<char*>("GRID_POINTS")};
+        char* tformv[] = {const_cast<char*>("E16.9")};
+        char* tunitv[] = {const_cast<char*>("")};
+        ffcrtb(fptr, ASCII_TBL, 0, 1, ttypev, tformv, tunitv, "Y-axis coordinate values", &status);
+        if (status) report_error(filepath, "writing", status);
+
+        // Write the single column
+        void* gridpoints = const_cast<void*>(static_cast<const void*>(begin(y)));
+        ffpcl(fptr, TDOUBLE, 1, 1, 1, nx, gridpoints, &status);
         if (status) report_error(filepath, "writing", status);
     }
 
