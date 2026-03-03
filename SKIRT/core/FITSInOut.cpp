@@ -301,7 +301,7 @@ void FITSInOut::writeMap(string filepath, const Array& data, string dataUnits, c
 
         // Write the single column
         void* gridpoints = const_cast<void*>(static_cast<const void*>(begin(y)));
-        ffpcl(fptr, TDOUBLE, 1, 1, 1, nx, gridpoints, &status);
+        ffpcl(fptr, TDOUBLE, 1, 1, 1, ny, gridpoints, &status);
         if (status) report_error(filepath, "writing", status);
     }
 

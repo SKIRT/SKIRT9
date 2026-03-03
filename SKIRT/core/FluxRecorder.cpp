@@ -193,7 +193,7 @@ void FluxRecorder::finalizeConfiguration()
     size_t lenSED = _includeFluxDensity ? _numWavelengths : 0;
     size_t lenIFU = _includeSurfaceBrightness ? _numPixelsInFrame * _numWavelengths : 0;
     size_t lenLC = _includeLightCurve ? _timegrid->numBins() : 0;
-    size_t lenSTM = _includeLightCurve ? _numWavelengths * _timegrid->numBins() : 0;
+    size_t lenSTM = _includeSpectralTimeMap ? _numWavelengths * _timegrid->numBins() : 0;
 
     // do not try to record components if there is no medium
     _recordTotalOnly = !_recordComponents || !_hasMedium;
