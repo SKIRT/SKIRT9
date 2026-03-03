@@ -505,6 +505,170 @@ void FluxRecorder::calibrateAndWrite()
                           : 4. * atan(0.5 * _pixelSizeX / _angularDiameterDistance)
                                 * atan(0.5 * _pixelSizeY / _angularDiameterDistance);
 
+    // ---------------------- local helper functions ----------------------
+
+    // "global" arrays that can be inserted into the lists constructed by the build functions below
+    Array empty, total;
+
+    // local function to build synchronized lists of column names and recorded array pointers
+    // params: vector of recorded arrays (in), list of column names (out), list of array pointers (out)
+    auto buildCols = [this, &empty, &total](vector<Array>& arrays, vector<string>& colNames,
+                                            vector<Array*>& arrayPtrs) {
+        // add the total flux; if we didn't record it directly, calculate it now
+        colNames.push_back("total flux");
+        if (_recordTotalOnly)
+            arrayPtrs.push_back(&arrays[Total]);
+        else
+        {
+            total = arrays[PrimaryDirect] + arrays[PrimaryScattered];
+            if (_hasMediumEmission) total += arrays[SecondaryDirect] + arrays[SecondaryScattered];
+            arrayPtrs.push_back(&total);
+        }
+
+        // add the flux components, if requested
+        // we always add all of them, even if some of them are zero
+        if (_recordComponents)
+        {
+            // add transparent flux
+            // if we did not actually record components (because there are no media), use the total flux instead
+            colNames.push_back("transparent flux");
+            arrayPtrs.push_back(_recordTotalOnly ? &arrays[Total] : &arrays[Transparent]);
+
+            // add the actual components of the total flux
+            colNames.insert(colNames.end(), {"direct primary flux", "scattered primary flux", "direct secondary flux",
+                                             "scattered secondary flux", "transparent secondary flux"});
+            arrayPtrs.insert(arrayPtrs.end(),
+                             {&arrays[PrimaryDirect], &arrays[PrimaryScattered], &arrays[SecondaryDirect],
+                              &arrays[SecondaryScattered], &arrays[SecondaryTransparent]});
+        }
+
+        // add the polarization components, if requested
+        if (_recordPolarization)
+        {
+            colNames.insert(colNames.end(), {"total Stokes Q", "total Stokes U", "total Stokes V"});
+            arrayPtrs.insert(arrayPtrs.end(), {&arrays[TotalQ], &arrays[TotalU], &arrays[TotalV]});
+
+            if (_recordComponents && !_recordTotalOnly)
+            {
+                colNames.insert(
+                    colNames.end(),
+                    {"transparent Stokes Q", "transparent Stokes U", "transparent Stokes V", "direct primary Stokes Q",
+                     "direct primary Stokes U", "direct primary Stokes V", "scattered primary Stokes Q",
+                     "scattered primary Stokes U", "scattered primary Stokes V", "direct secondary Stokes Q",
+                     "direct secondary Stokes U", "direct secondary Stokes V", "scattered secondary Stokes Q",
+                     "scattered secondary Stokes U", "scattered secondary Stokes V", "transparent secondary Stokes Q",
+                     "transparent secondary Stokes U", "transparent secondary Stokes V"});
+                arrayPtrs.insert(arrayPtrs.end(),
+                                 {&arrays[TransparentQ], &arrays[TransparentU], &arrays[TransparentV],
+                                  &arrays[PrimaryDirectQ], &arrays[PrimaryDirectU], &arrays[PrimaryDirectV],
+                                  &arrays[PrimaryScatteredQ], &arrays[PrimaryScatteredU], &arrays[PrimaryScatteredV],
+                                  &arrays[SecondaryDirectQ], &arrays[SecondaryDirectU], &arrays[SecondaryDirectV],
+                                  &arrays[SecondaryScatteredQ], &arrays[SecondaryScatteredU],
+                                  &arrays[SecondaryScatteredV], &arrays[SecondaryTransparentQ],
+                                  &arrays[SecondaryTransparentU], &arrays[SecondaryTransparentV]});
+            }
+        }
+
+        // add the scattering levels, if requested, even if they are all zero
+        if (_recordComponents)
+        {
+            for (int i = 0; i != _numScatteringLevels; ++i)
+            {
+                colNames.push_back(std::to_string(i + 1) + "-times scattered primary flux");
+                arrayPtrs.push_back(_recordTotalOnly ? &empty : &arrays[PrimaryScatteredLevel + i]);
+            }
+        }
+    };
+
+    // local function to build synchronized lists of file names and recorded array pointers
+    // params: vector of recorded arrays (in), list of file names (out), list of array pointers (out)
+    auto buildFiles = [this, &total](vector<Array>& arrays, vector<string>& fileNames, vector<Array*>& arrayPtrs) {
+        // add the total flux; if we didn't record it directly, calculate it now
+        fileNames.push_back("total");
+        if (_recordTotalOnly)
+            arrayPtrs.push_back(&arrays[Total]);
+        else
+        {
+            total = arrays[PrimaryDirect] + arrays[PrimaryScattered];
+            if (_hasMediumEmission) total += arrays[SecondaryDirect] + arrays[SecondaryScattered];
+            arrayPtrs.push_back(&total);
+        }
+
+        // add the flux components, if requested
+        if (_recordComponents)
+        {
+            // add the transparent flux only if it may differ from the total flux
+            if (!_recordTotalOnly)
+            {
+                fileNames.push_back("transparent");
+                arrayPtrs.push_back(&arrays[Transparent]);
+            }
+            // add the actual components of the total flux (empty arrays will be ignored later on)
+            fileNames.insert(fileNames.end(), {"primarydirect", "primaryscattered", "secondarytransparent",
+                                               "secondarydirect", "secondaryscattered"});
+            arrayPtrs.insert(arrayPtrs.end(),
+                             {&arrays[PrimaryDirect], &arrays[PrimaryScattered], &arrays[SecondaryTransparent],
+                              &arrays[SecondaryDirect], &arrays[SecondaryScattered]});
+        }
+
+        // add the polarization components, if requested
+        if (_recordPolarization)
+        {
+            fileNames.insert(fileNames.end(), {"stokesQ", "stokesU", "stokesV"});
+            arrayPtrs.insert(arrayPtrs.end(), {&arrays[TotalQ], &arrays[TotalU], &arrays[TotalV]});
+        }
+
+        // add the scattering levels, if requested
+        if (!_recordTotalOnly)
+            for (int i = 0; i != _numScatteringLevels; ++i)
+            {
+                fileNames.push_back("primaryscattered" + std::to_string(i + 1));
+                arrayPtrs.push_back(&arrays[PrimaryScatteredLevel + i]);
+            }
+    };
+
+    // local function to construct header comment line for text column output files
+    auto header = [this, units](string name) {
+        string header = "# " + name + " at ";
+        header += "inclination " + StringUtils::toString(units->oposangle(_inclination)) + " " + units->uposangle();
+        header += ", azimuth " + StringUtils::toString(units->oposangle(_azimuth)) + " " + units->uposangle();
+        if (_recordPolarization)
+        {
+            header += ", roll " + StringUtils::toString(units->oposangle(_roll)) + " " + units->uposangle();
+        }
+        if (_redshift)
+        {
+            header += ", redshift " + StringUtils::toString(_redshift);
+            header += ", luminosity distance " + StringUtils::toString(units->odistance(_luminosityDistance)) + " "
+                      + units->udistance();
+        }
+        else
+        {
+            header +=
+                ", distance " + StringUtils::toString(units->odistance(_luminosityDistance)) + " " + units->udistance();
+        }
+        return header;
+    };
+
+    // local function that returns unique pointer to new observer info record for distant instruments
+    // or a "null" unique pointer for local instruments
+    auto observerInfo = [this, units]() {
+        // determine observer info for distant instruments
+        std::unique_ptr<FITSInOut::ObserverInfo> obsInfo;
+        if (!_local)
+        {
+            obsInfo = std::make_unique<FITSInOut::ObserverInfo>();
+            obsInfo->inclination = _inclination * (180. / M_PI);
+            obsInfo->azimuth = _azimuth * (180. / M_PI);
+            obsInfo->roll = _roll * (180. / M_PI);
+            obsInfo->redshift = _redshift;
+            obsInfo->luminosityDistance = units->odistance(_luminosityDistance);
+            obsInfo->angularDiameterDistance = units->odistance(_angularDiameterDistance);
+            obsInfo->distanceUnits = units->udistance();
+        }
+        return obsInfo;
+    };
+
     // ---------------------- SED: flux density ----------------------
 
     // write SEDs to a single text file with multiple columns
@@ -523,93 +687,11 @@ void FluxRecorder::calibrateAndWrite()
         // build a list of column names and corresponding pointers to sed arrays (which may be empty)
         vector<string> sedNames;
         vector<Array*> sedArrays;
-
-        // add the total flux; if we didn't record it directly, calculate it now
-        sedNames.push_back("total flux");
-        Array sedTotal;
-        if (_recordTotalOnly)
-            sedArrays.push_back(&_sed[Total]);
-        else
-        {
-            sedTotal = _sed[PrimaryDirect] + _sed[PrimaryScattered];
-            if (_hasMediumEmission) sedTotal += _sed[SecondaryDirect] + _sed[SecondaryScattered];
-            sedArrays.push_back(&sedTotal);
-        }
-
-        // add the flux components, if requested
-        // we always add all of them, even if some of them are zero
-        if (_recordComponents)
-        {
-            // add transparent flux
-            // if we did not actually record components (because there are no media), use the total flux instead
-            sedNames.push_back("transparent flux");
-            sedArrays.push_back(_recordTotalOnly ? &_sed[Total] : &_sed[Transparent]);
-
-            // add the actual components of the total flux
-            sedNames.insert(sedNames.end(), {"direct primary flux", "scattered primary flux", "direct secondary flux",
-                                             "scattered secondary flux", "transparent secondary flux"});
-            sedArrays.insert(sedArrays.end(), {&_sed[PrimaryDirect], &_sed[PrimaryScattered], &_sed[SecondaryDirect],
-                                               &_sed[SecondaryScattered], &_sed[SecondaryTransparent]});
-        }
-
-        // add the polarization components, if requested
-        if (_recordPolarization)
-        {
-            sedNames.insert(sedNames.end(), {"total Stokes Q", "total Stokes U", "total Stokes V"});
-            sedArrays.insert(sedArrays.end(), {&_sed[TotalQ], &_sed[TotalU], &_sed[TotalV]});
-
-            if (_recordComponents && !_recordTotalOnly)
-            {
-                sedNames.insert(
-                    sedNames.end(),
-                    {"transparent Stokes Q", "transparent Stokes U", "transparent Stokes V", "direct primary Stokes Q",
-                     "direct primary Stokes U", "direct primary Stokes V", "scattered primary Stokes Q",
-                     "scattered primary Stokes U", "scattered primary Stokes V", "direct secondary Stokes Q",
-                     "direct secondary Stokes U", "direct secondary Stokes V", "scattered secondary Stokes Q",
-                     "scattered secondary Stokes U", "scattered secondary Stokes V", "transparent secondary Stokes Q",
-                     "transparent secondary Stokes U", "transparent secondary Stokes V"});
-                sedArrays.insert(sedArrays.end(),
-                                 {&_sed[TransparentQ], &_sed[TransparentU], &_sed[TransparentV], &_sed[PrimaryDirectQ],
-                                  &_sed[PrimaryDirectU], &_sed[PrimaryDirectV], &_sed[PrimaryScatteredQ],
-                                  &_sed[PrimaryScatteredU], &_sed[PrimaryScatteredV], &_sed[SecondaryDirectQ],
-                                  &_sed[SecondaryDirectU], &_sed[SecondaryDirectV], &_sed[SecondaryScatteredQ],
-                                  &_sed[SecondaryScatteredU], &_sed[SecondaryScatteredV], &_sed[SecondaryTransparentQ],
-                                  &_sed[SecondaryTransparentU], &_sed[SecondaryTransparentV]});
-            }
-        }
-
-        // add the scattering levels, if requested, even if they are all zero
-        Array empty;
-        if (_recordComponents)
-            for (int i = 0; i != _numScatteringLevels; ++i)
-            {
-                sedNames.push_back(std::to_string(i + 1) + "-times scattered primary flux");
-                sedArrays.push_back(_recordTotalOnly ? &empty : &_sed[PrimaryScatteredLevel + i]);
-            }
-
-        // construct header comment line
-        string header = "# SED at ";
-        header += "inclination " + StringUtils::toString(units->oposangle(_inclination)) + " " + units->uposangle();
-        header += ", azimuth " + StringUtils::toString(units->oposangle(_azimuth)) + " " + units->uposangle();
-        if (_recordPolarization)
-        {
-            header += ", roll " + StringUtils::toString(units->oposangle(_roll)) + " " + units->uposangle();
-        }
-        if (_redshift)
-        {
-            header += ", redshift " + StringUtils::toString(_redshift);
-            header += ", luminosity distance " + StringUtils::toString(units->odistance(_luminosityDistance)) + " "
-                      + units->udistance();
-        }
-        else
-        {
-            header +=
-                ", distance " + StringUtils::toString(units->odistance(_luminosityDistance)) + " " + units->udistance();
-        }
+        buildCols(_sed, sedNames, sedArrays);
 
         // open the file and add the column headers
         TextOutFile sedFile(_parentItem, _instrumentName + "_sed", "SED");
-        sedFile.writeLine(header);
+        sedFile.writeLine(header("SED"));
         sedFile.addColumn("wavelength; " + units->swavelength(), units->uwavelength());
         for (const string& name : sedNames)
         {
@@ -669,50 +751,7 @@ void FluxRecorder::calibrateAndWrite()
         // build a list of file names and corresponding pointers to ifu arrays (which may be empty)
         vector<string> ifuNames;
         vector<Array*> ifuArrays;
-
-        // add the total flux; if we didn't record it directly, calculate it now
-        ifuNames.push_back("total");
-        Array ifuTotal;
-        if (_recordTotalOnly)
-            ifuArrays.push_back(&_ifu[Total]);
-        else
-        {
-            ifuTotal = _ifu[PrimaryDirect] + _ifu[PrimaryScattered];
-            if (_hasMediumEmission) ifuTotal += _ifu[SecondaryDirect] + _ifu[SecondaryScattered];
-            ifuArrays.push_back(&ifuTotal);
-        }
-
-        // add the flux components, if requested
-        if (_recordComponents)
-        {
-            // add the transparent flux only if it may differ from the total flux
-            if (!_recordTotalOnly)
-            {
-                ifuNames.push_back("transparent");
-                ifuArrays.push_back(&_ifu[Transparent]);
-            }
-            // add the actual components of the total flux (empty arrays will be ignored later on)
-            ifuNames.insert(ifuNames.end(), {"primarydirect", "primaryscattered", "secondarytransparent",
-                                             "secondarydirect", "secondaryscattered"});
-            ifuArrays.insert(ifuArrays.end(),
-                             {&_ifu[PrimaryDirect], &_ifu[PrimaryScattered], &_ifu[SecondaryTransparent],
-                              &_ifu[SecondaryDirect], &_ifu[SecondaryScattered]});
-        }
-
-        // add the polarization components, if requested
-        if (_recordPolarization)
-        {
-            ifuNames.insert(ifuNames.end(), {"stokesQ", "stokesU", "stokesV"});
-            ifuArrays.insert(ifuArrays.end(), {&_ifu[TotalQ], &_ifu[TotalU], &_ifu[TotalV]});
-        }
-
-        // add the scattering levels, if requested
-        if (!_recordTotalOnly)
-            for (int i = 0; i != _numScatteringLevels; ++i)
-            {
-                ifuNames.push_back("primaryscattered" + std::to_string(i + 1));
-                ifuArrays.push_back(&_ifu[PrimaryScatteredLevel + i]);
-            }
+        buildFiles(_ifu, ifuNames, ifuArrays);
 
         // copy the wavelength grid in output units
         Array wavegrid(_numWavelengths);
@@ -766,31 +805,20 @@ void FluxRecorder::calibrateAndWrite()
             unitsxy = units->uangle();
         }
 
-        // determine observer info for distant instruments
-        std::unique_ptr<FITSInOut::ObserverInfo> obsInfo;
-        if (!_local)
-        {
-            obsInfo = std::make_unique<FITSInOut::ObserverInfo>();
-            obsInfo->inclination = _inclination * (180. / M_PI);
-            obsInfo->azimuth = _azimuth * (180. / M_PI);
-            obsInfo->roll = _roll * (180. / M_PI);
-            obsInfo->redshift = _redshift;
-            obsInfo->luminosityDistance = units->odistance(_luminosityDistance);
-            obsInfo->angularDiameterDistance = units->odistance(_angularDiameterDistance);
-            obsInfo->distanceUnits = units->udistance();
-        }
-
         // output the files (ignoring empty arrays)
+        auto info = observerInfo();
         int numFiles = ifuNames.size();
         for (int q = 0; q != numFiles; ++q)
+        {
             if (ifuArrays[q]->size())
             {
                 string filename = _instrumentName + "_" + ifuNames[q];
                 string description = ifuNames[q] + " flux";
                 FITSInOut::write(_parentItem, description, filename, *(ifuArrays[q]), units->usurfacebrightness(),
                                  _numPixelsX, _numPixelsY, incx, incy, cx, cy, unitsxy, wavegrid, units->uwavelength(),
-                                 obsInfo.get());
+                                 info.get());
             }
+        }
 
         // output statistics to additional files
         if (_recordStatistics)
@@ -836,34 +864,11 @@ void FluxRecorder::calibrateAndWrite()
         // build a list of column names and corresponding pointers to lc arrays (which may be empty)
         vector<string> lcNames;
         vector<Array*> lcArrays;
-
-        // add the total flux; if we didn't record it directly, calculate it now
-        lcNames.push_back("total flux");
-        lcArrays.push_back(&_lc[Total]);
-
-        // construct header comment line
-        string header = "# LC at ";
-        header += "inclination " + StringUtils::toString(units->oposangle(_inclination)) + " " + units->uposangle();
-        header += ", azimuth " + StringUtils::toString(units->oposangle(_azimuth)) + " " + units->uposangle();
-        if (_recordPolarization)
-        {
-            header += ", roll " + StringUtils::toString(units->oposangle(_roll)) + " " + units->uposangle();
-        }
-        if (_redshift)
-        {
-            header += ", redshift " + StringUtils::toString(_redshift);
-            header += ", luminosity distance " + StringUtils::toString(units->odistance(_luminosityDistance)) + " "
-                      + units->udistance();
-        }
-        else
-        {
-            header +=
-                ", distance " + StringUtils::toString(units->odistance(_luminosityDistance)) + " " + units->udistance();
-        }
+        buildCols(_sed, lcNames, lcArrays);
 
         // open the file and add the column headers
         TextOutFile lcFile(_parentItem, _instrumentName + "_lc", "LC");
-        lcFile.writeLine(header);
+        lcFile.writeLine(header("LC"));
         lcFile.addColumn("time lag", units->utimelag());
         for (const string& name : lcNames)
         {
@@ -885,38 +890,36 @@ void FluxRecorder::calibrateAndWrite()
     // write STMs to FITS files (one file per STM)
     if (_includeSpectralTimeMap)
     {
-        /*
-        for (int tll = 0; tll != numTimes; ++tll)
+        int numTimes = _timegrid->numBins();
+
+        // calibrate and convert values to output units
+        for (int k = 0; k != numTimes; ++k)
         {
-            for (int wll = 0; wll != numWavelengths; ++wll)
+            for (int ell = 0; ell != _numWavelengths; ++ell)
             {
-                int ell = wll + tll * numWavelengths;
-                // STMs
-                if (_includeSpectralTimeMap)
-                {
-                    double factor = 1. / fourpid2 / _lambdagrid->effectiveWidth(wll) / _timegrid->effectiveWidth(tll)
-                                    * units->ofluxdensity(_lambdagrid->wavelength(wll), 1.);
-                    for (auto& array : _stm)
-                        if (array.size()) array[ell] *= factor;
-                }
+                int kell = ell + k * _numWavelengths;
+                double factor = 1. / fourpid2 / _lambdagrid->effectiveWidth(ell) / _timegrid->width(k)
+                                * units->ospectraltimefluxdensity(_lambdagrid->wavelength(ell), 1.);
+                for (auto& array : _stm)
+                    if (array.size()) array[kell] *= factor;
             }
         }
 
         // build a list of file names and corresponding pointers to ifu arrays (which may be empty)
         vector<string> stmNames;
         vector<Array*> stmArrays;
+        buildFiles(_stm, stmNames, stmArrays);
 
-        // add the total flux; if we didn't record it directly, calculate it now
-        stmNames.push_back("stm");
-        Array stmTotal;
-        stmArrays.push_back(&_stm[Total]);
         // copy the wavelength grid in output units
-        Array wavegrid(numWavelengths);
-        Array timegrid(numTimes);
-        for (int ell = 0; ell != numWavelengths; ++ell)
+        Array wavegrid(_numWavelengths);
+        for (int ell = 0; ell != _numWavelengths; ++ell)
             wavegrid[ell] = units->owavelength(_lambdagrid->wavelength(ell));
-        for (int tll = 0; tll != numTimes; ++tll) timegrid[tll] = units->otime(_timegrid->time(tll));
-        // reverse the ordering of the wavelength grid and frames if necessary
+
+        // copy the time grid in output units
+        Array timegrid(numTimes);
+        for (int k = 0; k != numTimes; ++k) timegrid[k] = units->otimelag(_timegrid->time(k));
+
+        // reverse the ordering of the wavelength grid and flux data if necessary
         if (units->rwavelength())
         {
             // reverse the wavelength grid
@@ -927,43 +930,30 @@ void FluxRecorder::calibrateAndWrite()
             {
                 if (array.size())
                 {
-                    for (int t = 0; t < _numTimeY; ++t)
+                    for (int k = 0; k < numTimes; ++k)
                     {
-                        size_t startOffset = t * _numWavelengthX;
-                        double* startPtr = &array[startOffset];
-                        double* endPtr = startPtr + _numWavelengthX;
-                        std::reverse(startPtr, endPtr);
+                        double* begin = &array[k * _numWavelengths];
+                        double* end = begin + _numWavelengths;
+                        std::reverse(begin, end);
                     }
                 }
             }
         }
 
-        // determine observer info for distant instruments
-        std::unique_ptr<FITSInOut::ObserverInfo> obsInfo;
-        if (!_local)
-        {
-            obsInfo = std::make_unique<FITSInOut::ObserverInfo>();
-            obsInfo->inclination = _inclination * (180. / M_PI);
-            obsInfo->azimuth = _azimuth * (180. / M_PI);
-            obsInfo->roll = _roll * (180. / M_PI);
-            obsInfo->redshift = _redshift;
-            obsInfo->luminosityDistance = units->odistance(_luminosityDistance);
-            obsInfo->angularDiameterDistance = units->odistance(_angularDiameterDistance);
-            obsInfo->distanceUnits = units->udistance();
-        }
-
         // output the files (ignoring empty arrays)
+        auto info = observerInfo();
         int numFiles = stmNames.size();
         for (int q = 0; q != numFiles; ++q)
+        {
             if (stmArrays[q]->size())
             {
-                string filename = _instrumentName + "_" + stmNames[q];
+                string filename = _instrumentName + "_stm_" + stmNames[q];
                 string description = stmNames[q] + " flux";
-                FITSInOut::writeforSpectralTimeMap(_parentItem, description, filename, *(stmArrays[q]),
-                                                   units->uspectraltimefluxdensity(), _numWavelengthX, _numTimeY,
-                                                   units->uwavelength(), units->utime(), obsInfo.get());
+                FITSInOut::writeMap(_parentItem, description, filename, *(stmArrays[q]),
+                                    units->uspectraltimefluxdensity(), wavegrid, timegrid, units->uwavelength(),
+                                    units->utimelag(), info.get());
             }
-        */
+        }
     }
 }
 
