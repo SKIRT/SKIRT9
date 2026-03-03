@@ -20,8 +20,9 @@
     maximum time as their respective characteristic time.
 
     Because a logarithmic grid cannot have negative or zero values, the additional \em offset
-    property specifies a value that is subtracted from each of the grid points, effectively
-    shifting the complete grid towards and usually beyond the origin. */
+    property specifies a value that is subtracted from each of the grid points. A positive value
+    shifts the complete grid towards and possibly beyond the origin. A negative value shifts
+    the grid away from the origin. */
 class LogTimeGrid : public TimeGrid
 {
     ITEM_CONCRETE(LogTimeGrid, TimeGrid, "a logarithmic time grid")
@@ -37,7 +38,6 @@ class LogTimeGrid : public TimeGrid
 
         PROPERTY_DOUBLE(offset, "the global time offset subtracted from the grid")
         ATTRIBUTE_QUANTITY(offset, "timelag")
-        ATTRIBUTE_MIN_VALUE(offset, "[0")
         ATTRIBUTE_DEFAULT_VALUE(offset, "0")
 
         PROPERTY_INT(numTimes, "the number of time grid points")

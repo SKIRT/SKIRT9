@@ -864,7 +864,7 @@ void FluxRecorder::calibrateAndWrite()
         // build a list of column names and corresponding pointers to lc arrays (which may be empty)
         vector<string> lcNames;
         vector<Array*> lcArrays;
-        buildCols(_sed, lcNames, lcArrays);
+        buildCols(_lc, lcNames, lcArrays);
 
         // open the file and add the column headers
         TextOutFile lcFile(_parentItem, _instrumentName + "_lc", "LC");
