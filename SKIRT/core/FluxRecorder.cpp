@@ -313,44 +313,38 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
     // get the photon packet's redshifted wavelength
     double wavelength = pp->wavelength() * (1. + _redshift);
 
-    // get the luminosity contribution from the photon packet, without taking into account the instrument transmission
-    double luminosity = pp->luminosity();
-
-    // adjust the luminosity for near distance if needed
-    if (_local)
-    {
-        luminosity /= distance * distance;
-    }
-
-    // obtain the extinction along the path to the recorder
-    double extinction = 1.;
-    if (_hasMedium)
-    {
-        // if this photon packet has already been launched towards an instrument with the same observer type,
-        // position and viewing direction, simply recover the stored optical depth from the photon packet;
-        // otherwise calculate the optical depth and store it in the photon packet for the next instrument
-        double tau;
-        if (pp->hasObservedOpticalDepth())
-        {
-            tau = pp->observedOpticalDepth();
-        }
-        else
-        {
-            tau = _ms->getExtinctionOpticalDepth(pp, distance);
-            pp->setObservedOpticalDepth(tau);
-        }
-        extinction = exp(-tau);
-    }
-
-    // get number of scatterings (because we use it a lot)
-    int numScatt = pp->numScatt();
-
     // get the wavelength bin indices that overlap the photon packet wavelength and perform recording for each
     for (int ell : _lambdagrid->bins(wavelength))
     {
-        // adjust the luminosity for the instrument transmission at this wavelength
-        double L = luminosity * _lambdagrid->transmission(ell, wavelength);
-        double Lext = L * extinction;
+        // get the luminosity contribution from the photon packet,
+        // taking into account the transmission for the detector bin at this wavelength
+        double L = pp->luminosity() * _lambdagrid->transmission(ell, wavelength);
+
+        // adjust the luminosity for near distance if needed
+        if (_local) L /= distance * distance;
+
+        // apply the extinction along the path to the recorder
+        double Lext = L;
+        if (_hasMedium)
+        {
+            // if this photon packet has already been launched towards an instrument with the same observer type,
+            // position and viewing direction, simply recover the stored optical depth from the photon packet;
+            // otherwise calculate the optical depth and store it in the photon packet for the next instrument
+            double tau;
+            if (pp->hasObservedOpticalDepth())
+            {
+                tau = pp->observedOpticalDepth();
+            }
+            else
+            {
+                tau = _ms->getExtinctionOpticalDepth(pp, distance);
+                pp->setObservedOpticalDepth(tau);
+            }
+            Lext *= exp(-tau);
+        }
+
+        // get number of scatterings (because we use it a lot)
+        int numScatt = pp->numScatt();
 
         // record in SED arrays
         if (_includeFluxDensity)
@@ -487,21 +481,23 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
         {
             // get the time grid bin index corresponding to the distance travelled by the photon packet
             int k = _timegrid->binForDistance(pp->distance());
-
-            // record in LC arrays
-            if (_includeLightCurve && k >= 0)
+            if (k >= 0)
             {
-                // record both the plain contribution and the contribution multiplied by the wavelength
-                // to allow converting the aggregated value between an amount of energy and a number of photons
-                LockFree::add(_lc[Total][k], L);
-                LockFree::add(_lcw[Total][k], L * wavelength);
-            }
+                // record in LC arrays
+                if (_includeLightCurve)
+                {
+                    // record both the plain contribution and the contribution multiplied by the wavelength
+                    // to allow converting the aggregated value between an amount of energy and a number of photons
+                    LockFree::add(_lc[Total][k], L);
+                    LockFree::add(_lcw[Total][k], L * wavelength);
+                }
 
-            // record in STM arrays
-            if (_includeSpectralTimeMap && k >= 0)
-            {
-                size_t kell = ell + k * _numWavelengths;
-                LockFree::add(_stm[Total][kell], Lext);
+                // record in STM arrays
+                if (_includeSpectralTimeMap)
+                {
+                    size_t kell = ell + k * _numWavelengths;
+                    LockFree::add(_stm[Total][kell], Lext);
+                }
             }
         }
 
@@ -539,6 +535,7 @@ void FluxRecorder::calibrateAndWrite()
     for (auto& array : _sed) ProcessManager::sumToRoot(array);
     for (auto& array : _ifu) ProcessManager::sumToRoot(array);
     for (auto& array : _lc) ProcessManager::sumToRoot(array);
+    for (auto& array : _lcw) ProcessManager::sumToRoot(array);
     for (auto& array : _stm) ProcessManager::sumToRoot(array);
     for (auto& array : _wsed) ProcessManager::sumToRoot(array);
     for (auto& array : _wifu) ProcessManager::sumToRoot(array);
