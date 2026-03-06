@@ -216,7 +216,15 @@ SkirtUnitDef::SkirtUnitDef()
 
     // time lag
     addUnit("timelag", "s", 1.);
+    addUnit("timelag", "min", 60.);
+    addUnit("timelag", "hour", 3600.);
     addUnit("timelag", "day", 24. * 3600.);
+    addUnit("timelag", "yr", year);
+    addUnit("timelag", "m", 1. / c);
+    addUnit("timelag", "km", 1e3 / c);
+    addUnit("timelag", "AU", AU / c);
+    addUnit("timelag", "pc", pc / c);
+    addUnit("timelag", "kpc", 1e3 * pc / c);
 
     // transition rate
     addUnit("transitionrate", "1/s", 1.);
