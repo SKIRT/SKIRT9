@@ -748,11 +748,6 @@ void FluxRecorder::calibrateAndWrite()
                     for (size_t lell = begin; lell != end; ++lell) array[lell] *= factor;
         }
 
-        // build a list of file names and corresponding pointers to ifu arrays (which may be empty)
-        vector<string> ifuNames;
-        vector<Array*> ifuArrays;
-        buildFiles(_ifu, ifuNames, ifuArrays);
-
         // copy the wavelength grid in output units
         Array wavegrid(_numWavelengths);
         for (int ell = 0; ell != _numWavelengths; ++ell)
@@ -764,13 +759,18 @@ void FluxRecorder::calibrateAndWrite()
             NR::reverse(wavegrid);
 
             // flux frames
-            for (auto array : ifuArrays)
-                if (array->size()) NR::reverse(*array, _numPixelsInFrame);
+            for (auto& array : _ifu)
+                if (array.size()) NR::reverse(array, _numPixelsInFrame);
 
             // statistics frames
             for (auto& array : _wifu)
                 if (array.size()) NR::reverse(array, _numPixelsInFrame);
         }
+
+        // build a list of file names and corresponding pointers to ifu arrays (which may be empty)
+        vector<string> ifuNames;
+        vector<Array*> ifuArrays;
+        buildFiles(_ifu, ifuNames, ifuArrays);
 
         // determine spatial axes values and units
         double incx, incy, cx, cy;
@@ -905,11 +905,6 @@ void FluxRecorder::calibrateAndWrite()
             }
         }
 
-        // build a list of file names and corresponding pointers to ifu arrays (which may be empty)
-        vector<string> stmNames;
-        vector<Array*> stmArrays;
-        buildFiles(_stm, stmNames, stmArrays);
-
         // copy the wavelength grid in output units
         Array wavegrid(_numWavelengths);
         for (int ell = 0; ell != _numWavelengths; ++ell)
@@ -939,6 +934,11 @@ void FluxRecorder::calibrateAndWrite()
                 }
             }
         }
+
+        // build a list of file names and corresponding pointers to ifu arrays (which may be empty)
+        vector<string> stmNames;
+        vector<Array*> stmArrays;
+        buildFiles(_stm, stmNames, stmArrays);
 
         // output the files (ignoring empty arrays)
         auto info = observerInfo();
