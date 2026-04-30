@@ -19,21 +19,27 @@
     integer and subsequently clipped to be in range. */
 class XRayIonicGasMixFamily : public MaterialMixFamily
 {
-    ENUM_DEF(BoundElectrons, None, Free, FreeWithPolarization, Good, Exact)
-        ENUM_VAL(BoundElectrons, None, "ignore bound electrons")
-        ENUM_VAL(BoundElectrons, Free, "use free-electron Compton scattering")
-        ENUM_VAL(BoundElectrons, FreeWithPolarization,
+    ENUM_DEF(ElectronScattering, None, Free, FreeWithPolarization, Good, Exact)
+        ENUM_VAL(ElectronScattering, None, "ignore electron")
+        ENUM_VAL(ElectronScattering, Free, "use free-electron Compton scattering for all electrons")
+        ENUM_VAL(ElectronScattering, FreeWithPolarization,
                  "use free-electron Compton scattering with support for polarization")
-        ENUM_VAL(BoundElectrons, Good, "use smooth Rayleigh scattering and exact bound-Compton scattering")
-        ENUM_VAL(BoundElectrons, Exact, "use anomalous Rayleigh scattering and exact bound-Compton scattering")
+        ENUM_VAL(ElectronScattering, Good, "use smooth Rayleigh scattering and exact bound-Compton scattering")
+        ENUM_VAL(ElectronScattering, Exact, "use anomalous Rayleigh scattering and exact bound-Compton scattering")
     ENUM_END()
+
     ITEM_CONCRETE(XRayIonicGasMixFamily, MaterialMixFamily, "a family of ionic mixes for each cell")
 
-        PROPERTY_STRING(ions, "the names of the ions for each element seperated by , (e.g. H1,He2,Fe1,Fe14,...)")
+        PROPERTY_STRING(ions, "the names of the ions for each element (e.g. H,He+,Li+1,..)")
 
-        PROPERTY_ENUM(scatterBoundElectrons, BoundElectrons, "implementation of scattering by bound electrons")
-        ATTRIBUTE_DEFAULT_VALUE(scatterBoundElectrons, "Good")
-        ATTRIBUTE_DISPLAYED_IF(scatterBoundElectrons, "Level3")
+        PROPERTY_ENUM(electronScattering, ElectronScattering, "implementation of scattering by electrons")
+        ATTRIBUTE_DEFAULT_VALUE(electronScattering, "Good")
+        ATTRIBUTE_DISPLAYED_IF(electronScattering, "Level3")
+
+        PROPERTY_BOOL(resonantScattering, "enable Lyman resonant scattering for all hydrogen-like ions")
+        ATTRIBUTE_DEFAULT_VALUE(resonantScattering, "false")
+        ATTRIBUTE_DISPLAYED_IF(resonantScattering, "Level2")
+        ATTRIBUTE_RELEVANT_IF(includeThermalDispersion, "Lya")
 
     ITEM_END()
 
@@ -60,8 +66,9 @@ private:
     //======================== Data Members ========================
 
 private:
+    bool _setupDone{false};
     vector<string> _ionNames;
-    XRayIonicGasMix::BoundElectrons _boundElectrons;
+    XRayIonicGasMix::ElectronScattering _boundElectrons;
     vector<XRayIonicGasMix*> _mixes;
     XRayIonicGasMix* _defaultMix{nullptr};
 };

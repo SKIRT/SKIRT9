@@ -4,15 +4,13 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "XRayIonicGasMixFamily.hpp"
-#include "Constants.hpp"
+#include "Atoms.hpp"
+#include "FatalError.hpp"
 #include "StringUtils.hpp"
 
 XRayIonicGasMixFamily::~XRayIonicGasMixFamily()
 {
-    for (XRayIonicGasMix* mix : _mixes)
-    {
-        delete mix;
-    }
+    for (XRayIonicGasMix* mix : _mixes) delete mix;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -30,10 +28,7 @@ vector<SnapshotParameter> XRayIonicGasMixFamily::parameterInfo() const
 {
     vector<SnapshotParameter> descriptors;
 
-    for (string ionName : _ionNames)
-    {
-        descriptors.push_back(SnapshotParameter::custom(ionName));
-    }
+    for (string ionName : _ionNames) descriptors.push_back(SnapshotParameter::custom(ionName));
 
     return descriptors;
 }
@@ -51,7 +46,7 @@ const MaterialMix* XRayIonicGasMixFamily::mix(double /*Z*/, double T, const Arra
         if (mix->abundances() == abundances) return mix;
     }
 
-    XRayIonicGasMix* mix = new XRayIonicGasMix(this, _ions, abundances, T, _boundElectrons, true);
+    XRayIonicGasMix* mix = new XRayIonicGasMix(this, _ions, abundances, T, _boundElectrons, _resonantScattering, true);
     _mixes.push_back(mix);
 
     return mix;
@@ -61,26 +56,32 @@ const MaterialMix* XRayIonicGasMixFamily::mix(double /*Z*/, double T, const Arra
 
 void XRayIonicGasMixFamily::setup()
 {
-    // read ions (temp fix)
-    if (_ionNames.size() == 0)
+    if (_setupDone) return;
+    _setupDone = true;
+
+    // read ions
+    // _numIons = StringUtils::split(ions(), ",").size();
+    // parse all required ions from the ions property
+    string ionString = StringUtils::squeeze(ions());
+    if (ionString.empty()) throw FATALERROR("No ions specified");
+    for (string ion : StringUtils::split(ionString, ","))
     {
-        for (string ion : StringUtils::split(ions(), ","))
-        {
-            ion = StringUtils::squeeze(ion);
-            _ionNames.push_back(ion);
-        }
+        // verify ion is in correct format
+        Atoms::parseIon(ion);
+        // store isolated ion name
+        _ionNames.push_back(ion);
     }
 
     // convert enum
-    switch (scatterBoundElectrons())
+    switch (electronScattering())
     {
-        case BoundElectrons::None: _boundElectrons = XRayIonicGasMix::BoundElectrons::None; break;
-        case BoundElectrons::Free: _boundElectrons = XRayIonicGasMix::BoundElectrons::Free; break;
-        case BoundElectrons::FreeWithPolarization:
-            _boundElectrons = XRayIonicGasMix::BoundElectrons::FreeWithPolarization;
+        case ElectronScattering::None: _boundElectrons = XRayIonicGasMix::ElectronScattering::None; break;
+        case ElectronScattering::Free: _boundElectrons = XRayIonicGasMix::ElectronScattering::Free; break;
+        case ElectronScattering::FreeWithPolarization:
+            _boundElectrons = XRayIonicGasMix::ElectronScattering::FreeWithPolarization;
             break;
-        case BoundElectrons::Good: _boundElectrons = XRayIonicGasMix::BoundElectrons::Good; break;
-        case BoundElectrons::Exact: _boundElectrons = XRayIonicGasMix::BoundElectrons::Exact; break;
+        case ElectronScattering::Good: _boundElectrons = XRayIonicGasMix::ElectronScattering::Good; break;
+        case ElectronScattering::Exact: _boundElectrons = XRayIonicGasMix::ElectronScattering::Exact; break;
     }
 }
 
@@ -90,13 +91,13 @@ const MaterialMix* XRayIonicGasMixFamily::mix()
 {
     if (_mixes.size() > 0) return _mixes[0];
 
-    // create a default mix for the Configuration (might remove later)
+    // create a default mix in case this is called before the setupSelfBefore()
     if (!_defaultMix)
     {
         setup();
 
         vector<double> abundances(_ionNames.size(), 0.);
-        _defaultMix = new XRayIonicGasMix(this, _ions, abundances, 0., _boundElectrons, true);
+        _defaultMix = new XRayIonicGasMix(this, _ions, abundances, 0., _boundElectrons, _resonantScattering, true);
     }
     return _defaultMix;
 }
