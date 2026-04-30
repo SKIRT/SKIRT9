@@ -45,7 +45,7 @@ class XRayIonicGasMix : public MaterialMix
         PROPERTY_BOOL(resonantScattering, "enable Lyman resonant scattering for all hydrogen-like ions")
         ATTRIBUTE_DEFAULT_VALUE(resonantScattering, "false")
         ATTRIBUTE_DISPLAYED_IF(resonantScattering, "Level2")
-        ATTRIBUTE_RELEVANT_IF(includeThermalDispersion, "Lya")
+        ATTRIBUTE_RELEVANT_IF(resonantScattering, "Lya")
 
     ITEM_END()
 
@@ -134,25 +134,25 @@ private:
 
     struct IonParam
     {
-        IonParam(short Z, short N) : Z(Z), N(N) {}
+        IonParam(int Z, int N) : Z(Z), N(N) {}
 
-        short Z;  // atomic number
-        short N;  // number of electrons
+        int Z;  // atomic number
+        int N;  // number of electrons
     };
     // Rayleigh scattering -> IonParam
     // Compton scattering -> IonParam
     // Fluorescence (+Lyman RC) -> FluorescenceParam
     struct FluorescenceParam
     {
-        unsigned char Z;  // atomic number
-        double lambda;    // wavelength (m)
-        double width;     // width (eV)
+        int Z;          // atomic number
+        double lambda;  // wavelength (m)
+        double width;   // width (eV)
     };
     // Resonant scattering -> LymanParam
     struct LymanParam
     {
-        unsigned char Z;      // atomic number
-        unsigned char index;  // Lyman index (alpha1/2, alpha3/2, beta1/2, ...)
+        int Z;                // atomic number
+        int index;            // Lyman index (alpha1/2, alpha3/2, beta1/2, ...)
         double lambda;        // wavelength (m)
         double a;             // Voigt parameter
         Array cumbranchingv;  // normalized cumulative branching

@@ -111,10 +111,10 @@ namespace
         {}
 
         int ionIndex{-1};                    // index of the ion
-        short Z;                             // atomic number
-        short N;                             // number of electrons
-        short n;                             // principal quantum number of the shell
-        short l;                             // orbital quantum number of the subshell
+        int Z;                               // atomic number
+        int N;                               // number of electrons
+        int n;                               // principal quantum number of the shell
+        int l;                               // orbital quantum number of the subshell
         double Eth;                          // subshell ionization threshold energy (eV)
         double E0;                           // fit parameter (eV)
         double sigma0;                       // fit parameter (Mb = 10^-22 m^2)
@@ -158,10 +158,10 @@ namespace
         FluorescenceResource(const Array& a) : Z(a[0]), N(a[1]), n(a[2]), l(a[3]), omega(a[4]), E(a[5]), W(a[6]) {}
 
         int paIndex{-1};  // index of the photo-absorption transition
-        short Z;          // atomic number
-        short N;          // number of electrons
-        short n;          // principal quantum number of the shell with the hole
-        short l;          // orbital quantum number of the subshell with the hole
+        int Z;            // atomic number
+        int N;            // number of electrons
+        int n;            // principal quantum number of the shell with the hole
+        int l;            // orbital quantum number of the subshell with the hole
         double omega;     // fluorescence yield (1)
         double E;         // (central) energy of the emitted photon (eV)
         double W;         // FWHM of the Lorentz shape for the emitted photon (eV), or zero
@@ -173,8 +173,8 @@ namespace
         int ionIndex{-1};  // index of the ion
         double sprob{-1};  // scatter probability after resonant scattering (<=1)
         double vth{-1};    // sqrt(2) * thermal velocity (m/s)
-        short Z;           // atomic number
-        short index;       // Lyman index (alpha1/2, alpha3/2, beta1/2, ...)
+        int Z;             // atomic number
+        int index;         // Lyman index (alpha1/2, alpha3/2, beta1/2, ...)
         double lamA;       // wavelength * Einstein A (m/s)
         double lam;        // wavelength (m)
 
@@ -190,9 +190,9 @@ namespace
     struct LymanBranchResource
     {
         LymanBranchResource(const Array& a) : Z(a[0]), upper(a[1]), lower(a[2]), prob(a[3]) {}
-        short Z;      // atomic number
-        short upper;  // upper Lyman index
-        short lower;  // lower Lyman index
+        int Z;        // atomic number
+        int upper;    // upper Lyman index
+        int lower;    // lower Lyman index
         double prob;  // branching probability
     };
 }
@@ -841,7 +841,7 @@ void XRayIonicGasMix::setupSelfBefore()
     if (ionString.empty()) throw FATALERROR("No ions specified");
     for (string ion : StringUtils::split(ionString, ","))
     {
-        short Z, N;
+        int Z, N;
         std::tie(Z, N) = Atoms::parseIon(ion);
         _ionParamv.emplace_back(Z, N);  // persistent data
     }
