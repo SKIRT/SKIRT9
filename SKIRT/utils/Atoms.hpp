@@ -45,16 +45,36 @@ public:
         // read ions
         ion = StringUtils::squeeze(ion);
         // split ion string into element symbol and ionization number
-        std::regex pattern("([A-Za-z]+)\\+?([0-9]*)");
+        std::regex pattern("([A-Za-z]+)(\\+?)([0-9]*)");
         std::smatch match;
 
-        if (!std::regex_match(ion, match, pattern)) throw FATALERROR("Invalid ion format: " + ion);
+        if (!std::regex_match(ion, match, pattern)) throw FATALERROR("Could not parse ion format: " + ion);
 
-        // get ion parameters
-        int Z = atomMap.at(match[1].str());
-        int N = Z - std::stoi(match[2].str());
-        if (N < 0 || N > Z) throw FATALERROR("Invalid ion format: " + ion);
-        // add ion parameters
+        int Z, N;
+        string element = match[1].str();
+        string plus = match[2].str();
+        string number = match[3].str();
+
+        Z = atomMap.at(element);
+
+        // enforce format to avoid ambiguities
+        if (number.empty())
+        {
+            if (plus.empty())
+                N = Z;  // eg. Fe
+            else
+                N = Z - 1;  // eg. Fe+
+        }
+        else
+        {
+            if (!plus.empty())
+                N = Z - StringUtils::toInt(number);  // eg. Fe+14
+            else
+                throw FATALERROR("Ion format should contain a '+' eg. Fe+14 for ion: " + ion);  // eg. Fe14
+        }
+
+        if (N < 0 || N > Z) throw FATALERROR("Invalid electron number for ion: " + ion);
+
         return std::make_pair(Z, N);
     }
 };

@@ -15,36 +15,37 @@
 
 class XRayIonicGasMix : public MaterialMix
 {
-    ENUM_DEF(BoundElectrons, None, Free, FreeWithPolarization, Good, Exact)
-        ENUM_VAL(BoundElectrons, None, "ignore bound electrons")
-        ENUM_VAL(BoundElectrons, Free, "use free-electron Compton scattering")
-        ENUM_VAL(BoundElectrons, FreeWithPolarization,
+    ENUM_DEF(ElectronScattering, None, Free, FreeWithPolarization, Good, Exact)
+        ENUM_VAL(ElectronScattering, None, "ignore electron")
+        ENUM_VAL(ElectronScattering, Free, "use free-electron Compton scattering for all electrons")
+        ENUM_VAL(ElectronScattering, FreeWithPolarization,
                  "use free-electron Compton scattering with support for polarization")
-        ENUM_VAL(BoundElectrons, Good, "use smooth Rayleigh scattering and exact bound-Compton scattering")
-        ENUM_VAL(BoundElectrons, Exact, "use anomalous Rayleigh scattering and exact bound-Compton scattering")
+        ENUM_VAL(ElectronScattering, Good, "use smooth Rayleigh scattering and exact bound-Compton scattering")
+        ENUM_VAL(ElectronScattering, Exact, "use anomalous Rayleigh scattering and exact bound-Compton scattering")
     ENUM_END()
 
     ITEM_CONCRETE(XRayIonicGasMix, MaterialMix, "Ionised gas mix")
         ATTRIBUTE_TYPE_INSERT(XRayIonicGasMix, "GasMix,CustomMediumState")
 
-        PROPERTY_STRING(ions, "the names of the ions for each element seperated by , (e.g. H1,He2,Fe1,Fe14,...)")
+        PROPERTY_STRING(ions, "the names of the ions for each element (e.g. H,He+,Li+1,..)")
 
         PROPERTY_DOUBLE_LIST(abundances, "the abundances of the ions in the same order as the ions property")
 
         PROPERTY_DOUBLE(temperature, "the temperature of the gas in K")
         ATTRIBUTE_QUANTITY(temperature, "temperature")
-        ATTRIBUTE_MIN_VALUE(temperature, "[0")
+        ATTRIBUTE_MIN_VALUE(temperature, "[3")
         ATTRIBUTE_MAX_VALUE(temperature, "1e9]")
         ATTRIBUTE_DEFAULT_VALUE(temperature, "1e4")
         ATTRIBUTE_DISPLAYED_IF(temperature, "Level2")
 
-        PROPERTY_ENUM(scatterBoundElectrons, BoundElectrons, "implementation of scattering by bound electrons")
-        ATTRIBUTE_DEFAULT_VALUE(scatterBoundElectrons, "Good")
-        ATTRIBUTE_DISPLAYED_IF(scatterBoundElectrons, "Level3")
+        PROPERTY_ENUM(electronScattering, ElectronScattering, "implementation of scattering by electrons")
+        ATTRIBUTE_DEFAULT_VALUE(electronScattering, "Free")
+        ATTRIBUTE_DISPLAYED_IF(electronScattering, "Level3")
 
         PROPERTY_BOOL(resonantScattering, "enable Lyman resonant scattering for all hydrogen-like ions")
         ATTRIBUTE_DEFAULT_VALUE(resonantScattering, "false")
         ATTRIBUTE_DISPLAYED_IF(resonantScattering, "Level2")
+        ATTRIBUTE_RELEVANT_IF(includeThermalDispersion, "Lya")
 
     ITEM_END()
 
@@ -52,7 +53,7 @@ class XRayIonicGasMix : public MaterialMix
 
 public:
     explicit XRayIonicGasMix(SimulationItem* parent, string ions, vector<double> abundances, double temperature,
-                             BoundElectrons boundElectrons, bool setup);
+                             ElectronScattering boundElectrons, bool resonantScattering, bool setup);
 
     void setupSelfBefore() override;
 
@@ -128,54 +129,56 @@ public:
     // base class for bound1-electron scattering helpers (public because we derive from it in anonymous namespace)
     class ScatteringHelper;
 
+private:
+    // all data is calculated in the setupSelfBefore(), but is persistent for use after setup
+
     struct IonParam
     {
         IonParam(short Z, short N) : Z(Z), N(N) {}
 
         short Z;  // atomic number
-        short N;  // number of electrons (technically not used, but might be when Compton accounts for this)
+        short N;  // number of electrons
     };
-
-    // Rayleigh params -> IonParam
-    // Compton params -> IonParam
-    // Fluorescence (+Lyman RC) params
+    // Rayleigh scattering -> IonParam
+    // Compton scattering -> IonParam
+    // Fluorescence (+Lyman RC) -> FluorescenceParam
     struct FluorescenceParam
     {
         unsigned char Z;  // atomic number
         double lambda;    // wavelength (m)
         double width;     // width (eV)
     };
-    // Resonant Lyman params
+    // Resonant scattering -> LymanParam
     struct LymanParam
     {
         unsigned char Z;      // atomic number
         unsigned char index;  // Lyman index (alpha1/2, alpha3/2, beta1/2, ...)
         double lambda;        // wavelength (m)
         double a;             // Voigt parameter
-        Array cumbranching;   // normalized cumulative branching
+        Array cumbranchingv;  // normalized cumulative branching
     };
 
-private:
     int _numIons;  // number of ions
     int _numFluo;  // number of fluorescence (+Lyman RC) transitions
     int _numLym;   // number of Lyman resonant scattering transitions
 
-    // persistent data
-    vector<IonParam> _ionParams;
-    vector<FluorescenceParam> _fluorescenceParams;
-    vector<LymanParam> _lymanParams;
-    vector<double> _vtherm;  // indexed on Z
+    // persistent data for scattering
+    vector<IonParam> _ionParamv;
+    vector<FluorescenceParam> _fluorescenceParamv;
+    vector<LymanParam> _lymanParamv;
+    vector<double> _vthermv;  // indexed on Z
 
-    // fine wavelength grid
-    Array _lambda;  // indexed on lambda
+    // wavelength grid (shifted to the left of the actually sampled points to approximate rounding)
+    Array _lambdav;
     // cross sections
-    Array _sigmaext;             // indexed on lambda
-    Array _sigmasca;             // indexed on lambda
-    ArrayTable<2> _cumsigmasca;  // indexed on lambda. interactions (2*numIons + numFluo + numRes)
+    Array _sigmaextv;              // indexed on lambdav
+    Array _sigmascav;              // indexed on lambdav
+    ArrayTable<2> _cumsigmascavv;  // indexed on lambdav, interactions (2*numIons + numFluo + numRes)
 
     // bound-electron scattering helpers depending on the configured implementation
     ScatteringHelper* _ray{nullptr};  // Rayleigh scattering helper
     ScatteringHelper* _com{nullptr};  // Compton scattering helper
+    // dipole phase function for resonant scattering
     DipolePhaseFunction* _dpf{nullptr};
 };
 
