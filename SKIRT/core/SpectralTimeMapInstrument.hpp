@@ -12,7 +12,7 @@
 
 /** A SpectralTimeMapInstrument object represents a distant instrument with an optional circular
     aperture that records the spatially integrated flux density per wavelength interval and per
-    time lag interval, and outputs a FITS file a 2D spectral-time map. */
+    time lag interval, and outputs a FITS file containing a 2D spectral-time map. */
 class SpectralTimeMapInstrument : public TimeInstrument
 {
     ITEM_CONCRETE(SpectralTimeMapInstrument, TimeInstrument,

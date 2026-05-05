@@ -27,7 +27,7 @@
     k=0\dots N-1.\f]
 
     The public interface offers functions to obtain the properties of each bin, and to determine
-    the (index of) the bin that contains a given time point.
+    the (index of the) bin that contains a given time point.
 
     A TimeGrid subclass is expected to implement the getTimeBins() function, which is invoked by
     this base class during setup to initialize the time grid. */

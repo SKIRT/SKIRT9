@@ -28,15 +28,15 @@ class VelocityInterface;
     indirectly affects the luminosity represented by the packet, because the latter is directly
     proportional to the frequency and thus inversely proportional to the wavelength.
 
-    Apart from its wavelength and weight, a photon packet carries information about its polarization
-    state, about its origin (e.g. emission by a primary or secondary source), about the
-    interactions it experienced since its emission (e.g. the number of scattering events), and
-    about its current path (e.g. starting position, propagation direction, spatial grid cells being
-    crossed). A photon packet also carries a unique identifier (within the current emission
-    segment) for the \em history it is part of, i.e. the collection of scattered and peeled-off
-    packets derived from the same originally launched packet (emitted by a primary or secondary
-    source). This history index can be used by instruments to group the fluxes of all photon
-    packets belonging to the same history.
+    Apart from its wavelength and weight, a photon packet carries information about its
+    polarization state, about its origin (e.g. emission by a primary or secondary source), about
+    the interactions it experienced since its emission (e.g. the number of scattering events),
+    about the distance traveled since its emission, and about its current path (e.g. starting
+    position, propagation direction, spatial grid cells being crossed). A photon packet also
+    carries a unique identifier (within the current emission segment) for the \em history it is
+    part of, i.e. the collection of scattered and peeled-off packets derived from the same
+    originally launched packet (emitted by a primary or secondary source). This history index can
+    be used by instruments to group the fluxes of all photon packets belonging to the same history.
 
     Implementation notes
     --------------------
@@ -126,6 +126,9 @@ public:
         polarization state is set according to its propagation direction; otherwise its
         polarization state is set to unpolarized.
 
+        The distance traveled is adjusted for the peel-off position relative to its direction,
+        ensuring consistent arrival times in TimeInstrument observers.
+
         The current path of the peel off photon packet is invalidated, and all information about
         its previous life cycle is lost. The base photon packet remains unchanged. */
     void launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk);
@@ -137,6 +140,9 @@ public:
         function copies the relevant values from the base photon packet to the peel off photon
         packet, updates the peel off direction, the wavelength and weight, and increments the
         scattering counter.
+
+        The distance traveled is adjusted for the peel-off position relative to its direction,
+        ensuring consistent arrival times in TimeInstrument observers.
 
         The peel off photon packet is initialized to an unpolarized state; the polarization state
         should be properly updated after the launch through the StokesVector class functions. The

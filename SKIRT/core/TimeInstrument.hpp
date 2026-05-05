@@ -13,7 +13,8 @@
 
 /** TimeInstrument is an abstract subclass of ApertureInstrument (and thus of DistantInstrument)
     that offers a TimeGrid property, used by subclasses that record the timelag response to a pulse
-    in the source luminosity at \f$t=0\f$. */
+    in the source luminosity. The origin of the arrival time is defined as the time at which a
+    photon emitted at the spatial origin arrives at the observer directly. */
 class TimeInstrument : public ApertureInstrument
 {
     ITEM_ABSTRACT(TimeInstrument, ApertureInstrument,
