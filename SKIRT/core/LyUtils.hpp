@@ -149,7 +149,7 @@ namespace LyUtils
         velocity of the interacting atom, and the incoming and outgoing photon packet directions.
         */
     double shiftWavelength(double lambda, const Vec& vatom, const Direction& kin, const Direction& kout);
-};
+}
 
 ////////////////////////////////////////////////////////////////////
 

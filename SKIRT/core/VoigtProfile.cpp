@@ -50,7 +50,7 @@ double VoigtProfile::sample(double a, double x, Random* random)
     double p = (theta0 + M_PI_2) / ((1. - exp(-u0 * u0)) * theta0 + (1. + exp(-u0 * u0)) * M_PI_2);
 
     // perform the rejection method loop for a maximum number of attempts
-    int n = 100000;  // sometimes fails at a~1e-6 x~3
+    int n = 100000;  // not the most efficient for certain a,x combinations (eg. Zn+29 at T=3K)
     while (n--)
     {
         // determine which one of the two comparison functions to use
