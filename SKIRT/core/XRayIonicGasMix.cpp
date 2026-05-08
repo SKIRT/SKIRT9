@@ -328,7 +328,8 @@ void XRayIonicGasMix::setupSelfBefore()
     }
     _numIons = _ionParamv.size();
 
-    if (_numIons != (int)abundances().size()) throw FATALERROR("Number of ions and abundances do not match");
+    if (_numIons != static_cast<int>(abundances().size()))
+        throw FATALERROR("Number of ions and abundances do not match");
 
     // create scattering helpers depending on the user-configured implementation type
     switch (electronScattering())
