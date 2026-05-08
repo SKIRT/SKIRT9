@@ -104,12 +104,10 @@ class Random;
     critical value, \f$|x|<0.2\f$. */
 namespace LyUtils
 {
-    double vtherm(double T, double mass);
-
     /** This function returns the Lyman-alpha scattering cross section per hydrogen atom
         \f$\sigma_\alpha(\lambda, T)\f$ at the given photon wavelength and gas temperature, using
         the definition given in the class header. */
-    double section(double vth, double a, double center, double g, double lambda);
+    double section(double lambda, double center, double vth, double a, double g);
 
     /** This function draws a random hydrogen atom velocity as seen by an incoming photon from the
         appropriate probability distributions, reflecting the preference for photons to be
@@ -143,8 +141,8 @@ namespace LyUtils
         - Return the atom velocity and a flag indicating the selected phase function.
 
         */
-    std::pair<Vec, bool> sampleAtomVelocity(double vth, double a, double center, bool J32, double lambda, double T,
-                                            double nH, Direction kin, Configuration* config, Random* random);
+    Vec sampleAtomVelocity(double lambda, double center, double vth, double a, double T, double nH, Direction kin,
+                           Configuration* config, Random* random);
 
     /** This function returns the Doppler-shifted wavelength in the gas bulk rest frame after a
         Lyman-alpha scattering event, given the incoming wavelength in the gas bulk rest frame, the

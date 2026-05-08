@@ -59,12 +59,13 @@
 
     <b>Lyman recombination continuum</b>
 
-    For hydrogen-like ions, photo-absorption can not be followed by fluorescence since the ion will
+    For hydrogen-like ions, photo-absorption cannot be followed by fluorescence since the ion will
     have no electrons left. Instead it can be followed by a radiative recombination event either to
     the ground state or to an excited level, which will then cascade down to the ground state. This
-    class only implements the Lyman series photons as a product of the cascade from the level
-    \f$i\f$ to the ground state. This will thus only result in line emission and can also be
-    modelled the same way as fluorescence.
+    class assumes instantaneous recombination and only implements the Lyman series photons produced
+    from cascades from the level \f$i\f$ to the ground state. This will thus only result in line
+    emission and no continuum emission. This allows for this process to be modelled the same way as
+    fluorescence.
 
     <b>Scattering by bound electrons</b>
 
@@ -83,6 +84,22 @@
 
     This means that all electrons are treated the same way. A material mix with Fe+0 will thus have
     the same scattering cross section as a material mix with Fe+26.
+
+    <b>Lyman resonant scattering</b>
+
+    Lyman resonant scattering is the process where a photon is absorbed and re-emitted by a bound
+    electron in an ion, promoting it from the ground state (\f$n=1\f$) to an excited level (\f$n
+    \leq 10\f$) and back again. This class implements these transitions for all hydrogen-like ions
+    up to atomic number 30. There are 9 Lyman-series lines included, each with fine-structure
+    splitting, resulting in a total of 18 transitions to the ground state (e.g., Ly\f${\alpha1}\f$,
+    Ly\f${\alpha2}\f$, Ly\f$_{\beta1}\f$, etc.).
+
+    Lyman-series transitions may occur either as a direct transition from and to the ground state
+    or via a radiative cascade. Direct transitions correspond to coherent scattering events, while
+    cascades are incoherent and erase information about the initial photon packet. when a cascade
+    occurs, we ignore all intermediate (non-Lyman) radiative decays, keeping only the final (Lyman)
+    transition to the ground state. This means we can also model the cascade as a single scattering
+    event.
 
     <b>Configuring the simulation</b>
 
@@ -164,25 +181,71 @@
     factor \f$C(\theta, E)\f$ defined above. The implementation is delegated to the
     ComptonPhaseFunction class.
 
+    <b>Lyman resonant scattering - cross section and phase function</b>
+
+    The resonant Lyman transitions are broadened both thermally and intrinsically. The resulting
+    cross section is described by a Voigt profile, the implementation of this is delegated to the
+    \em LyUtils and \em VoigtProfile namespaces.
+
+    If the resonant scattering occurs for the fine-structure levels Ly\f$_{\alpha1}\f$,
+    Ly\f$_{\beta1}\f$, Ly\f$_{\gamma1}\f$, etc. the resulting photon has a 50% chance to be emitted
+    isotropically and 50% chance for a dipole phase function. This dipole phase function always
+    includes polarization, the \em ElectronScattering property does not affect it in any way. The
+    implementation of this phase function can be found in the \em DipolePhaseFunction class. For
+    the other fine-structure levels Ly\f$_{\alpha2}\f$, Ly\f$_{\beta2}\f$, etc. the resulting
+    photon is always emitted isotropically.
+
+    If the scattering is coherent (no-cascade) the wavelength shift is determined by: \f[ \lambda'
+    = \lambda \frac{(1 - \boldsymbol{k}_\mathrm{out} \cdot \boldsymbol{v}_\mathrm{atom} / c)}{(1 -
+    \boldsymbol{k}_\mathrm{in} \cdot \boldsymbol{v}_\mathrm{atom} / c)} \f] otherwise (cascade) the
+    wavelength shift is only determined by the outgoing direction: \f[ \lambda' = \lambda (1 -
+    \boldsymbol{k}_\mathrm{out} \cdot \boldsymbol{v}_\mathrm{atom} / c) \f]
+
     <b>Performing scattering</b>
 
     The function performing an actual scattering event randomly selects one of the supported
-    scattering channels (i.e. scattering by an electron, fluorescent line emission following
-    a photo-absorption event or scattering by a resonant Lyman line). The relative
-    probabilities for these transitions as a function of incoming photon packet wavelength are also
-    calculated during setup. The selected transition determines the scattering mechanism. For
-    electrons, Compton scattering is used. For fluorescence, the emission direction is
-    isotropic, and the outgoing wavelength is the fluorescence wavelength. For the resonant Lyman lines,
-    the direction can be either isotropic and unpolarized or following a dipole phase function for 
-    both direction and polarization. The outcome is determined by the Lyman index... lya1, lyb1, etc.
+    scattering channels (i.e. scattering by an electron, fluorescent line emission following a
+    photo-absorption event or scattering by a resonant Lyman line). The relative probabilities for
+    these transitions as a function of incoming photon packet wavelength are also calculated during
+    setup. The selected transition determines the scattering mechanism. For electrons, Compton
+    scattering is used. For fluorescence, the emission direction is isotropic, and the outgoing
+    wavelength is the fluorescence wavelength. For the resonant Lyman lines, the direction can be
+    either isotropic and unpolarized or following a dipole phase function for both direction and
+    polarization. The outcome is determined by the Lyman index... lya1, lyb1, etc.
 
-    
-    
+    <b>Thermal dispersion</b>
 
+    The thermal dispersion appropriate for a given interaction depends on the (constant)
+    temperature configured for this material mix and on the mass of the interacting atom. For
+    electron scattering and fluorescence events, the implementation is straightforward. Once a
+    channel has been randomly selected, the magnitude of the interacting atom's thermal velocity is
+    taken from a precalculated table and a velocity vector is sampled from the Maxwell
+    distribution.
+
+    For photo-absorption, the situation is much more involved. In principle, the full cross section
+    curve for each ionization transition must be convolved with a Gaussian kernel of appropriate
+    width. In practice, the cross section curves are very smooth except for the step at the
+    threshold energy. The effect of the convolution is therefore limited to energies near the
+    threshold energy, replacing the infinitely steep step by a sigmoid function. Considering that
+    the convolution of a step function with a Gaussion is given by the error function, this class
+    uses the following approximation. With \f$E_\mathrm{th}\f$ the threshold energy and
+    \f$E_\mathrm{s}\f$ the energy dispersion corresponding to the thermal velocity of the atom
+    being ionized, the cross section near \f$E_\mathrm{th}\f$ is replaced by
+
+    \f[ \sigma_{ph}'(E) = \frac{\sigma_{ph}(E_\mathrm{th} +2 E_\mathrm{s})} {2} \, \left[ 1+
+    \mathrm{erf} ( \frac{E - E_\mathrm{th}} {E_\mathrm{s}} ) \right] \qquad \mathrm{for} \;
+    E_\mathrm{th} -2 E_\mathrm{s} < E < E_\mathrm{th} +2 E_\mathrm{s}. \f]
+
+    The sigmoid is scaled by the value of the actual cross section at the end of the interval,
+    achieving good continuity at that point in most cases, including all important transitions.
+
+    The thermal broadening present in the resonant scattering is already built into the Voigt
+    profile, its implementation can be found in the \em LyUtils and \em VoigtProfile namespaces.
 
     */
 class XRayIonicGasMix : public MaterialMix
 {
+    /** The enumeration type indicating the implementation used for scattering by electrons. */
     ENUM_DEF(ElectronScattering, None, Free, FreeWithPolarization)
         ENUM_VAL(ElectronScattering, None, "ignore electron")
         ENUM_VAL(ElectronScattering, Free, "use free-electron Compton scattering for all electrons")
@@ -190,10 +253,12 @@ class XRayIonicGasMix : public MaterialMix
                  "use free-electron Compton scattering with support for polarization")
     ENUM_END()
 
-    ITEM_CONCRETE(XRayIonicGasMix, MaterialMix, "Ionised gas mix")
-        ATTRIBUTE_TYPE_INSERT(XRayIonicGasMix, "GasMix,CustomMediumState")
+    ITEM_CONCRETE(XRayIonicGasMix, MaterialMix,
+                  "An ionised gas mix supporting photo-absorption, fluorescence and resonant Lyman scattering for "
+                  "X-ray wavelengths")
+        ATTRIBUTE_TYPE_INSERT(XRayIonicGasMix, "GasMix")
 
-        PROPERTY_STRING(ions, "the names of the ions for each element (e.g. H,He+,Li+1,..)")
+        PROPERTY_STRING(ions, "the names of the ions for each element (e.g. H,He+,Fe+25,..)")
 
         PROPERTY_DOUBLE_LIST(abundances, "the abundances of the ions in the same order as the ions property")
 
@@ -218,11 +283,12 @@ class XRayIonicGasMix : public MaterialMix
     //============= Construction - Setup - Destruction =============
 
 public:
-    explicit XRayIonicGasMix(SimulationItem* parent, string ions, vector<double> abundances, double temperature,
-                             ElectronScattering boundElectrons, bool resonantScattering, bool setup);
-
+    /** This function precalculates relevant cross sections and relative contributions over a
+        high-resolution wavelength grid. It also stores presistent data that is used during the
+        simulation to perform scattering. */
     void setupSelfBefore() override;
 
+    /** The destructor destructs the phase function helpers that were created during setup. */
     ~XRayIonicGasMix();
 
     //======== Private support functions =======
@@ -233,50 +299,124 @@ private:
         are stored in data members during setup. */
     int indexForLambda(double lambda) const;
 
+    /** This function returns the precalculated thermal velocity of the atom with the specified
+        atomic number \f$Z\f$. */
     double vtherm(int Z) const;
 
     //============= Capabilities =============
 
 public:
+    /** This function returns the fundamental material type represented by this material mix, which
+        is MaterialType::Gas. */
     MaterialType materialType() const override;
 
+    /** This function returns true if this material mix supports polarization during scattering
+        events. For this class, the function returns true if the \em scatterBoundElectrons property
+        has been set to \c FreeWithPolarization or is the \em resonantScattering property is set to
+        true. */
     bool hasPolarizedScattering() const override;
 
+    /** This function returns true if scattering for this material mix is resonant. For this class,
+        the function returns true if the \em resonantScattering property is set to true. */
     bool hasResonantScattering() const override;
 
+    /** This function returns true, indicating that a scattering interaction for this material mix
+        may (and usually does) adjust the wavelength of the interacting photon packet. */
     bool hasScatteringDispersion() const override;
 
+    /** This function returns true, indicating that a scattering interaction for this material mix
+        may emulate secondary emission. This is used to implement fluorescence as scattering. */
     bool scatteringEmulatesSecondaryEmission() const override;
 
     //============= Medium state setup =============
 
+    /** This function returns a list of StateVariable objects describing the specific state
+        variables used by the receiving material mix. For this class, the function returns just the
+        descriptor for the number density. */
     vector<StateVariable> specificStateVariableInfo() const override;
 
     //============= Low-level material properties =============
 
+    /** This function returns the mass of a hydrogen atom. */
     double mass() const override;
 
+    /** This function returns the absorption (i.e. \f$\sigma_\mathrm{ext} - \sigma_\mathrm{sca}\f$)
+        cross section per hydrogen atom at the given wavelength and using the abundances and
+        temperature configured for this material mix. */
     double sectionAbs(double lambda) const override;
 
+    /** This function returns the scattering (i.e. electron scattering, fluorescence, resonant
+        scattering) cross section per hydrogen atom at the given wavelength and using the
+        abundances and temperature configured for this material mix. */
     double sectionSca(double lambda) const override;
 
+    /** This function returns the extinction cross section per hydrogen atom at the given
+        wavelength and using the abundances and temperature configured for this material mix. */
     double sectionExt(double lambda) const override;
 
     //============= High-level photon life cycle =============
 
+    /** This function returns the absorption (i.e. \f$\sigma_\mathrm{ext} - \sigma_\mathrm{sca}\f$)
+        opacity at the given wavelength and material state, using the abundances and temperature
+        configured for this material mix. The photon packet properties are not used. */
     double opacityAbs(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
+    /** This function returns the scattering (i.e. electron scattering, fluorescence, resonant
+        scattering) opacity at the given wavelength and material state, using the abundances and
+        temperature configured for this material mix. The photon packet properties are not used. */
     double opacitySca(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
+    /** This function returns the extinction opacity at the given wavelength and material state,
+        using the abundances and temperature configured for this material mix. The photon packet
+        properties are not used. */
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
-    Array sigmaSca(double lambda, const MaterialState* state) const;
-
+private:
+    /** This private function draws a random scattering channel and atom velocity and stores this
+        information in the photon packet's scattering information record, unless a previous
+        peel-off stored this already. For fluorescence transitions that support a nonzero line
+        width, the function also draws a random wavelength from the line shape. For a resonant
+        scattering event it determines whether a cascade occrus and if the phase function is
+        isotropic or a dipole. */
     void setScatteringInfoIfNeeded(PhotonPacket* pp, const MaterialState* state, const double lambda) const;
 
+public:
+    /** This function calculates the contribution of the medium component associated with this
+        material mix to the peel-off photon luminosity, polarization state, and wavelength shift
+        for the given wavelength, geometry, material state, and photon properties. The
+        contributions to the Stokes vector components are stored in the \em I, \em Q, \em U, \em V
+        arguments, which are guaranteed to be initialized to zero by the caller. If there is
+        wavelength shift, the new wavelength value replaces the incoming value of the \em lambda
+        argument.
+
+        The function first calls the private setScatteringInfoIfNeeded() function to establish a
+        random scattering channel and atom velocity for this event. In case the selected channel is
+        electron scattering, the peel-off bias weight and wavelength shift are determined by the
+        Compton phase function and the selected atom velocity. For fluorescence, the peel-off bias
+        weight is trivially one because emission is isotropic and unpolarized, and the outgoing
+        wavelength is determined by Doppler-shifting the rest wavelength of the selected
+        fluorescence transition for the selected atom velocity. For resonant scattering the
+        peel-off bias weight and polarization are determined by its isotropic or dipole phase
+        function, and the wavelength is shifted accordingly depending on whether the scattering is
+        coherent or through a cascade. */
     bool peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
                            const MaterialState* state, const PhotonPacket* pp) const override;
 
+    /** This function performs a scattering event on the specified photon packet in the spatial
+        cell and medium component represented by the specified material state and the receiving
+        material mix. It first calls the private setScatteringInfoIfNeeded() function to establish
+        a random scattering channel and atom velocity for this event.
+
+        In case the selected channel is electron scattering, the outgoing direction and adjusted
+        wavelength are determined by the Compton phase function and the selected atom velocity. For
+        fluorescence, emission is isotropic, so the outgoing direction is randomly chosen from the
+        isotropic distribution. The outgoing wavelength is determined by Doppler-shifting the rest
+        wavelength of the selected fluorescence transition for the selected atom velocity. For
+        resonant scattering, the emission direction and polarization are determined by its
+        isotropic or dipole phase function. The wavelength is shifted depending on whether the
+        scattering is coherent or occurs through a cascade. Coherent scattering depends on both the
+        incoming and outgoing directions, whereas a cascade removes the incoming photon information
+        and depends only on the outgoing direction. */
     void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
 
     //======== Temperature =======
@@ -290,11 +430,11 @@ public:
     //======================== Data Members ========================
 
 public:
-    // base class for bound1-electron scattering helpers (public because we derive from it in anonymous namespace)
+    // base class for electron scattering helpers (public because we derive from it in anonymous namespace)
     class ScatteringHelper;
 
 private:
-    // all data is calculated in the setupSelfBefore(), but is persistent for use after setup to perform scattering
+    // all of the data below is calculated in the setupSelfBefore(), but is persistent for use after setup to perform scattering
 
     struct IonParam
     {
@@ -336,7 +476,7 @@ private:
     // cross sections
     Array _sigmaextv;              // indexed on lambdav
     Array _sigmascav;              // indexed on lambdav
-    ArrayTable<2> _cumsigmascavv;  // indexed on lambdav, interactions (numIons + numFluo + numRes)
+    ArrayTable<2> _cumsigmascavv;  // indexed on lambdav, interaction (electron + fluorescence + resonant)
 
     // compton-electron scattering helpers depending on the configured implementation
     ScatteringHelper* _com{nullptr};  // Compton scattering helper

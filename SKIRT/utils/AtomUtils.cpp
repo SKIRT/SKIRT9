@@ -3,7 +3,7 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "Atoms.hpp"
+#include "AtomUtils.hpp"
 #include "Constants.hpp"
 #include "FatalError.hpp"
 #include "StringUtils.hpp"
@@ -28,26 +28,25 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-short Atoms::atomToZ(string element)
+short AtomUtils::atomToZ(string element)
 {
     return atomMap.at(element);
 }
 
 ////////////////////////////////////////////////////////////////////
 
-/** This function returns the mass of the specified atomic number in kg. */
-double Atoms::mass(short Z)
+double AtomUtils::mass(short Z)
 {
     return masses[Z - 1] * Constants::amu();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-std::pair<short, short> Atoms::parseIon(string ion)
+std::pair<short, short> AtomUtils::parseIon(string ion)
 {
     // read ions
     ion = StringUtils::squeeze(ion);
-    // split ion string into element symbol and ionization number
+    // split ion string into (atom, plus, ionization)
     std::regex pattern("([A-Za-z]+)(\\+?)([0-9]*)");
     std::smatch match;
 
@@ -78,7 +77,7 @@ std::pair<short, short> Atoms::parseIon(string ion)
             throw FATALERROR("Ion format should contain a '+' eg. Fe+14 for ion: " + ion);
     }
 
-    if (N < 0 || N > Z) throw FATALERROR("Invalid electron number for ion: " + ion);
+    if (N < 0 || N > Z) throw FATALERROR("Invalid ionization degree for ion: " + ion);
 
     return std::make_pair(Z, N);
 }

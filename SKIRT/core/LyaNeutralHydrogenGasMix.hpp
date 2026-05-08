@@ -11,9 +11,9 @@
 
 ////////////////////////////////////////////////////////////////////
 
-/** The LyaNeutralHydrogenGasMix class describes the material properties related to
-    Lyman-alpha line transfer for a population of neutral hydrogen atoms, including support for
-    polarization by scattering.
+/** The LyaNeutralHydrogenGasMix class describes the material properties related to Lyman-alpha
+    line transfer for a population of neutral hydrogen atoms, including support for polarization by
+    scattering.
 
     The spatial distributions for both the mass density and the temperature of the neutral hydrogen
     gas must be defined by the input model and are considered to be constant during the simulation.
@@ -101,10 +101,9 @@ public:
     //======== Low-level material properties =======
 
 private:
+    /** This private function calculates the cross section per hydrogen atom for the given
+        wavelength and temperature. */
     double section(double lambda, double T) const;
-
-    std::pair<Vec, bool> sampleAtomVelocity(double lambda, double T, double nH, Direction kin, Configuration* config,
-                                            Random* random) const;
 
 public:
     /** This function returns the mass of neutral hydrogen atom. */
@@ -142,6 +141,15 @@ public:
         Lyman-alpha material mix, the extinction opacity equals the scattering opacity. */
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
+private:
+    /** This private function draws an atom velocity and phase function and stores this information
+        in the photon packet's scattering information record, unless a previous peel-off stored
+        this already. The atom velocity sampling is delegated to the LyUtils::sampleAtomVelocity.
+        The phase function is chosen to be a dipole for all wing events (x > 0.2) and 1/3 of the
+        core events (x < 0.2). The remaining core events are isotropic. */
+    void setScatteringInfoIfNeeded(PhotonPacket* pp, const MaterialState* state, const double lambda) const;
+
+public:
     /** This function calculates the contribution of the medium component associated with this
         material mix to the peel-off photon luminosity, polarization state, and wavelength shift,
         for the given wavelength, geometry, material state, and photon properties. The

@@ -3,7 +3,7 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 #include "XRayIonicGasMix.hpp"
-#include "Atoms.hpp"
+#include "AtomUtils.hpp"
 #include "ComptonPhaseFunction.hpp"
 #include "Configuration.hpp"
 #include "Constants.hpp"
@@ -28,7 +28,6 @@ namespace
     // ---- common helper functions ----
 
     static constexpr int numAtoms = 30;  // maximum atomic number used in this class
-    // static constexpr int numLy = 18;     // maximum lyman index used in this class
 
     // convert photon energy in eV to and from wavelength in m (same conversion in both directions)
     constexpr double wavelengthToFromEnergy(double x)
@@ -57,6 +56,7 @@ namespace
         return result;
     }
 
+    // resource data for photo-absorption
     struct PhotoAbsorbResource
     {
         PhotoAbsorbResource(const Array& a)
@@ -104,6 +104,7 @@ namespace
         }
     };
 
+    // resource data for fluorescence
     struct FluorescenceResource
     {
         FluorescenceResource(const Array& a) : Z(a[0]), N(a[1]), n(a[2]), l(a[3]), omega(a[4]), E(a[5]), W(a[6]) {}
@@ -118,6 +119,7 @@ namespace
         double W;         // FWHM of the Lorentz shape for the emitted photon (eV), or zero
     };
 
+    // resource data for Lyman-series
     struct LymanResource
     {
         LymanResource(const Array& a) : Z(a[0]), index(a[1]), lamA(a[2]), lam(a[3]) {}
@@ -134,10 +136,11 @@ namespace
             double a = lamA / (4. * M_PI * vth);
 
             double g = (index % 2) + 1.;
-            return LyUtils::section(vth, a, lam, g, lambda);
+            return LyUtils::section(lambda, lam, vth, a, g);
         }
     };
 
+    // resource data for Lyman branching (incoherent scattering)
     struct LymanBranchResource
     {
         LymanBranchResource(const Array& a) : Z(a[0]), upper(a[1]), lower(a[2]), prob(a[3]) {}
@@ -320,8 +323,8 @@ void XRayIonicGasMix::setupSelfBefore()
     for (string ion : StringUtils::split(ionString, ","))
     {
         int Z, N;
-        std::tie(Z, N) = Atoms::parseIon(ion);
-        _ionParamv.emplace_back(Z, N);  // persistent data
+        std::tie(Z, N) = AtomUtils::parseIon(ion);
+        _ionParamv.emplace_back(Z, N);
     }
     _numIons = _ionParamv.size();
 
@@ -429,7 +432,7 @@ void XRayIonicGasMix::setupSelfBefore()
         // calculate the persistent thermal velocities
         // doesn't actually use any resources, but stores this for all 30 atomic numbers
         _vthermv.resize(numAtoms, 0.);
-        for (int Z = 1; Z <= numAtoms; Z++) _vthermv[Z - 1] = sqrt(Constants::k() * temperature() / Atoms::mass(Z));
+        for (int Z = 1; Z <= numAtoms; Z++) _vthermv[Z - 1] = sqrt(Constants::k() * temperature() / AtomUtils::mass(Z));
 
         // Photo-absorption
         // calculate the parameters for the sigmoid function approximating the convolution with a Gaussian
@@ -670,23 +673,6 @@ void XRayIonicGasMix::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
-XRayIonicGasMix::XRayIonicGasMix(SimulationItem* parent, string ions, vector<double> abundances, double temperature,
-                                 ElectronScattering electronScattering, bool resonantScattering, bool setup)
-{
-    _ions = ions;
-    _abundances = abundances;
-    _temperature = temperature;
-    _electronScattering = electronScattering;
-    _resonantScattering = resonantScattering;
-    if (setup)
-    {
-        parent->addChild(this);
-        this->setup();
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
 XRayIonicGasMix::~XRayIonicGasMix()
 {
     delete _com;
@@ -898,10 +884,13 @@ void XRayIonicGasMix::setScatteringInfoIfNeeded(PhotonPacket* pp, const Material
                 scatinfo->lambda = llyp.lambda;
             }
 
+            // if J32 -> Lya1, Lyb1, ... -> 50/50   dipole/isotropic
+            // if J12 -> Lya2, Lyb2, ... -> 100     isotropic
+            scatinfo->dipole = J32 ? random()->uniform() < 0.5 : false;
+
             // sample a atom velocity from Voigt profile
-            std::tie(scatinfo->velocity, scatinfo->dipole) =
-                LyUtils::sampleAtomVelocity(vth, a, center, J32, lambda, temperature(), state->numberDensity(),
-                                            pp->direction(), config(), random());
+            scatinfo->velocity = LyUtils::sampleAtomVelocity(
+                lambda, center, vth, a, temperature(), state->numberDensity(), pp->direction(), config(), random());
         }
     }
 }

@@ -14,23 +14,11 @@
 namespace
 {
     constexpr double c = Constants::c();  // speed of light in vacuum
-    // constexpr double kB = Constants::k();        // Boltzmann constant
-    // constexpr double mp = Constants::Mproton();  // proton mass
-    // constexpr double la = Constants::lambdaLya();     // central Lyman-alpha wavelength
-    // constexpr double Aa = Constants::EinsteinALya();  // Einstein A coefficient for Lyman-alpha transition
 }
 
 ////////////////////////////////////////////////////////////////////
 
-double LyUtils::vtherm(double T, double mass)
-{
-    return sqrt(2 * Constants::k() * T / mass);
-}
-
-////////////////////////////////////////////////////////////////////
-
-// vth = sqrt(2) * thermal velocity
-double LyUtils::section(double vth, double a, double center, double g, double lambda)
+double LyUtils::section(double lambda, double center, double vth, double a, double g)
 {
     double x = (center - lambda) / lambda * c / vth;            // dimensionless frequency
     double sigma0 = g * center * center * M_2_SQRTPI / 4. * a;  // cross section at line center
@@ -39,8 +27,8 @@ double LyUtils::section(double vth, double a, double center, double g, double la
 
 ////////////////////////////////////////////////////////////////////
 
-std::pair<Vec, bool> LyUtils::sampleAtomVelocity(double vth, double a, double center, bool J32, double lambda, double T,
-                                                 double nH, Direction kin, Configuration* config, Random* random)
+Vec LyUtils::sampleAtomVelocity(double lambda, double center, double vth, double a, double T, double nH, Direction kin,
+                                Configuration* config, Random* random)
 {
     double x = (center - lambda) / lambda * c / vth;  // dimensionless frequency
 
@@ -83,20 +71,11 @@ std::pair<Vec, bool> LyUtils::sampleAtomVelocity(double vth, double a, double ce
     // transform the dimensionless frequency into the rest frame of the atom
     x -= Vec::dot(u, kin);
 
-    // select the isotropic or the dipole phase function:
-    // all wing events and 1/3 of core events are dipole, and the remaining 2/3 core events are isotropic,
-    // where x=0.2 (in the atom frame) defines the transition between core and wings
-    // bool dipole = abs(x) > 0.2 || random->uniform() < 1. / 3.;
-
-    // if J32 -> Lya1, Lyb1, ... -> 50/50   dipole/isotropic
-    // if J12 -> Lya2, Lyb2, ... -> 100     isotropic
-    bool dipole = J32 ? random->uniform() < 0.5 : false;
-
     // scale the atom velocity from dimensionless to regular units
     u *= vth;
 
     // return the atom velocity and the phase function choice
-    return std::make_pair(u, dipole);
+    return u;
 }
 
 ////////////////////////////////////////////////////////////////////
