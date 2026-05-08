@@ -27,12 +27,30 @@ namespace
         Transparent,
         PrimaryDirect,
         PrimaryScattered,
-        SecondaryTransparent,
         SecondaryDirect,
         SecondaryScattered,
+        SecondaryTransparent,
         TotalQ,
         TotalU,
         TotalV,
+        TransparentQ,
+        TransparentU,
+        TransparentV,
+        PrimaryDirectQ,
+        PrimaryDirectU,
+        PrimaryDirectV,
+        PrimaryScatteredQ,
+        PrimaryScatteredU,
+        PrimaryScatteredV,
+        SecondaryDirectQ,
+        SecondaryDirectU,
+        SecondaryDirectV,
+        SecondaryScatteredQ,
+        SecondaryScatteredU,
+        SecondaryScatteredV,
+        SecondaryTransparentQ,
+        SecondaryTransparentU,
+        SecondaryTransparentV,
         PrimaryScatteredLevel
     };
 
@@ -192,6 +210,36 @@ void FluxRecorder::finalizeConfiguration()
         _ifu[TotalU].resize(lenIFU);
         _sed[TotalV].resize(lenSED);
         _ifu[TotalV].resize(lenIFU);
+
+        if (!_recordTotalOnly)
+        {
+            _sed[TransparentQ].resize(lenSED);
+            _sed[TransparentU].resize(lenSED);
+            _sed[TransparentV].resize(lenSED);
+
+            _sed[PrimaryDirectQ].resize(lenSED);
+            _sed[PrimaryDirectU].resize(lenSED);
+            _sed[PrimaryDirectV].resize(lenSED);
+
+            _sed[PrimaryScatteredQ].resize(lenSED);
+            _sed[PrimaryScatteredU].resize(lenSED);
+            _sed[PrimaryScatteredV].resize(lenSED);
+
+            if (_hasMediumEmission)
+            {
+                _sed[SecondaryDirectQ].resize(lenSED);
+                _sed[SecondaryDirectU].resize(lenSED);
+                _sed[SecondaryDirectV].resize(lenSED);
+
+                _sed[SecondaryScatteredQ].resize(lenSED);
+                _sed[SecondaryScatteredU].resize(lenSED);
+                _sed[SecondaryScatteredV].resize(lenSED);
+
+                _sed[SecondaryTransparentQ].resize(lenSED);
+                _sed[SecondaryTransparentU].resize(lenSED);
+                _sed[SecondaryTransparentV].resize(lenSED);
+            }
+        }
     }
 
     // allocate and resize the statistics detector arrays
@@ -300,6 +348,46 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
                 LockFree::add(_sed[TotalQ][ell], Lext * pp->stokesQ());
                 LockFree::add(_sed[TotalU][ell], Lext * pp->stokesU());
                 LockFree::add(_sed[TotalV][ell], Lext * pp->stokesV());
+
+                if (!_recordTotalOnly)
+                {
+                    if (pp->hasPrimaryOrigin())
+                    {
+                        if (numScatt == 0)
+                        {
+                            LockFree::add(_sed[TransparentQ][ell], L * pp->stokesQ());
+                            LockFree::add(_sed[TransparentU][ell], L * pp->stokesU());
+                            LockFree::add(_sed[TransparentV][ell], L * pp->stokesV());
+                            LockFree::add(_sed[PrimaryDirectQ][ell], Lext * pp->stokesQ());
+                            LockFree::add(_sed[PrimaryDirectU][ell], Lext * pp->stokesU());
+                            LockFree::add(_sed[PrimaryDirectV][ell], Lext * pp->stokesV());
+                        }
+                        else
+                        {
+                            LockFree::add(_sed[PrimaryScatteredQ][ell], Lext * pp->stokesQ());
+                            LockFree::add(_sed[PrimaryScatteredU][ell], Lext * pp->stokesU());
+                            LockFree::add(_sed[PrimaryScatteredV][ell], Lext * pp->stokesV());
+                        }
+                    }
+                    else
+                    {
+                        if (numScatt == 0)
+                        {
+                            LockFree::add(_sed[SecondaryDirectQ][ell], Lext * pp->stokesQ());
+                            LockFree::add(_sed[SecondaryDirectU][ell], Lext * pp->stokesU());
+                            LockFree::add(_sed[SecondaryDirectV][ell], Lext * pp->stokesV());
+                            LockFree::add(_sed[SecondaryTransparentQ][ell], L * pp->stokesQ());
+                            LockFree::add(_sed[SecondaryTransparentU][ell], L * pp->stokesU());
+                            LockFree::add(_sed[SecondaryTransparentV][ell], L * pp->stokesV());
+                        }
+                        else
+                        {
+                            LockFree::add(_sed[SecondaryScatteredQ][ell], Lext * pp->stokesQ());
+                            LockFree::add(_sed[SecondaryScatteredU][ell], Lext * pp->stokesU());
+                            LockFree::add(_sed[SecondaryScatteredV][ell], Lext * pp->stokesV());
+                        }
+                    }
+                }
             }
         }
 
@@ -462,6 +550,25 @@ void FluxRecorder::calibrateAndWrite()
         {
             sedNames.insert(sedNames.end(), {"total Stokes Q", "total Stokes U", "total Stokes V"});
             sedArrays.insert(sedArrays.end(), {&_sed[TotalQ], &_sed[TotalU], &_sed[TotalV]});
+
+            if (_recordComponents && !_recordTotalOnly)
+            {
+                sedNames.insert(
+                    sedNames.end(),
+                    {"transparent Stokes Q", "transparent Stokes U", "transparent Stokes V", "direct primary Stokes Q",
+                     "direct primary Stokes U", "direct primary Stokes V", "scattered primary Stokes Q",
+                     "scattered primary Stokes U", "scattered primary Stokes V", "direct secondary Stokes Q",
+                     "direct secondary Stokes U", "direct secondary Stokes V", "scattered secondary Stokes Q",
+                     "scattered secondary Stokes U", "scattered secondary Stokes V", "transparent secondary Stokes Q",
+                     "transparent secondary Stokes U", "transparent secondary Stokes V"});
+                sedArrays.insert(sedArrays.end(),
+                                 {&_sed[TransparentQ], &_sed[TransparentU], &_sed[TransparentV], &_sed[PrimaryDirectQ],
+                                  &_sed[PrimaryDirectU], &_sed[PrimaryDirectV], &_sed[PrimaryScatteredQ],
+                                  &_sed[PrimaryScatteredU], &_sed[PrimaryScatteredV], &_sed[SecondaryDirectQ],
+                                  &_sed[SecondaryDirectU], &_sed[SecondaryDirectV], &_sed[SecondaryScatteredQ],
+                                  &_sed[SecondaryScatteredU], &_sed[SecondaryScatteredV], &_sed[SecondaryTransparentQ],
+                                  &_sed[SecondaryTransparentU], &_sed[SecondaryTransparentV]});
+            }
         }
 
         // add the scattering levels, if requested, even if they are all zero
