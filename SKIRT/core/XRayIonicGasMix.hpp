@@ -57,7 +57,7 @@
     to be treated during primary emission. A possible drawback is that the weaker fluorescence
     lines will be represented by a fairly small number of photon packets.
 
-    <b>Lyman recombination continuum</b>
+    <b>Lyman recombination</b>
 
     For hydrogen-like ions, photo-absorption cannot be followed by fluorescence since the ion will
     have no electrons left. Instead it can be followed by a radiative recombination event either to
@@ -99,7 +99,8 @@
     cascades are incoherent and erase information about the initial photon packet. when a cascade
     occurs, we ignore all intermediate (non-Lyman) radiative decays, keeping only the final (Lyman)
     transition to the ground state. This means we can also model the cascade as a single scattering
-    event.
+    event. The branching data, determining the probability of an (in)coherent transition,
+    is obtained from the SPEX database Kaastra et al. (2024).
 
     <b>Configuring the simulation</b>
 
@@ -163,6 +164,15 @@
     The total fluorescence cross section per hydrogen atom for this material mix is obtained
     similarly, but now including only the K, L and M shell photo-absorption cross sections for each
     ion, multiplied by the appropriate fluorescence yields in addition to the element abundance.
+    These yields are obtained from Kaastra & Mewe (1993) for all ions up to Z=30, from neutral down
+    to B-like.
+
+    <b>Lyman recombination cross section</b>
+
+    The total Lyman recombination cross section per hydrogen atom for this material mix is obtained
+    the exact same was as for fluorescence. The yields are now temperature-dependent however, but
+    since the temperature is assumed to be constant this is simply read during the setup. The
+    temperature-dependent yields are obtained from Mao & Kaastra (2016).
 
     <b>Electron scattering - cross section and phase function</b>
 
@@ -185,7 +195,8 @@
 
     The resonant Lyman transitions are broadened both thermally and intrinsically. The resulting
     cross section is described by a Voigt profile, the implementation of this is delegated to the
-    \em LyUtils and \em VoigtProfile namespaces.
+    \em LyUtils and \em VoigtProfile namespaces. The data for the line energies and Einstein A
+    coefficients are obtained from the SPEX database Kaastra et al. (2024).
 
     If the resonant scattering occurs for the fine-structure levels Ly\f$_{\alpha1}\f$,
     Ly\f$_{\beta1}\f$, Ly\f$_{\gamma1}\f$, etc. the resulting photon has a 50% chance to be emitted
@@ -241,7 +252,6 @@
 
     The thermal broadening present in the resonant scattering is already built into the Voigt
     profile, its implementation can be found in the \em LyUtils and \em VoigtProfile namespaces.
-
     */
 class XRayIonicGasMix : public MaterialMix
 {
