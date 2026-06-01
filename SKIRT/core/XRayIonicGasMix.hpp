@@ -100,7 +100,7 @@
     occurs, we ignore all intermediate (non-Lyman) radiative decays, keeping only the final (Lyman)
     transition to the ground state. This means we can also model the cascade as a single scattering
     event. The branching data, determining the probability of an (in)coherent transition,
-    is obtained from the SPEX database Kaastra et al. (2024).
+    was calculated from the SPEX database Kaastra et al. (2024).
 
     <b>Configuring the simulation</b>
 
@@ -123,7 +123,7 @@
     low-intensity line photon packets are killed before having a chance to register in the
     instruments.
 
-    The input model must define the spatial distribution of the number density. The use can then
+    The input model must define the spatial distribution of the number density. The user can then
     define the abundances of the ions in the gas in this material mix. The spatial density is
     simply the product of the number density and the abundances of the ions in use.
 

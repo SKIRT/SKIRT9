@@ -385,8 +385,6 @@ void XRayIonicGasMix::setupSelfBefore()
         // ------------ discard unused resources ------------
 
         // for each (used) ion save all the photo-absorption, fluorescence and resonant Lyman transitions
-
-        // for each ION
         for (int i = 0; i < _numIons; i++)
         {
             auto& ion = _ionParamv[i];
@@ -412,7 +410,7 @@ void XRayIonicGasMix::setupSelfBefore()
                 }
             }
 
-            // add RS for this (H-like) ION
+            // add RS for this (H-like) ion
             if (resonantScattering() && ion.N == 1)
             {
                 for (auto& ly : lyResource)
