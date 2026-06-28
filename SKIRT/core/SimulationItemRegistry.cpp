@@ -63,6 +63,7 @@
 #include "DefaultWavelengthDistribution.hpp"
 #include "DensityProbe.hpp"
 #include "DensityTreePolicy.hpp"
+#include "DiffuseIonizedGasMix.hpp"
 #include "DiscreteWavelengthDistribution.hpp"
 #include "DonutGeometry.hpp"
 #include "DorschnerOlivineGrainComposition.hpp"
@@ -127,6 +128,7 @@
 #include "InstrumentTimeGridProbe.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "IntegratedLuminosityNormalization.hpp"
+#include "IntegratedSecondaryLineLuminosityProbe.hpp"
 #include "IsotropicAngularDistribution.hpp"
 #include "LaserAngularDistribution.hpp"
 #include "LaunchedPacketsProbe.hpp"
@@ -605,6 +607,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<XRayAtomicGasMix>();
     ItemRegistry::add<EmittingGasMix>();
     ItemRegistry::add<NonLTELineGasMix>();
+    ItemRegistry::add<DiffuseIonizedGasMix>();
     ItemRegistry::add<LyaNeutralHydrogenGasMix>();
     ItemRegistry::add<TrivialGasMix>();
 
@@ -739,6 +742,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<RadiationFieldProbe>();
     ItemRegistry::add<SecondaryDustLuminosityProbe>();
     ItemRegistry::add<SecondaryLineLuminosityProbe>();
+    ItemRegistry::add<IntegratedSecondaryLineLuminosityProbe>();
     //   .. properties
     ItemRegistry::add<SpatialCellPropertiesProbe>();
     ItemRegistry::add<SpatialGridPlotProbe>();
