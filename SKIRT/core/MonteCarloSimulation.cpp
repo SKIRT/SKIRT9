@@ -273,20 +273,14 @@ void MonteCarloSimulation::runPrimaryEmissionIterations()
     auto parallel = find<ParallelFactory>()->parallelDistributed();
 
     // get the parameters controlling the dynamic state iteration
-    size_t Npp = _config->numPrimaryIterationPackets();
+    double minNpp = max(1., _config->numPrimaryIterationPackets() * _config->primaryIterationInitialPacketsFraction());
+    double maxNpp = max(1., _config->numPrimaryIterationPackets());
+    double ramp = _config->primaryIterationPacketsRamp();
     int minIters = _config->minPrimaryIterations();
     int maxIters = _config->maxPrimaryIterations();
 
-    // retrieve packet ramp-up parameters
-    double initFrac = _config->primaryIterationInitialPacketsFraction();
-    double ramp = _config->primaryIterationPacketsRamp();
-    bool useRamp = (initFrac < 1.0);
-
-    // prepare the source system for the appropriate number of packets
-    sourceSystem()->prepareForLaunch(Npp);
-
     // track the previous iteration packet count to avoid redundant prepareForLaunch calls
-    size_t Npp_prev = Npp;
+    size_t prevNpp = 0;
 
     // loop over the dynamic state iterations
     int iter = 0;
@@ -294,25 +288,20 @@ void MonteCarloSimulation::runPrimaryEmissionIterations()
     {
         ++iter;
 
-        // compute ramped packet count: Npp * initFrac * ramp^(iter-1), capped at Npp
-        size_t Npp_iter = Npp;
-        if (useRamp)
+        // compute ramped packet count
+        size_t Npp = min(maxNpp, minNpp * std::pow(ramp, iter - 1));
+
+        // prepare the source system for the appropriate number of packets
+        if (Npp != prevNpp)
         {
-            double Npp_ramped = static_cast<double>(Npp) * initFrac * std::pow(ramp, iter - 1);
-            Npp_iter = min(Npp, max(static_cast<size_t>(1), static_cast<size_t>(std::round(Npp_ramped))));
-            if (Npp_iter != Npp_prev)
-            {
-                sourceSystem()->prepareForLaunch(Npp_iter);
-                Npp_prev = Npp_iter;
-            }
+            sourceSystem()->prepareForLaunch(Npp);
+            prevNpp = Npp;
         }
 
+        // perform the segment
         bool converged = true;
         {
             string segment = "primary emission iteration " + std::to_string(iter);
-            if (useRamp && Npp_iter < Npp)
-                log()->info("Launching " + StringUtils::toString(static_cast<double>(Npp_iter), 'g')
-                            + " primary iteration " + std::to_string(iter) + " photon packets (ramped)");
             TimeLogger logger(log(), segment);
 
             mediumSystem()->beginDynamicMediumStateIteration();
@@ -321,8 +310,8 @@ void MonteCarloSimulation::runPrimaryEmissionIterations()
             mediumSystem()->clearRadiationField(true);
 
             // launch photon packets
-            initProgress(segment, Npp_iter);
-            parallel->call(Npp_iter, [this](size_t i, size_t n) { performLifeCycle(i, n, true, false, true); });
+            initProgress(segment, Npp);
+            parallel->call(Npp, [this](size_t i, size_t n) { performLifeCycle(i, n, true, false, true); });
             instrumentSystem()->flush();
 
             // wait for all processes to finish and synchronize the radiation field

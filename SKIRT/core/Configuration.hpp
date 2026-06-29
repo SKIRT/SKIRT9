@@ -6,7 +6,6 @@
 #ifndef CONFIGURATION_HPP
 #define CONFIGURATION_HPP
 
-#include "Array.hpp"
 #include "Range.hpp"
 #include "SimulationItem.hpp"
 class DisjointWavelengthGrid;

@@ -68,7 +68,7 @@ class IterationOptions : public SimulationItem
         ATTRIBUTE_MIN_VALUE(primaryIterationPacketsRamp, "]1")
         ATTRIBUTE_MAX_VALUE(primaryIterationPacketsRamp, "100]")
         ATTRIBUTE_DEFAULT_VALUE(primaryIterationPacketsRamp, "2")
-        ATTRIBUTE_RELEVANT_IF(primaryIterationPacketsRamp, "primaryIterationInitialPacketsFraction")
+        ATTRIBUTE_RELEVANT_IF(primaryIterationPacketsRamp, "IteratePrimary&primaryIterationInitialPacketsFraction")
         ATTRIBUTE_DISPLAYED_IF(primaryIterationPacketsRamp, "Level3")
 
         PROPERTY_DOUBLE(secondaryIterationPacketsMultiplier,

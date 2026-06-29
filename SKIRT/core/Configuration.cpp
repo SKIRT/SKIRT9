@@ -193,9 +193,11 @@ void Configuration::setupSelfBefore()
             {
                 _minPrimaryIterations = ms->iterationOptions()->minPrimaryIterations();
                 _maxPrimaryIterations = max(_minPrimaryIterations, ms->iterationOptions()->maxPrimaryIterations());
+                _primaryIterationInitialPacketsFraction =
+                    ms->iterationOptions()->primaryIterationInitialPacketsFraction();
+                if (_primaryIterationInitialPacketsFraction < 1.)
+                    _primaryIterationPacketsRamp = ms->iterationOptions()->primaryIterationPacketsRamp();
             }
-            _primaryIterationInitialPacketsFraction = ms->iterationOptions()->primaryIterationInitialPacketsFraction();
-            _primaryIterationPacketsRamp = ms->iterationOptions()->primaryIterationPacketsRamp();
         }
         else
         {
