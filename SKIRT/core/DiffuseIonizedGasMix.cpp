@@ -20,11 +20,33 @@
 #include "StringUtils.hpp"
 
 ////////////////////////////////////////////////////////////////////
-constexpr double DiffuseIonizedGasMix::_solarAbundances[8];
-constexpr double DiffuseIonizedGasMix::_gunasekeraDepletion[8];
 
 namespace
 {
+    // Solar reference metallicity (GASS10).
+    static constexpr double _solarZ = 0.014;
+
+    // Solar abundances (GASS10) for Z-scaling of metal emission.
+    // Order: C, N, O, Ne, Mg, Si, S, Fe.
+    static constexpr double _solarAbundances[8] = {2.69e-4, 6.76e-5, 4.90e-4, 8.51e-5,
+                                                   3.98e-5, 3.24e-5, 1.32e-5, 3.16e-5};
+
+    // Per-element gas-phase depletion factors following Gunasekera et al. (2023): the
+    // Jenkins (2009) depletion pattern (Table 4) evaluated at F* = 0.5, with no depletion
+    // applied to sulphur. These multiply the solar abundance pattern in
+    // buildPerCellAbundances so that the analytical ionization and line-emission step
+    // uses the same gas-phase composition that Cloudy used when the temperature and
+    // opacity tables were generated. Order matches _solarAbundances.
+    static constexpr double _gunasekeraDepletion[8] = {
+        0.688023,  // C  : J09 F*=0.5
+        0.778037,  // N  : J09 F*=0.5
+        0.753442,  // O  : J09 F*=0.5
+        1.000000,  // Ne : noble gas, no depletion
+        0.170179,  // Mg : J09 F*=0.5
+        0.161614,  // Si : J09 F*=0.5
+        1.000000,  // S  : Gunasekera (2023) leaves S undepleted
+        0.025471,  // Fe : J09 F*=0.5
+    };
 
     // Constants from CMACIONIZE (same values as in PhysicalDiffuseReemissionHandler)
     static constexpr double helium19p8EvFreq = 4.788e15;
@@ -140,10 +162,10 @@ void DiffuseIonizedGasMix::setupSelfBefore()
     // Transition stays on the centre slice).
     if (enableTemperatureStab())
     {
-        _standardTemperatureTable.open(this, standardTemperatureTableName(),
+        _standardTemperatureTable.open(this, "DiffuseIonizedGas5Bin_Standard_multiZ_Temperature",
                                        "Z(1),n_H(1/m3),logU(1),logR2(1),logR3(1),logR4(1),logR5(1),delta_id(1)",
                                        "logT(K)", true);
-        _transitionTemperatureTable.open(this, transitionTemperatureTableName(),
+        _transitionTemperatureTable.open(this, "DiffuseIonizedGas5Bin_Transition_multiZ_Temperature",
                                          "Z(1),n_H(1/m3),logU(1),logR2(1),logR3(1),logR4(1),logR5(1)", "logT(K)", true);
 
         // Cache the transition table's logU axis edges for the per-cell selectTable/getBlendingWeight hot path.
@@ -156,17 +178,18 @@ void DiffuseIonizedGasMix::setupSelfBefore()
     // Load reemission spectra STAB table if diffuse reemission is enabled
     if (reemissionFraction() > 0.0)
     {
-        _reemissionSpectraTable.open(this, reemissionSpectraTableName(), "type(1),T(K),lambda(m)", "P(1)", true);
+        _reemissionSpectraTable.open(this, "DiffuseIonizedGasReemissionSpectra", "type(1),T(K),lambda(m)", "P(1)",
+                                     true);
     }
 
     // Load opacity STAB tables if enabled (tag-subsampled, K tags in lambda axis;
     // multiZ: Standard carries a delta_id axis, Transition uses only the centre slice).
     if (enableOpacityStab())
     {
-        _standardOpacityTable.open(this, standardOpacityTableName(),
+        _standardOpacityTable.open(this, "DiffuseIonizedGas5Bin_Standard_multiZ_Opacity",
                                    "lambda(m),logU(1),logR2(1),logR3(1),logR4(1),logR5(1),Z(1),n_H(1/m3),delta_id(1)",
                                    "kappa(1/m)", true);
-        _transitionOpacityTable.open(this, transitionOpacityTableName(),
+        _transitionOpacityTable.open(this, "DiffuseIonizedGas5Bin_Transition_multiZ_Opacity",
                                      "lambda(m),logU(1),logR2(1),logR3(1),logR4(1),logR5(1),Z(1),n_H(1/m3)",
                                      "kappa(1/m)", true);
     }
@@ -177,12 +200,14 @@ void DiffuseIonizedGasMix::setupSelfBefore()
     // delta_id indices in _dNAxisDeltaIds), and similarly for dC.
     if (enableTemperatureStab() || enableOpacityStab())
     {
-        _deltaNMapTable.open(this, deltaMapTableName(), "delta_id(1)", "delta_N(1)", true);
-        _deltaCMapTable.open(this, deltaMapTableName(), "delta_id(1)", "delta_C(1)", true);
+        _deltaNMapTable.open(this, std::string("DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap"), "delta_id(1)",
+                             "delta_N(1)", true);
+        _deltaCMapTable.open(this, std::string("DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap"), "delta_id(1)",
+                             "delta_C(1)", true);
 
         const size_t nDelta = _deltaNMapTable.axisSize<0>();
         if (nDelta == 0 || _deltaCMapTable.axisSize<0>() != nDelta)
-            throw FATALERROR("DeltaMap table '" + deltaMapTableName()
+            throw FATALERROR("DeltaMap table '" + std::string("DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap")
                              + "' is empty or has mismatched delta_N/delta_C lengths");
 
         // Treat anything within eps of zero as "exactly on the centre axis". DELTA_SAMPLES
@@ -201,11 +226,14 @@ void DiffuseIonizedGasMix::setupSelfBefore()
         }
 
         if (_deltaIdCentre < 0)
-            throw FATALERROR("DeltaMap table '" + deltaMapTableName() + "': no centre entry (dN=0, dC=0) found");
+            throw FATALERROR("DeltaMap table '" + std::string("DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap")
+                             + "': no centre entry (dN=0, dC=0) found");
         if (dNcandidates.size() < 2)
-            throw FATALERROR("DeltaMap table '" + deltaMapTableName() + "': dN axis has fewer than 2 grid points");
+            throw FATALERROR("DeltaMap table '" + std::string("DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap")
+                             + "': dN axis has fewer than 2 grid points");
         if (dCcandidates.size() < 2)
-            throw FATALERROR("DeltaMap table '" + deltaMapTableName() + "': dC axis has fewer than 2 grid points");
+            throw FATALERROR("DeltaMap table '" + std::string("DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap")
+                             + "': dC axis has fewer than 2 grid points");
 
         std::sort(dNcandidates.begin(), dNcandidates.end());
         std::sort(dCcandidates.begin(), dCcandidates.end());

@@ -549,8 +549,6 @@ double PhotoIonizationSolver::interpolateMetalCooling(int ionFracsIdx, double T,
 double PhotoIonizationSolver::computeCoolingRate(double T, const double ionFracs[], double nH, double yHe,
                                                  const double metalAbundances[8], double ne, const int effNS[]) const
 {
-    using namespace PhotoIonizationRates;
-
     double cooling = 0.;
 
     // ion number densities
@@ -570,7 +568,7 @@ double PhotoIonizationSolver::computeCoolingRate(double T, const double ionFracs
     }
 
     // Collisional ionization cooling: beta * IP * ne * nHI
-    cooling += betaHI(T) * VernerCrossSections::HI_eV * eV_erg * ne * nHI;
+    cooling += PhotoIonizationRates::betaHI(T) * VernerCrossSections::HI_eV * eV_erg * ne * nHI;
 
     // HI collisional excitation cooling (Lyman series: Ly-alpha through Ly-delta, N=2-5)
     // Maxwellian-averaged effective collision strengths (Anderson et al. 2000, 2002)
@@ -614,10 +612,10 @@ double PhotoIonizationSolver::computeCoolingRate(double T, const double ionFracs
     // -- Helium cooling --
 
     // HeII recombination cooling
-    cooling += alphaBHeII(T) * kB_cgs * T * ne * nHeII;
+    cooling += PhotoIonizationRates::alphaBHeII(T) * kB_cgs * T * ne * nHeII;
 
     // HeII dielectronic recombination cooling (0.75 * alpha_DR * T_HeI * kB)
-    cooling += 0.75 * alphaDRHeII(T) * 631515. * kB_cgs * ne * nHeII;
+    cooling += 0.75 * PhotoIonizationRates::alphaDRHeII(T) * 631515. * kB_cgs * ne * nHeII;
 
     // HeIII recombination cooling: Hui & Gnedin (1997) fitted form (Z^2=4 scaling)
     {
@@ -626,10 +624,10 @@ double PhotoIonizationSolver::computeCoolingRate(double T, const double ionFracs
     }
 
     // HeI collisional ionization cooling
-    cooling += betaHeI(T) * VernerCrossSections::HeI_eV * eV_erg * ne * nHeI;
+    cooling += PhotoIonizationRates::betaHeI(T) * VernerCrossSections::HeI_eV * eV_erg * ne * nHeI;
 
     // HeII collisional ionization cooling
-    cooling += betaHeII(T) * VernerCrossSections::HeII_eV * eV_erg * ne * nHeII;
+    cooling += PhotoIonizationRates::betaHeII(T) * VernerCrossSections::HeII_eV * eV_erg * ne * nHeII;
 
     // HeI collisional excitation cooling (He 2^3S, 19.8 eV)
     cooling += 9.1e-27 * pow(T, -0.1687) * exp(-213751. / T) / (1. + sqrt(T * 1e-5)) * ne * nHeI;
@@ -739,9 +737,6 @@ double PhotoIonizationSolver::solveIonizationBalance(double T, double ne, const 
                                                      const double metalAbundances[8], double ionFracs[],
                                                      const int effNS[]) const
 {
-    using namespace PhotoIonizationRates;
-    using namespace VernerCrossSections;
-
     // iterate until electron density converges; start fully ionized (xe=1)
     double xe = 1.;
     ne = nH;
@@ -750,8 +745,8 @@ double PhotoIonizationSolver::solveIonizationBalance(double T, double ne, const 
     for (int iter = 0; iter < maxNeIterations; iter++)
     {
         // -- Hydrogen --
-        double aHII = alphaBHII(T);
-        double bHI = betaHI(T);
+        double aHII = PhotoIonizationRates::alphaBHII(T);
+        double bHI = PhotoIonizationRates::betaHI(T);
         double gHI = gamma[0];
         double cHI = (bHI + gHI / ne) / aHII;
         double xHI = 1. / (1. + cHI);
@@ -763,14 +758,14 @@ double PhotoIonizationSolver::solveIonizationBalance(double T, double ne, const 
         double HIIe = xHII / xe;  // n_HII / n_e (per H density)
 
         // -- Helium --
-        double aHeII = alphaBHeII(T) + alphaDRHeII(T);
-        double bHeI = betaHeI(T);
+        double aHeII = PhotoIonizationRates::alphaBHeII(T) + PhotoIonizationRates::alphaDRHeII(T);
+        double bHeI = PhotoIonizationRates::betaHeI(T);
         double gHeI = gamma[1];
-        double eHeII = xiHIHeII(T);
-        double aHeIII = alphaBHeIII(T);
-        double bHeII = betaHeII(T);
+        double eHeII = PhotoIonizationRates::xiHIHeII(T);
+        double aHeIII = PhotoIonizationRates::alphaBHeIII(T);
+        double bHeII = PhotoIonizationRates::betaHeII(T);
         double gHeII = gamma[2];
-        double eHeIII = xiHIHeIII(T);
+        double eHeIII = PhotoIonizationRates::xiHIHeIII(T);
 
         double cHeI = safediv(bHeI + gHeI / ne, aHeII + eHeII * HIe);
         double cHeII = safediv(bHeII + gHeII / ne, aHeIII + eHeIII * HIe);

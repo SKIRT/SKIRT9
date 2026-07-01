@@ -16,8 +16,29 @@
 
 #include "NebularContinuumEmission.hpp"
 
-namespace NebularContinuumEmission
+namespace
 {
+
+    // ===== Physical constants (CGS) =====
+    constexpr double h_cgs = 6.62607015e-27;                      // Planck constant [erg s]
+    constexpr double c_cgs = 2.99792458e10;                       // Speed of light [cm/s]
+    constexpr double kB_cgs = 1.380649e-16;                       // Boltzmann constant [erg/K]
+    constexpr double eV_cgs = 1.602176634e-12;                    // eV in erg
+    constexpr double Ryd_cgs = 13.605693122994 * eV_cgs;          // Rydberg energy [erg]
+    constexpr double Ryd_K = Ryd_cgs / kB_cgs;                    // Rydberg energy in Kelvin
+    constexpr double angstrom = 1e-8;                             // Angstrom in cm
+    constexpr double E_w = h_cgs * c_cgs / (angstrom * Ryd_cgs);  // hc/(A Ry) [A Ry / Ry = dimensionless]
+    constexpr double mHCgs = 1.6735575e-24;                       // Hydrogen mass [g]
+    constexpr double mHe_cgs = 6.6464764e-24;                     // Helium-4 mass [g]
+    constexpr double meCgs = 9.1093837e-28;                       // Electron mass [g]
+    constexpr double ee_cgs = 4.8032047e-10;                      // Elementary charge [esu]
+
+    // Two-photon transition frequencies and rates
+    constexpr double nu_12_HI = c_cgs * 82258.9544;                // HI 2s->1s 2p transition frequency [Hz]
+    constexpr double nu_12_HeII = c_cgs * 329179.7623;             // HeII 2s->1s 2p frequency [Hz]
+    constexpr double Z6_HeII = 64.0 * 1.097373156e5 / 1.096788e5;  // Z^6 (R_Z/R_H) for HeII
+    constexpr double A_2q_HI = 8.2249;                             // HI 2s->1s two-photon rate [s^-1]
+    constexpr double A_2q_HeII = A_2q_HI * Z6_HeII;                // HeII 2s->1s two-photon rate [s^-1]
 
     // ========== HI free-bound (Ercolano & Storey 2006) ==========
 
@@ -4265,37 +4286,36 @@ namespace NebularContinuumEmission
         return (A_nu > 0.0) ? h_cgs * x * A_nu / A_2q_HeII : 0.0;
     }
 
-    // ===== Full continuum luminosity =====
+}
 
-    double continuumLuminosity(double lambda_m, double T, double ne, double nHII, double nHeII, double nHeIII,
-                               double V_cm3)
-    {
-        if (T <= 0.0 || ne <= 0.0) return 0.0;
+// ===== Full continuum luminosity: public class entry point =====
 
-        // Convert wavelength: m -> Angstrom
-        const double w = lambda_m * 1e10;
+double NebularContinuumEmission::continuumLuminosity(double lambda_m, double T, double ne, double nHII, double nHeII,
+                                                     double nHeIII, double V_cm3)
+{
+    if (T <= 0.0 || ne <= 0.0) return 0.0;
 
-        // Free-free emissivity: already per Angstrom [erg s^-1 A^-1 cm^3] per (ne * nion)
-        double j_ff_A = (freeFree(T, w, 1) * (nHII + nHeII) + freeFree(T, w, 2) * nHeIII) * ne;
+    // Convert wavelength: m -> Angstrom
+    const double w = lambda_m * 1e10;
 
-        // Free-bound emissivity: per Hz [erg s^-1 Hz^-1 cm^3] per (ne * nion)
-        // Convert to per Angstrom: multiply by c / (w_cm)^2 = c / (w * angstrom)^2
-        double j_fb_nu = (HI_fb(T, w) * nHII + HeI_fb(T, w) * nHeII + HeII_fb(T, w) * nHeIII) * ne;
-        double dnudw = c_cgs / (angstrom * w * w);  // dnu/dlambda [Hz/A]
-        double j_fb_A = j_fb_nu * dnudw;
+    // Free-free emissivity: already per Angstrom [erg s^-1 A^-1 cm^3] per (ne * nion)
+    double j_ff_A = (freeFree(T, w, 1) * (nHII + nHeII) + freeFree(T, w, 2) * nHeIII) * ne;
 
-        // Two-photon emissivity: g_nu has units [erg] (per Hz), rate is [cm^3 s^-1]
-        // product = rate * g_nu * nion * ne -> [erg s^-1 Hz^-1 cm^-3]
-        double j_2p_nu =
-            (HI_2p_rate(T, ne, nHII) * HI_2p_gnu(w) * nHII + HeII_2p_rate(T, ne, nHeIII) * HeII_2p_gnu(w) * nHeIII)
-            * ne;
-        double j_2p_A = j_2p_nu * dnudw;
+    // Free-bound emissivity: per Hz [erg s^-1 Hz^-1 cm^3] per (ne * nion)
+    // Convert to per Angstrom: multiply by c / (w_cm)^2 = c / (w * angstrom)^2
+    double j_fb_nu = (HI_fb(T, w) * nHII + HeI_fb(T, w) * nHeII + HeII_fb(T, w) * nHeIII) * ne;
+    double dnudw = c_cgs / (angstrom * w * w);  // dnu/dlambda [Hz/A]
+    double j_fb_A = j_fb_nu * dnudw;
 
-        // Total emissivity per Angstrom [erg s^-1 A^-1 cm^-3]
-        double j_A = j_ff_A + j_fb_A + j_2p_A;
+    // Two-photon emissivity: g_nu has units [erg] (per Hz), rate is [cm^3 s^-1]
+    // product = rate * g_nu * nion * ne -> [erg s^-1 Hz^-1 cm^-3]
+    double j_2p_nu =
+        (HI_2p_rate(T, ne, nHII) * HI_2p_gnu(w) * nHII + HeII_2p_rate(T, ne, nHeIII) * HeII_2p_gnu(w) * nHeIII) * ne;
+    double j_2p_A = j_2p_nu * dnudw;
 
-        // Convert to W/m: multiply by V [cm^3], 1e-7 [erg->W], 1e10 [A/m -> per m]
-        return j_A * V_cm3 * 1e-7 * 1e10;  // [W/m]
-    }
+    // Total emissivity per Angstrom [erg s^-1 A^-1 cm^-3]
+    double j_A = j_ff_A + j_fb_A + j_2p_A;
 
-}  // namespace NebularContinuumEmission
+    // Convert to W/m: multiply by V [cm^3], 1e-7 [erg->W], 1e10 [A/m -> per m]
+    return j_A * V_cm3 * 1e-7 * 1e10;  // [W/m]
+}

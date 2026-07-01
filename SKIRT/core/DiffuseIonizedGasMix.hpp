@@ -243,41 +243,11 @@ class DiffuseIonizedGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(reemissionFraction, "1.0")
         ATTRIBUTE_DISPLAYED_IF(reemissionFraction, "Level3")
 
-        // reemission spectra STAB table
-        PROPERTY_STRING(reemissionSpectraTableName, "name of the temperature-dependent reemission spectra STAB table")
-        ATTRIBUTE_DEFAULT_VALUE(reemissionSpectraTableName, "DiffuseIonizedGasReemissionSpectra")
-        ATTRIBUTE_RELEVANT_IF(reemissionSpectraTableName, "reemissionFraction")
-
         PROPERTY_DOUBLE(transitionBlendWidth, "blending width in logU between the standard and transition tables")
         ATTRIBUTE_MIN_VALUE(transitionBlendWidth, "[0")
         ATTRIBUTE_MAX_VALUE(transitionBlendWidth, "1.5]")
         ATTRIBUTE_DEFAULT_VALUE(transitionBlendWidth, "0.3")
         ATTRIBUTE_DISPLAYED_IF(transitionBlendWidth, "Level2")
-
-        PROPERTY_STRING(standardTemperatureTableName, "name of the standard temperature STAB table resource")
-        ATTRIBUTE_DEFAULT_VALUE(standardTemperatureTableName, "DiffuseIonizedGas5Bin_Standard_multiZ_Temperature")
-        ATTRIBUTE_RELEVANT_IF(standardTemperatureTableName, "enableTemperatureStab")
-        ATTRIBUTE_DISPLAYED_IF(standardTemperatureTableName, "Level3")
-
-        PROPERTY_STRING(transitionTemperatureTableName, "name of the transition temperature STAB table resource")
-        ATTRIBUTE_DEFAULT_VALUE(transitionTemperatureTableName, "DiffuseIonizedGas5Bin_Transition_multiZ_Temperature")
-        ATTRIBUTE_RELEVANT_IF(transitionTemperatureTableName, "enableTemperatureStab")
-        ATTRIBUTE_DISPLAYED_IF(transitionTemperatureTableName, "Level3")
-
-        PROPERTY_STRING(standardOpacityTableName, "name of the standard opacity table resource")
-        ATTRIBUTE_DEFAULT_VALUE(standardOpacityTableName, "DiffuseIonizedGas5Bin_Standard_multiZ_Opacity")
-        ATTRIBUTE_RELEVANT_IF(standardOpacityTableName, "enableOpacityStab")
-        ATTRIBUTE_DISPLAYED_IF(standardOpacityTableName, "Level3")
-
-        PROPERTY_STRING(transitionOpacityTableName, "name of the transition opacity table resource")
-        ATTRIBUTE_DEFAULT_VALUE(transitionOpacityTableName, "DiffuseIonizedGas5Bin_Transition_multiZ_Opacity")
-        ATTRIBUTE_RELEVANT_IF(transitionOpacityTableName, "enableOpacityStab")
-        ATTRIBUTE_DISPLAYED_IF(transitionOpacityTableName, "Level3")
-
-        PROPERTY_STRING(deltaMapTableName, "name of the delta-map STAB resource for the multiZ stab")
-        ATTRIBUTE_DEFAULT_VALUE(deltaMapTableName, "DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap")
-        ATTRIBUTE_RELEVANT_IF(deltaMapTableName, "enableTemperatureStab|enableOpacityStab")
-        ATTRIBUTE_DISPLAYED_IF(deltaMapTableName, "Level3")
 
         PROPERTY_DOUBLE(maxHydrogenDensity, "maximum hydrogen number density ceiling in cm^-3 (0 means no ceiling)")
         ATTRIBUTE_MIN_VALUE(maxHydrogenDensity, "[0")
@@ -584,29 +554,6 @@ private:
     int _numLines = 0;
     Array _lineCenters;
     Array _lineMasses;
-
-    // Solar abundances (GASS10) for Z-scaling of metal emission
-    static constexpr double _solarZ = 0.014;
-    static constexpr double _solarAbundances[8] = {2.69e-4, 6.76e-5, 4.90e-4, 8.51e-5,
-                                                   3.98e-5, 3.24e-5, 1.32e-5, 3.16e-5};
-    //                                              C        N        O        Ne       Mg       Si       S        Fe
-
-    // Per-element gas-phase fractions following Gunasekera et al. (2023): the
-    // Jenkins (2009) depletion pattern (Table 4) evaluated at F* = 0.5, with
-    // no depletion applied to sulphur. These multiply the solar abundance
-    // pattern in buildPerCellAbundances so that the analytical ionization and
-    // line-emission step uses the same gas-phase composition that Cloudy used
-    // when the temperature and opacity tables were generated.
-    static constexpr double _gunasekeraDepletion[8] = {
-        0.688023,  // C  : J09 F*=0.5
-        0.778037,  // N  : J09 F*=0.5
-        0.753442,  // O  : J09 F*=0.5
-        1.000000,  // Ne : noble gas, no depletion
-        0.170179,  // Mg : J09 F*=0.5
-        0.161614,  // Si : J09 F*=0.5
-        1.000000,  // S  : Gunasekera (2023) leaves S undepleted
-        0.025471,  // Fe : J09 F*=0.5
-    };
 
     // Convergence stability tracking
     mutable std::vector<double> _convergedFractionHistory;
