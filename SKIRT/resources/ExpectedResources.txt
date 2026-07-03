@@ -7,3 +7,4 @@ TODDLERS_Cloud_SB99_kroupa100 2
 ExtraDust 3
 ExtraBands 1
 AtomsMolecules 7
+DiffuseIonizedGas 1
