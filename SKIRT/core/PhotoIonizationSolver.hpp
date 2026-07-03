@@ -7,9 +7,6 @@
 #define PHOTOIONIZATIONSOLVER_HPP
 
 #include "Array.hpp"
-#include "VernerCrossSections.hpp"
-#include <string>
-#include <vector>
 
 //////////////////////////////////////////////////////////////////////
 
@@ -33,7 +30,7 @@
     photoionisation. The interface accepts a prior state (T_prior, ion fractions) as the
     initial estimate, which accelerates convergence. All internal computations use CGS units
     (cm^-3 for densities, erg/s/cm^3 for rates, eV for energies). */
-class PhotoIonizationSolver
+class PhotoIonizationSolver final
 {
 public:
     //======== Element indexing =======

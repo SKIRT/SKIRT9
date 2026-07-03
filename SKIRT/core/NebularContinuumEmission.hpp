@@ -23,7 +23,7 @@
 
     All internal component functions and coefficient tables are file-local to the
     implementation translation unit; only the full-spectrum entry point is exposed. */
-class NebularContinuumEmission
+class NebularContinuumEmission final
 {
 public:
     /** Compute the full nebular continuum emissivity at wavelength lambda [m] for a cell with:

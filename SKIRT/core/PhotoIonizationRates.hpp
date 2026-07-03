@@ -6,7 +6,7 @@
 #ifndef PHOTOIONIZATIONRATES_HPP
 #define PHOTOIONIZATIONRATES_HPP
 
-#include "VernerCrossSections.hpp"
+#include "Basics.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -20,12 +20,9 @@
     The individual per-ion rate functions and their fitting coefficients are file-local to the
     implementation translation unit; only the dispatch entry points and the small set of
     rates consumed directly by the solver / cooling code are exposed here. */
-class PhotoIonizationRates
+class PhotoIonizationRates final
 {
 public:
-    // conversion factor: eV -> K (IP_eV * eV_to_K = IP in Kelvin)
-    static constexpr double eV_to_K = 11604.52;
-
     // ============================================================
     //  Dispatch functions by linear ion index
     //  (same ordering as VernerCrossSections)

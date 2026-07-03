@@ -19,7 +19,7 @@
     The individual per-ion fitting formulae are file-local to the implementation translation
     unit; only the dispatch entry points, ionization potentials, and index-range constants are
     exposed here. */
-class VernerCrossSections
+class VernerCrossSections final
 {
 public:
     // ---- ionization potentials [eV] ----

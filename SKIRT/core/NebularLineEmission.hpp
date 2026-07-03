@@ -24,7 +24,7 @@
 
     All internal component functions, coefficient tables, and helper constants are file-local to
     the implementation translation unit; only the public entry points are exposed. */
-class NebularLineEmission
+class NebularLineEmission final
 {
 public:
     // ============== Line definitions ==============

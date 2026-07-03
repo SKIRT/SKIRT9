@@ -9,7 +9,6 @@
 #include "EmittingGasMix.hpp"
 #include "PhotoIonizationSolver.hpp"
 #include "StoredTable.hpp"
-#include <vector>
 
 //////////////////////////////////////////////////////////////////////
 
@@ -270,7 +269,7 @@ public:
     /** Returns true, indicating that this material mix has state variables beyond number density */
     bool hasExtraSpecificState() const override;
 
-    /** Returns DynamicStateType::Primary, indicating that this material mix has a dynamic 
+    /** Returns DynamicStateType::Primary, indicating that this material mix has a dynamic
         medium state with updates that are considered to affect primary emission. */
     DynamicStateType hasDynamicMediumState() const override;
 
@@ -559,5 +558,7 @@ private:
     mutable std::vector<double> _convergedFractionHistory;
     mutable size_t _convergenceHistorySize = 3;
 };
+
+//////////////////////////////////////////////////////////////////////
 
 #endif  // DIFFUSEIONIZEDGASMIX_HPP

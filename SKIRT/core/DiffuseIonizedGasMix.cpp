@@ -5,7 +5,6 @@
 
 #include "DiffuseIonizedGasMix.hpp"
 #include "Configuration.hpp"
-#include "ConsoleLog.hpp"
 #include "Constants.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
@@ -1323,7 +1322,7 @@ double DiffuseIonizedGasMix::calculateIonizationParameter(const Array& Jv, doubl
     /**
      * Calculate ionization parameter directly from radiation field:
      * U = (ionizing photon flux) / (n_H * c)
-     * 
+     *
      * Since we use step functions with energy conservation by construction,
      * we can calculate U directly without Cloudy field reconstruction.
      */
@@ -1818,7 +1817,7 @@ void DiffuseIonizedGasMix::calculateBinAverages(const Array& Jv, double* binAver
     /**
      * Calculate bin averages for the 5-bin method.
      * Bin 1: 1.0 - 1.80 Ryd
-     * Bin 2: 1.8 - 2.58 Ryd  
+     * Bin 2: 1.8 - 2.58 Ryd
      * Bin 3: 2.58 - 3.52 Ryd
      * Bin 4: 3.52 - 4.00 Ryd
      * Bin 5: 4.00 - 6.00 Ryd

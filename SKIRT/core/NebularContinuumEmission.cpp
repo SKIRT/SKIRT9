@@ -3,21 +3,22 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-/* Static data tables for nebular continuum emission (free-bound, two-photon, free-free).
- * Tabulation follows McClymont, Smith & Tacchella (2025).
- *
- * Free-bound: Ercolano & Storey (2006), via NEBULAR (Schirmer 2016).
- * Two-photon: Hummer & Storey (1987).
- * Free-free Gaunt factors: van Hoof et al. (2014), MNRAS, 444, 420.
- *
- * Units: CGS. Energies in Rydbergs, temperatures in K (log10),
- * electron densities in cm^-3 (log10).
- */
-
 #include "NebularContinuumEmission.hpp"
+
+////////////////////////////////////////////////////////////////////
 
 namespace
 {
+    /* Static data tables for nebular continuum emission (free-bound, two-photon, free-free).
+     * Tabulation follows McClymont, Smith & Tacchella (2025).
+     *
+     * Free-bound: Ercolano & Storey (2006), via NEBULAR (Schirmer 2016).
+     * Two-photon: Hummer & Storey (1987).
+     * Free-free Gaunt factors: van Hoof et al. (2014), MNRAS, 444, 420.
+     *
+     * Units: CGS. Energies in Rydbergs, temperatures in K (log10),
+     * electron densities in cm^-3 (log10).
+     */
 
     // ===== Physical constants (CGS) =====
     constexpr double h_cgs = 6.62607015e-27;                      // Planck constant [erg s]
@@ -4287,6 +4288,8 @@ namespace
     }
 
 }
+
+////////////////////////////////////////////////////////////////////
 
 // ===== Full continuum luminosity: public class entry point =====
 

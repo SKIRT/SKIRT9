@@ -6,12 +6,11 @@
 #include "PhotoIonizationSolver.hpp"
 #include "Constants.hpp"
 #include "PhotoIonizationRates.hpp"
-#include <algorithm>
-#include <cmath>
-#include <cstdint>
-#include <cstring>
+#include "VernerCrossSections.hpp"
 #include <fstream>
 #include <stdexcept>
+
+//////////////////////////////////////////////////////////////////////
 
 // Out-of-line definitions for static constexpr members (required for ODR-use on GCC/Linux)
 constexpr int PhotoIonizationSolver::numStages[];
@@ -345,6 +344,8 @@ namespace
         return -1;
     }
 }
+
+//////////////////////////////////////////////////////////////////////
 
 void PhotoIonizationSolver::loadCoolingTable(const std::string& path)
 {
