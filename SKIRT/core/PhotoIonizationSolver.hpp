@@ -68,8 +68,8 @@ public:
     /** Initializes the solver for a given radiation field wavelength grid.
         \param lambdav wavelength grid bin centers [m], must be sorted ascending
         \param dlambdav wavelength grid bin widths [m]
-        \param coolingTablePath path to ChiantiMetalCooling.stab file (empty to skip) */
-    void initialize(const Array& lambdav, const Array& dlambdav, const std::string& coolingTablePath = "");
+        \param coolingTable true to load cooling table, false to skip */
+    void initialize(const Array& lambdav, const Array& dlambdav, bool coolingTable = false);
 
     //======== Main solve interface =======
 
@@ -157,9 +157,9 @@ private:
     double solveIonizationBalance(double T, double ne, const double gamma[], double nH, double yHe,
                                   const double metalAbundances[8], double ionFracs[], const int effNS[]) const;
 
-    /** Loads the CHIANTI metal line cooling table from a .stab file.
+    /** Loads the CHIANTI metal line cooling table from file.
         Parses ion names to build the mapping from ionFracs index to table quantity index. */
-    void loadCoolingTable(const std::string& path);
+    void loadCoolingTable();
 
     /** Returns the metal line cooling rate [erg/s per ion] for the given ionFracs index
         by bilinear interpolation in log T and log ne from the pre-loaded table.

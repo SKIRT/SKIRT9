@@ -5,10 +5,9 @@
 
 #include "PhotoIonizationSolver.hpp"
 #include "Constants.hpp"
+#include "FatalError.hpp"
 #include "PhotoIonizationRates.hpp"
 #include "VernerCrossSections.hpp"
-#include <fstream>
-#include <stdexcept>
 
 //////////////////////////////////////////////////////////////////////
 
@@ -103,7 +102,7 @@ namespace
 
 //////////////////////////////////////////////////////////////////////
 
-void PhotoIonizationSolver::initialize(const Array& lambdav, const Array& dlambdav, const std::string& coolingTablePath)
+void PhotoIonizationSolver::initialize(const Array& lambdav, const Array& dlambdav, bool coolingTable)
 {
     _numBins = lambdav.size();
     _lambda.resize(_numBins);
@@ -122,7 +121,7 @@ void PhotoIonizationSolver::initialize(const Array& lambdav, const Array& dlambd
     }
 
     // load metal cooling table if path provided
-    if (!coolingTablePath.empty()) loadCoolingTable(coolingTablePath);
+    if (coolingTable) loadCoolingTable();
 
     // default: effective stages = full stages
     for (int e = 0; e < nElements; e++) _nStagesEff[e] = nStages[e];
@@ -347,113 +346,11 @@ namespace
 
 //////////////////////////////////////////////////////////////////////
 
-void PhotoIonizationSolver::loadCoolingTable(const std::string& path)
+void PhotoIonizationSolver::loadCoolingTable()
 {
-    std::ifstream file(path, std::ios::binary);
-    if (!file.is_open()) throw std::runtime_error("Cannot open cooling table: " + path);
+    throw FATALERROR("Loading the cooling table is not yet implemented");
 
-    auto readString8 = [&]() -> std::string {
-        char buf[8];
-        file.read(buf, 8);
-        return std::string(buf, 8);
-    };
-    auto readUint64 = [&]() -> uint64_t {
-        uint64_t v;
-        file.read(reinterpret_cast<char*>(&v), 8);
-        return v;
-    };
-    auto readDouble = [&]() -> double {
-        double v;
-        file.read(reinterpret_cast<char*>(&v), 8);
-        return v;
-    };
-
-    // Header
-    std::string header = readString8();
-    if (header != "SKIRT X\n") throw std::runtime_error("Bad .stab header");
-    readUint64();  // endianness check
-
-    // Axes
-    int numAxes = static_cast<int>(readUint64());
-    if (numAxes != 2) throw std::runtime_error("Expected 2 axes in cooling .stab");
-
-    // Skip axis names, units, scales (3 strings per axis)
-    for (int i = 0; i < 3 * numAxes; i++) readString8();
-
-    // Read axis grids
-    // Axis 0: T [K], Axis 1: ne [1/m^3]
-    int nT = static_cast<int>(readUint64());
-    std::vector<double> T_grid(nT);
-    for (int i = 0; i < nT; i++) T_grid[i] = readDouble();
-
-    int nNe = static_cast<int>(readUint64());
-    std::vector<double> ne_grid(nNe);
-    for (int i = 0; i < nNe; i++) ne_grid[i] = readDouble();
-
-    // Convert to log10 and to CGS for ne
-    _coolNT = nT;
-    _coolNNe = nNe;
-    _coolLogT.resize(nT);
-    _coolLogNe.resize(nNe);
-    for (int i = 0; i < nT; i++) _coolLogT[i] = std::log10(T_grid[i]);
-    for (int i = 0; i < nNe; i++) _coolLogNe[i] = std::log10(ne_grid[i] * 1e-6);  // m^-3 -> cm^-3
-
-    // Quantities
-    int numQty = static_cast<int>(readUint64());
-    std::vector<std::string> qtyNames(numQty);
-    for (int i = 0; i < numQty; i++)
-    {
-        std::string s = readString8();
-        // trim trailing spaces
-        while (!s.empty() && s.back() == ' ') s.pop_back();
-        qtyNames[i] = s;
-    }
-    // Skip units and scales
-    for (int i = 0; i < 2 * numQty; i++) readString8();
-
-    // Build mapping: ionFracs index -> .stab quantity index
-    _stabIdxForIon.assign(totalStages, -1);
-    for (int q = 0; q < numQty; q++)
-    {
-        int ifrac = parseIonName(qtyNames[q]);
-        if (ifrac >= 0 && ifrac < totalStages) _stabIdxForIon[ifrac] = q;
-    }
-
-    // Read all quantity values
-    // .stab layout: values ordered so that quantity index varies fastest,
-    // first axis (T) varies next, last axis (ne) varies slowest.
-    // So on disk: [ne=0, T=0, qty=0], [ne=0, T=0, qty=1], ..., [ne=0, T=1, qty=0], ...
-    int totalValues = numQty * nT * nNe;
-    std::vector<double> raw(totalValues);
-    file.read(reinterpret_cast<char*>(raw.data()), totalValues * 8);
-
-    // Rearrange into _coolData[ion][iT][iNe] for efficient per-ion lookup.
-    // Only store data for ions that map to valid ionFracs indices.
-    // _coolData layout: ion index (0 = ionFracs[5], ..., 54 = ionFracs[59]) * nT * nNe
-    _coolData.assign(_numMetalIons * nT * nNe, 0.);
-
-    for (int ifrac = _metalOffset; ifrac < totalStages; ifrac++)
-    {
-        int qIdx = _stabIdxForIon[ifrac];
-        if (qIdx < 0) continue;
-
-        int ionSlot = ifrac - _metalOffset;
-        for (int iNe = 0; iNe < nNe; iNe++)
-        {
-            for (int iT = 0; iT < nT; iT++)
-            {
-                // Raw index: ne slowest, T middle, qty fastest
-                double valSI = raw[iNe * (nT * numQty) + iT * numQty + qIdx];  // [W per ion]
-                double valCGS = valSI * 1e7;                                   // W -> erg/s
-                _coolData[ionSlot * (nT * nNe) + iT * nNe + iNe] = valCGS;
-            }
-        }
-    }
-
-    // Check footer
-    std::string footer = readString8();
-    if (footer != "STABEND\n") throw std::runtime_error("Bad .stab footer");
-
+    (void)parseIonName;
     _hasCoolingTable = true;
 }
 
