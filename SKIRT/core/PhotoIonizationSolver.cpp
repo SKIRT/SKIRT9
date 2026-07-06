@@ -351,7 +351,7 @@ void PhotoIonizationSolver::loadCoolingTable()
 {
     throw FATALERROR("Loading the cooling table is not yet implemented");
 
-    (void)parseIonName;
+    parseIonName("");
     _hasCoolingTable = true;
 }
 
