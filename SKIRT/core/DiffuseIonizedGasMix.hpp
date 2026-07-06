@@ -176,17 +176,15 @@ class DiffuseIonizedGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(defaultTemperature, "10000")
         ATTRIBUTE_DISPLAYED_IF(defaultTemperature, "Level2")
 
-        PROPERTY_BOOL(
-            enableTemperatureStab,
-            "use the STAB temperature lookup (developer toggle; disabling keeps T fixed at defaultTemperature)")
-        ATTRIBUTE_DEFAULT_VALUE(enableTemperatureStab, "true")
-        ATTRIBUTE_DISPLAYED_IF(enableTemperatureStab, "Level3")
+        PROPERTY_BOOL(useCloudyTemperature,
+                      "use the Cloudy-tabulated temperature (disabling keeps T fixed at defaultTemperature)")
+        ATTRIBUTE_DEFAULT_VALUE(useCloudyTemperature, "true")
+        ATTRIBUTE_DISPLAYED_IF(useCloudyTemperature, "Level3")
 
-        PROPERTY_BOOL(
-            enableOpacityStab,
-            "use the STAB opacity lookup (developer toggle; disabling falls back to Verner bound-free opacity)")
-        ATTRIBUTE_DEFAULT_VALUE(enableOpacityStab, "true")
-        ATTRIBUTE_DISPLAYED_IF(enableOpacityStab, "Level3")
+        PROPERTY_BOOL(useCloudyOpacity,
+                      "use the Cloudy-tabulated opacity (disabling falls back to Verner bound-free opacity)")
+        ATTRIBUTE_DEFAULT_VALUE(useCloudyOpacity, "true")
+        ATTRIBUTE_DISPLAYED_IF(useCloudyOpacity, "Level3")
 
         // ===== Abundance specification (metals + helium, for analytical emission solver) =====
         // T/kappa stabs always use the Gutkin baseline regardless of this setting.

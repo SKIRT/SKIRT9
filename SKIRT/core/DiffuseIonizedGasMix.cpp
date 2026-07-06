@@ -159,7 +159,7 @@ void DiffuseIonizedGasMix::setupSelfBefore()
 
     // Load temperature STAB tables if enabled (multiZ: Standard gains a delta_id axis,
     // Transition stays on the centre slice).
-    if (enableTemperatureStab())
+    if (useCloudyTemperature())
     {
         _standardTemperatureTable.open(this, "DiffuseIonizedGas5Bin_Standard_multiZ_Temperature",
                                        "Z(1),n_H(1/m3),logU(1),logR2(1),logR3(1),logR4(1),logR5(1),delta_id(1)",
@@ -183,7 +183,7 @@ void DiffuseIonizedGasMix::setupSelfBefore()
 
     // Load opacity STAB tables if enabled (tag-subsampled, K tags in lambda axis;
     // multiZ: Standard carries a delta_id axis, Transition uses only the centre slice).
-    if (enableOpacityStab())
+    if (useCloudyOpacity())
     {
         _standardOpacityTable.open(this, "DiffuseIonizedGas5Bin_Standard_multiZ_Opacity",
                                    "lambda(m),logU(1),logR2(1),logR3(1),logR4(1),logR5(1),Z(1),n_H(1/m3),delta_id(1)",
@@ -197,7 +197,7 @@ void DiffuseIonizedGasMix::setupSelfBefore()
     // axes for separable bracket+linterp reconstruction. _deltaIdCentre is the delta_id of the
     // (dN=0, dC=0) slice; _dNAxisValues holds the sorted dN grid (with corresponding
     // delta_id indices in _dNAxisDeltaIds), and similarly for dC.
-    if (enableTemperatureStab() || enableOpacityStab())
+    if (useCloudyTemperature() || useCloudyOpacity())
     {
         _deltaNMapTable.open(this, std::string("DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap"), "delta_id(1)",
                              "delta_N(1)", true);
@@ -315,7 +315,7 @@ void DiffuseIonizedGasMix::setupSelfBefore()
     // Initialize opacity wavelength grid
     initializeOpacityWavelengthGrid();
 
-    if (enableOpacityStab())
+    if (useCloudyOpacity())
     {
         Array nHRange_opacity;
         _standardOpacityTable.axisArray<7>(nHRange_opacity);
@@ -671,7 +671,7 @@ UpdateStatus DiffuseIonizedGasMix::updateSpecificState(MaterialState* state, con
         state->setLogR5(logR5_val);
 
         // Update temperature from STAB before ionization balance (PIO solver needs T)
-        if (enableTemperatureStab())
+        if (useCloudyTemperature())
         {
             updateTemperatureFromStab(state);
         }
@@ -2263,7 +2263,7 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
     // to avoid an over-opaque medium at low densities (StoredTable clamps to boundary)
     // At higher densities, the opacity table is held flat for consistency with the emission tables (see the class docstring).
     double densityScalingFactor = 1.0;
-    if (enableOpacityStab() && n_H < _nHMinOpacity)
+    if (useCloudyOpacity() && n_H < _nHMinOpacity)
     {
         densityScalingFactor = n_H / _nHMinOpacity;
     }
@@ -2273,7 +2273,7 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
     double analyticalAbundances[8] = {};
     double nH_cgs_opacity = 0.;
     bool analyticalOpacityReady = false;
-    if (!enableOpacityStab())
+    if (!useCloudyOpacity())
     {
         double T = state->temperature();
         double yHe = state->heliumAbundance();
@@ -2297,7 +2297,7 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
     int dNlo = _deltaIdCentre, dNhi = _deltaIdCentre;
     int dClo = _deltaIdCentre, dChi = _deltaIdCentre;
     double wN = 0., wC = 0.;
-    if (enableOpacityStab())
+    if (useCloudyOpacity())
     {
         double dN, dC;
         computeCellDeltas(state, dN, dC);
@@ -2347,7 +2347,7 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
             probReemission = data.pHabs * hydrogenScatProb + (1.0 - data.pHabs) * heliumScatProb;
         }
 
-        if (enableOpacityStab())
+        if (useCloudyOpacity())
         {
             if (lambda <= _lambdaLow)
             {
@@ -2429,7 +2429,7 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
                 scatteringOpacity = 0.0;
             }
         }
-        else if (!enableOpacityStab())  // analytical opacity from ion-balance solver
+        else if (!useCloudyOpacity())  // analytical opacity from ion-balance solver
         {
             if (lambda <= _lambdaLow && analyticalOpacityReady)
             {
