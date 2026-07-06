@@ -8,6 +8,7 @@
 #include "FatalError.hpp"
 #include "PhotoIonizationRates.hpp"
 #include "VernerCrossSections.hpp"
+#include <cstring>
 
 //////////////////////////////////////////////////////////////////////
 
