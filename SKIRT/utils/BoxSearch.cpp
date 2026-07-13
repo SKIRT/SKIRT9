@@ -130,7 +130,7 @@ void BoxSearch::loadEntities(int numEntities, std::function<Box(int)> bounds,
     // calculate statistics
     _minEntitiesPerBlock = numEntities;
     _maxEntitiesPerBlock = 0;
-    int totalEntityReferences = 0;
+    size_t totalEntityReferences = 0;
     for (const auto& list : _listv)
     {
         int size = list.size();
