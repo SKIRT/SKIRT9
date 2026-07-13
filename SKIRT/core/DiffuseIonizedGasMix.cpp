@@ -22,6 +22,17 @@
 
 namespace
 {
+    // Minimum ionization parameter for emission: cells with logU <= this get T = _minTEmit
+    // in updateTemperatureFromStab() and are also directly gated in emissionSpectrum().
+    static constexpr double _minLogUEmit = -6.50;
+
+    // Temperature floor [K] applied to cells below the logU emission gate
+    static constexpr double _minTEmit = 300.0;
+
+    // Log-space floor for logU and logR2..logR5: uninitialised cells sit here, and computed
+    // values are clamped here. "At the floor" is detected with `value <= _logFloor`.
+    static constexpr double _logFloor = -99.0;
+
     // Solar reference metallicity (GASS10).
     static constexpr double _solarZ = 0.014;
 
