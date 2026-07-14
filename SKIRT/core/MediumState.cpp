@@ -161,7 +161,7 @@ void MediumState::calculateAggregate()
     if (_numAggregateCells)
     {
         // clear the variables in the current aggregate state
-        for (int i = 0; i != _numVars; ++i) _data[_numVars * _numCells + i] = 0.;
+        for (size_t i = 0; i != _numVars; ++i) _data[_numVars * _numCells + i] = 0.;
 
         // calculate the current aggregate state
         for (int m = 0; m != _numCells; ++m)
@@ -186,7 +186,7 @@ void MediumState::pushAggregate()
         // shift the previous aggregate states to make room
         for (int m = _numCells + _numAggregateCells - 1; m != _numCells; --m)
         {
-            for (int i = 0; i != _numVars; ++i) _data[_numVars * m + i] = _data[_numVars * (m - 1) + i];
+            for (size_t i = 0; i != _numVars; ++i) _data[_numVars * m + i] = _data[_numVars * (m - 1) + i];
         }
     }
 }
@@ -202,7 +202,7 @@ void MediumState::setVolume(int m, double value)
 
 void MediumState::setBulkVelocity(int m, Vec value)
 {
-    int i = _numVars * m + _off_velo;
+    size_t i = _numVars * m + _off_velo;
     _data[i] = value.x();
     _data[i + 1] = value.y();
     _data[i + 2] = value.z();
@@ -212,7 +212,7 @@ void MediumState::setBulkVelocity(int m, Vec value)
 
 void MediumState::setMagneticField(int m, Vec value)
 {
-    int i = _numVars * m + _off_mfld;
+    size_t i = _numVars * m + _off_mfld;
     _data[i] = value.x();
     _data[i + 1] = value.y();
     _data[i + 2] = value.z();
