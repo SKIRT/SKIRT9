@@ -19,6 +19,8 @@ public:
     /** This function returns the mass of the specified atomic number in SI units. */
     static double mass(short Z);
 
+    static int ionIndex(int Z, int N);
+
     /** This function returns a pair of the atomic number and number of electrons (Z,N) of the
         specified ion string. The ion string can have the following formats, as listed in the table
         below. Any other format will throw an error. <TABLE>

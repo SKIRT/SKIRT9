@@ -15,9 +15,10 @@
 
 /** The XRayIonicGasMix class describes the material properties of a partially ionised gas in the
     X-ray wavelength range, taking into account the effects of photo-absorption, fluorescence,
-    Lyman recombination, electron scattering, and optionally resonant Lyman resonant scattering. It
-    is largely an extension of the XRayAtomicGasMix class, supporting all ions instead of just the
-    neutral atoms. To avoid the use of this material mix outside of the regime for which it has
+    recombination, electron scattering, and optionally　resonant scattering. It supports the line 
+    production and transfer for the Lyman-series of hydrogen-like ions and the K-series of helium-like 
+    ions.　It is largely an extension of the XRayAtomicGasMix class, supporting all ions instead of 
+    just the neutral atoms. To avoid the use of this material mix outside of the regime for which it has
     been designed, all cross sections are forced to zero below 4.3 eV and above 500 keV
     (corresponding approximately to a wavelength range from 2.5 pm to 290 nm).
 
@@ -57,15 +58,15 @@
     to be treated during primary emission. A possible drawback is that the weaker fluorescence
     lines will be represented by a fairly small number of photon packets.
 
-    <b>Lyman recombination</b>
+    <b>Recombination</b>
 
-    For hydrogen-like ions, photo-absorption cannot be followed by fluorescence since the ion will
-    have no electrons left. Instead it can be followed by a radiative recombination event either to
-    the ground state or to an excited level, which will then cascade down to the ground state. This
-    class assumes instantaneous recombination and only implements the Lyman series photons produced
-    from cascades from the level \f$i\f$ to the ground state. This will thus only result in line
-    emission and no continuum emission. This allows for this process to be modelled the same way as
-    fluorescence.
+    For hydrogen-like ions and helium-like ions, photo-absorption cannot be followed by fluorescence 
+    since the ion will have no excited electrons left. Instead it can be followed by a radiative 
+    recombination event either to the ground state or to an excited level, which will then cascade 
+    down to the ground state. This class assumes instantaneous recombination and only implements 
+    the Lyman-series and He-like K-series photons produced from cascades from the level \f$i\f$ to 
+    the ground state. This will thus only result in line emission and no continuum emission. 
+    This allows for this process to be modelled the same way as fluorescence.
 
     <b>Scattering by bound electrons</b>
 
@@ -85,22 +86,27 @@
     This means that all electrons are treated the same way. A material mix with Fe+0 will thus have
     the same scattering cross section as a material mix with Fe+26.
 
-    <b>Lyman resonant scattering</b>
+    <b>Resonant scattering</b>
 
-    Lyman resonant scattering is the process where a photon is absorbed and re-emitted by a bound
+    Resonant scattering is the process where a photon is absorbed and re-emitted by a bound
     electron in an ion, promoting it from the ground state (\f$n=1\f$) to an excited level (\f$n
     \leq 10\f$) and back again. This class implements these transitions for all hydrogen-like ions
-    up to atomic number 30. There are 9 Lyman-series lines included, each with fine-structure
-    splitting, resulting in a total of 18 transitions to the ground state (e.g., Ly\f${\alpha1}\f$,
-    Ly\f${\alpha2}\f$, Ly\f$_{\beta1}\f$, etc.).
+    and helium-like ions up to atomic number 30. For hydrogen-like ions, the 18 prominent electric-dipole
+    transition lines fine-structure levels are included for each ion (e.g., Ly\f$\alpha_1\f$, 
+    Ly\f$\alpha_2\f$, Ly\f$\beta_1\f$, Ly\f$\beta_2\f$, \f$\ldots\f$, Ly\f$\theta_1\f$, Ly\f$\theta_2\f$, 
+    Ly\f$\iota_1\f$, Ly\f$\iota_2\f$). The magnetic-dipole transition lines between the metastable level 
+    (2s \f$^2S_{1/2}\f$) and the ground level for \f$Z\geq14\f$, where these liens are non-negligible, 
+    are also included. For helium-like ions, the He\f$\alpha\f$ \f$w\f$, \f$x\f$, \f$y\f$ and \f$z\f$ lines
+    and several prominent higher K-series lines (e.g., He\f$\beta\f$, He\f$\gamma\f$, \f$\ldots\f$, etc.)
+    are included. 
 
-    Lyman-series transitions may occur either as a direct transition from and to the ground state
+    These transitions may occur either as a direct transition from and to the ground state
     or via a radiative cascade. Direct transitions correspond to coherent scattering events, while
     cascades are incoherent and erase information about the initial photon packet. when a cascade
-    occurs, we ignore all intermediate (non-Lyman) radiative decays, keeping only the final (Lyman)
-    transition to the ground state. This means we can also model the cascade as a single scattering
-    event. The branching data, determining the probability of an (in)coherent transition,
-    was calculated from the SPEX database Kaastra et al. (2024).
+    occurs, we ignore all intermediate photons produced by radiative decays between excited states, 
+    keeping only the final transition to the ground state. This means we can also model the cascade 
+    as a single scattering event. The branching data, determining the probability of an (in)coherent transition,
+    is obtained from the SPEX database Kaastra et al. (2024).
 
     <b>Configuring the simulation</b>
 
@@ -123,7 +129,7 @@
     low-intensity line photon packets are killed before having a chance to register in the
     instruments.
 
-    The input model must define the spatial distribution of the number density. The user can then
+    The input model must define the spatial distribution of the number density. The use can then
     define the abundances of the ions in the gas in this material mix. The spatial density is
     simply the product of the number density and the abundances of the ions in use.
 
@@ -167,9 +173,9 @@
     These yields are obtained from Kaastra & Mewe (1993) for all ions up to Z=30, from neutral down
     to B-like.
 
-    <b>Lyman recombination cross section</b>
+    <b>Recombination cross section</b>
 
-    The total Lyman recombination cross section per hydrogen atom for this material mix is obtained
+    The total recombination cross section per hydrogen-like or helium-like ion for this material mix is obtained
     the exact same was as for fluorescence. The yields are now temperature-dependent however, but
     since the temperature is assumed to be constant this is simply read during the setup. The
     temperature-dependent yields are obtained from Mao & Kaastra (2016).
@@ -191,20 +197,67 @@
     factor \f$C(\theta, E)\f$ defined above. The implementation is delegated to the
     ComptonPhaseFunction class.
 
-    <b>Lyman resonant scattering - cross section and phase function</b>
+    <b>Resonant scattering - cross section and phase function</b>
 
-    The resonant Lyman transitions are broadened both thermally and intrinsically. The resulting
+    The resonant transitions are broadened both thermally and intrinsically. The resulting
     cross section is described by a Voigt profile, the implementation of this is delegated to the
     \em LyUtils and \em VoigtProfile namespaces. The data for the line energies and Einstein A
     coefficients are obtained from the SPEX database Kaastra et al. (2024).
 
-    If the resonant scattering occurs for the fine-structure levels Ly\f$_{\alpha1}\f$,
-    Ly\f$_{\beta1}\f$, Ly\f$_{\gamma1}\f$, etc. the resulting photon has a 50% chance to be emitted
-    isotropically and 50% chance for a dipole phase function. This dipole phase function always
-    includes polarization, the \em ElectronScattering property does not affect it in any way. The
-    implementation of this phase function can be found in the \em DipolePhaseFunction class. For
-    the other fine-structure levels Ly\f$_{\alpha2}\f$, Ly\f$_{\beta2}\f$, etc. the resulting
-    photon is always emitted isotropically.
+    Resonant scattering in an electric-dipole transition is described as a linear
+    combination of an isotropic and a dipole M\"{u}ller matrix. The relative weights
+    of these two components are determined by the total angular momentum of the
+    lower level, \f$J\f$, and by　\f$\Delta J = J_\mathrm{upper}-J_\mathrm{lower}\f$ \citep{H1947}.
+    With the notation used here, \f$E_1\f$ is the weight of the isotropic component
+    and \f$E_2\f$ is the weight of the dipole component.
+
+    <table>
+    <caption>Weights of the isotropic (\f$E_1\f$) and dipole (\f$E_2\f$)
+    components in the M\"{u}ller matrix for resonant scattering.</caption>
+    <tr>
+      <th>\f$\Delta J\f$</th>
+      <th>\f$E_1\f$</th>
+      <th>\f$E_2\f$</th>
+    </tr>
+    <tr>
+      <td>\f$1\f$</td>
+      <td>\f$\displaystyle \frac{1}{10}
+      \frac{3J(6J+7)}{(J+1)(2J+1)}\f$</td>
+      <td>\f$\displaystyle \frac{1}{10}
+      \frac{(2J+5)(J+2)}{(J+1)(2J+1)}\f$</td>
+    </tr>
+    <tr>
+      <td>\f$0\f$</td>
+      <td>\f$\displaystyle \frac{1}{10}
+      \frac{3(2J^2+2J+1)}{J(J+1)}\f$</td>
+      <td>\f$\displaystyle \frac{1}{10}
+      \frac{(2J-1)(2J+3)}{J(J+1)}\f$</td>
+    </tr>
+    <tr>
+      <td>\f$-1\f$</td>
+      <td>\f$\displaystyle \frac{1}{10}
+      \frac{3(J+1)(6J-1)}{J(2J+1)}\f$</td>
+      <td>\f$\displaystyle \frac{1}{10}
+      \frac{(2J-3)(J-1)}{J(2J+1)}\f$</td>
+    </tr>
+    </table>
+
+    For example, the H-like Ly\f$_{\alpha1}\f$ transition has
+    \f$J=1/2\f$ and \f$\Delta J=1\f$, and therefore
+    \f$E_1=E_2=1/2\f$; the scattered photon is emitted with equal weights
+    for the isotropic and dipole components. The H-like Ly\f$_{\alpha2}\f$
+    transition has \f$J=1/2\f$ and \f$\Delta J=0\f$, giving
+    \f$E_1=1\f$ and \f$E_2=0\f$; the scattered photon is emitted
+    isotropically. For the He-like He\f$\alpha\f$ \f$w\f$ and \f$y\f$
+    lines, the lower level has \f$J=0\f$ and the upper level has
+    \f$J=1\f$, so that \f$E_1=0\f$ and \f$E_2=1\f$; the scattering is
+    described entirely by the dipole component.
+
+    The dipole component always includes polarization. Therefore, the
+    \em ElectronScattering property does not affect this treatment in any way.
+    The implementation of the dipole phase function can be found in the
+    \em DipolePhaseFunction class. If \f$E_2=0\f$, the scattered photon is emitted
+    isotropically.
 
     If the scattering is coherent (no-cascade) the wavelength shift is determined by: \f[ \lambda'
     = \lambda \frac{(1 - \boldsymbol{k}_\mathrm{out} \cdot \boldsymbol{v}_\mathrm{atom} / c)}{(1 -
@@ -216,13 +269,14 @@
 
     The function performing an actual scattering event randomly selects one of the supported
     scattering channels (i.e. scattering by an electron, fluorescent line emission following a
-    photo-absorption event or scattering by a resonant Lyman line). The relative probabilities for
+    photo-absorption event or scattering by a resonant line). The relative probabilities for
     these transitions as a function of incoming photon packet wavelength are also calculated during
     setup. The selected transition determines the scattering mechanism. For electrons, Compton
     scattering is used. For fluorescence, the emission direction is isotropic, and the outgoing
-    wavelength is the fluorescence wavelength. For the resonant Lyman lines, the direction can be
+    wavelength is the fluorescence wavelength. For the resonant lines, the direction can be
     either isotropic and unpolarized or following a dipole phase function for both direction and
-    polarization. The outcome is determined by the Lyman index... lya1, lyb1, etc.
+    polarization. The outcome is determined by the total angular momentum of the lower level \f$J\f$
+    and the difference in the total angular momentum between the upper and lower levels \f$\Delta J\f$.
 
     <b>Thermal dispersion</b>
 
@@ -448,37 +502,37 @@ private:
 
     struct IonParam
     {
-        IonParam(int Z, int N) : Z(Z), N(N) {}
-
         int Z;  // atomic number
         int N;  // number of electrons
     };
     // Compton scattering -> IonParam
-    // Fluorescence (+Lyman RC) -> FluorescenceParam
+    // Fluorescence (+RR) -> FluorescenceParam
     struct FluorescenceParam
     {
-        int Z;          // atomic number
+        double vth;     // thermal velocity (m/s)
         double lambda;  // wavelength (m)
         double width;   // width (eV)
     };
-    // Resonant scattering -> LymanParam
-    struct LymanParam
+    // Resonant scattering -> ResonaceLineParam
+    struct ResonantParam
     {
-        int Z;                // atomic number
-        int index;            // Lyman index (alpha1/2, alpha3/2, beta1/2, ...)
-        double lambda;        // wavelength (m)
-        double a;             // Voigt parameter
-        Array cumbranchingv;  // normalized cumulative branching
+        int ionIndex;
+        int lineIndex;          // line index
+        double vth;             // thermal velocity (m/s)
+        double lambda;          // wavelength (m)
+        double a;               // Voigt parameter
+        double dipoleFraction;  // Probability for dipole phase function
+        Array cumBranchingv;    // normalized cumulative branching
     };
 
     int _numIons;  // number of ions
-    int _numFluo;  // number of fluorescence (+Lyman RC) transitions
-    int _numLym;   // number of Lyman resonant scattering transitions
+    int _numFluo;  // number of fluorescence (+RR) transitions
+    int _numLine;  // number of resonant scattering transitions
 
     // persistent data for scattering
     vector<IonParam> _ionParamv;
     vector<FluorescenceParam> _fluorescenceParamv;
-    vector<LymanParam> _lymanParamv;
+    vector<ResonantParam> _resonantParamv;
     vector<double> _vthermv;  // indexed on Z
 
     // wavelength grid (shifted to the left of the actually sampled points to approximate rounding)

@@ -127,6 +127,9 @@ public:
         undefined behavior (usually a crash). */
     StoredTable() {}
 
+    // hard to find bug if you accidentally copy
+    StoredTable(const StoredTable&) = delete;
+
     /** This alternate constructor constructs a stored table instance and immediately associates a
         given stored table resource file with it by calling the open() function. Refer to the
         open() function for a description of the arguments and of its operation. */
@@ -310,6 +313,9 @@ public:
     {
         return operator()(value);
     }
+
+    // hard to find bug if you accidentally copy
+    StoredTable<N>& operator=(const StoredTable<N>& other) = delete;
 
     // ------------------------------------------
 
