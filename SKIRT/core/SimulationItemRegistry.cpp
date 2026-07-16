@@ -93,6 +93,7 @@
 #include "FilePolarizedPointSource.hpp"
 #include "FileSED.hpp"
 #include "FileSSPSEDFamily.hpp"
+#include "FileTimeGrid.hpp"
 #include "FileTreeSpatialGrid.hpp"
 #include "FileWavelengthDistribution.hpp"
 #include "FileWavelengthGrid.hpp"
@@ -123,13 +124,16 @@
 #include "ImportedSourceMetallicityProbe.hpp"
 #include "ImportedSourceVelocityProbe.hpp"
 #include "InstrumentSystem.hpp"
+#include "InstrumentTimeGridProbe.hpp"
 #include "InstrumentWavelengthGridProbe.hpp"
 #include "IntegratedLuminosityNormalization.hpp"
 #include "IsotropicAngularDistribution.hpp"
 #include "LaserAngularDistribution.hpp"
 #include "LaunchedPacketsProbe.hpp"
+#include "LightCurveInstrument.hpp"
 #include "LinBorderWavelengthGrid.hpp"
 #include "LinMesh.hpp"
+#include "LinTimeGrid.hpp"
 #include "LinWavelengthDistribution.hpp"
 #include "LinWavelengthGrid.hpp"
 #include "LineLuminosityNormalization.hpp"
@@ -146,6 +150,7 @@
 #include "LocalUniverseCosmology.hpp"
 #include "LogBorderWavelengthGrid.hpp"
 #include "LogMesh.hpp"
+#include "LogTimeGrid.hpp"
 #include "LogWavelengthDistribution.hpp"
 #include "LogWavelengthGrid.hpp"
 #include "LuminosityProbe.hpp"
@@ -242,6 +247,7 @@
 #include "SpatialGridPlotProbe.hpp"
 #include "SpatialGridSourceDensityProbe.hpp"
 #include "SpecificLuminosityNormalization.hpp"
+#include "SpectralTimeMapInstrument.hpp"
 #include "SphePowerLawRedistributeGeometryDecorator.hpp"
 #include "Sphere1DSpatialGrid.hpp"
 #include "Sphere2DSpatialGrid.hpp"
@@ -681,16 +687,26 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<PredefinedBandWavelengthGrid>();
     ItemRegistry::add<ConfigurableBandWavelengthGrid>();
 
+    // time grids
+    ItemRegistry::add<TimeGrid>();
+    ItemRegistry::add<LinTimeGrid>();
+    ItemRegistry::add<LogTimeGrid>();
+    ItemRegistry::add<FileTimeGrid>();
+
     // instrument system and instruments
     ItemRegistry::add<InstrumentSystem>();
     ItemRegistry::add<Instrument>();
     ItemRegistry::add<DistantInstrument>();
+    ItemRegistry::add<ApertureInstrument>();
     ItemRegistry::add<SEDInstrument>();
     ItemRegistry::add<FrameInstrument>();
     ItemRegistry::add<FullInstrument>();
     ItemRegistry::add<AllSkyInstrument>();
     ItemRegistry::add<HEALPixSkyInstrument>();
     ItemRegistry::add<PerspectiveInstrument>();
+    ItemRegistry::add<TimeInstrument>();
+    ItemRegistry::add<LightCurveInstrument>();
+    ItemRegistry::add<SpectralTimeMapInstrument>();
 
     // all-sky projections
     ItemRegistry::add<AllSkyProjection>();
@@ -736,6 +752,8 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<RadiationFieldWavelengthGridProbe>();
     ItemRegistry::add<DustEmissionWavelengthGridProbe>();
     ItemRegistry::add<InstrumentWavelengthGridProbe>();
+    //   .. time grid
+    ItemRegistry::add<InstrumentTimeGridProbe>();
     //   .. specialty
     ItemRegistry::add<DustAbsorptionPerCellProbe>();
     ItemRegistry::add<SpatialGridSourceDensityProbe>();

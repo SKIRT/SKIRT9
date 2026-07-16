@@ -150,6 +150,14 @@ public:
         and the internally used SI units (m) to the program's adopted output style and units. */
     double owavelength(double lambda) const;
 
+    /** This function returns a string containing the name of the unit of time lag adopted by the
+        program for output. */
+    string utimelag() const;
+
+    /** This function converts the time lag \f$t\f$ from the internally used SI units (s) to the
+        program's adopted output units. */
+    double otimelag(double t) const;
+
     /** This function returns a string containing the name of the unit of dust grain size adopted
         by the program for output. */
     string ugrainsize() const;
@@ -367,6 +375,36 @@ public:
         \f$\lambda\f$ from the internally used SI units (\f${\text{W}}\, {\text{m}}^{-3}\,
         {\text{sr}}^{-1}\f$) to the program's flux output style and units. */
     double omeanintensity(double lambda, double Jlambda) const;
+
+    /** This function returns a string describing the output style adopted by the program for a
+        flux density per timelag interval (the quantity used by a light curve). */
+    string stimefluxdensity() const;
+
+    /** This function returns a string containing the name of the output unit adopted by the
+        program for a flux density per timelag interval. */
+    string utimefluxdensity() const;
+
+    /** This function converts a flux density per timelag interval given in internal units to the
+        program's adopted output style and units. Because the quantity is spectrally integrated, it
+        is not possible to convert the aggregated quantity between an amount of energy and a number
+        of photons. Therefore, the caller must provide both the flux density \f$F_\text{time}\f$ in
+        regular internal SI units \f${\text{W}}\, {\text{m}}^{-2}\, {\text{s}}^{-1}\f$ and the same
+        quantity multiplied by wavelength for every photon packet contribution separately,
+        resulting in internal SI units \f${\text{W}}\, {\text{m}}^{-1}\, {\text{s}}^{-1}\f$. */
+    double otimefluxdensity(double Ftime, double lambdaFtime) const;
+
+    /** This function returns a string describing the output style adopted by the program for a
+        spectral flux density per timelag interval (the quantity used by a spectral-time map). */
+    string sspectraltimefluxdensity() const;
+
+    /** This function returns a string containing the name of the output unit adopted by the
+        program for a spectral flux density per timelag interval. */
+    string uspectraltimefluxdensity() const;
+
+    /** This function converts a spectral flux density per timelag interval given in internal SI
+        units (\f${\text{W}}\, {\text{m}}^{-3}\, {\text{s}}^{-1}\f$) to the program's adopted
+        output style and units. */
+    double ospectraltimefluxdensity(double lambda, double flambdatime) const;
 
     /** This function returns a string containing the name of the unit of temperature adopted by
         the program for output. */

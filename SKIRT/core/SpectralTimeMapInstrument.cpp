@@ -3,23 +3,23 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "SEDInstrument.hpp"
+#include "SpectralTimeMapInstrument.hpp"
 #include "FluxRecorder.hpp"
 #include "PhotonPacket.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-void SEDInstrument::setupSelfBefore()
+void SpectralTimeMapInstrument::setupSelfBefore()
 {
-    ApertureInstrument::setupSelfBefore();
+    TimeInstrument::setupSelfBefore();
 
     // configure flux recorder
-    instrumentFluxRecorder()->includeFluxDensityForDistant();
+    instrumentFluxRecorder()->includeSpectralTimeMap();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void SEDInstrument::detect(PhotonPacket* pp)
+void SpectralTimeMapInstrument::detect(PhotonPacket* pp)
 {
     if (isInsideAperture(pp)) instrumentFluxRecorder()->detect(pp, 0);
 }

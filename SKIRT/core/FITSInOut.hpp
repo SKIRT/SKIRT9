@@ -51,6 +51,18 @@ public:
                       string dataUnits, int nx, int ny, double incx, double incy, double xc, double yc, string xyUnits,
                       const Array& z = Array(), string zUnits = string(), const ObserverInfo* obsInfo = nullptr);
 
+    /** This function writes a 2D map to a FITS file in the context of the simulation item
+        hierarchy specified through the first argument. This allows the function to issue log
+        messages using the human-readable description of the data given as the second argument, to
+        skip writing in non-root processes of a multi-process similation, and to determine a full
+        path from the output filename specified as the third argument, relative to the simulation's
+        output path. The output filename should \em not include the filename extension nor the
+        simulation prefix. The remaining arguments of this function are the same as those described
+        for the basic writeMap() function in this class. */
+    static void writeMap(const SimulationItem* item, string description, string filename, const Array& data,
+                         string dataUnits, const Array& x, const Array& y, string xUnits, string yUnits,
+                         const ObserverInfo* obsInfo = nullptr);
+
     // ================== Basic read/write ==================
 
 private:
@@ -104,6 +116,22 @@ private:
         data structure holding observer information (or the null pointer). */
     static void write(string filepath, const Array& data, string dataUnits, int nx, int ny, double incx, double incy,
                       double xc, double yc, string xyUnits, const Array& z, string zUnits, const ObserverInfo* obsInfo);
+
+    /** This function writes a 2D map to the primary data unit of a FITS file. The x and y axis
+        each discretizes some arbitrary quantity, for example wavelength and time lag for a
+        spectral-time map. The function also writes the axis grid points to the FITS file as a
+        binary table extension, so that the file is self-contained.
+
+        The first argument specifies a relative or absolute file path; if a file with that name
+        already exists, it is overwritten. The subsequent arguments specify the contents of the
+        file. \em data contains the actual values in the frame; the values in this array must be
+        ordered such that the index along the x-axis varies most rapidly and the index along the
+        y-axis varies less rapidly. \em dataUnits describes the units of the data values. \em x and
+        \em y specify the grid points in each direction, and \em xUnits and \em yUnits describe the
+        units of these grid points. Finally, \em obsInfo is a pointer to an optional data structure
+        holding observer information (or the null pointer). */
+    static void writeMap(string filepath, const Array& data, string dataUnits, const Array& x, const Array& y,
+                         string xUnits, string yUnits, const ObserverInfo* obsInfo);
 };
 
 ////////////////////////////////////////////////////////////////////

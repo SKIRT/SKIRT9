@@ -3,20 +3,20 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef SEDINSTRUMENT_HPP
-#define SEDINSTRUMENT_HPP
+#ifndef SPECTRALTIMEMAPINSTRUMENT_HPP
+#define SPECTRALTIMEMAPINSTRUMENT_HPP
 
-#include "ApertureInstrument.hpp"
+#include "TimeInstrument.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
-/** An SEDInstrument object represents a distant instrument with an optional circular aperture that
-    records the spatially integrated flux density for each wavelength and outputs an %SED text
-    column file. */
-class SEDInstrument : public ApertureInstrument
+/** A SpectralTimeMapInstrument object represents a distant instrument with an optional circular
+    aperture that records the spatially integrated flux density per wavelength interval and per
+    time lag interval, and outputs a FITS file containing a 2D spectral-time map. */
+class SpectralTimeMapInstrument : public TimeInstrument
 {
-    ITEM_CONCRETE(SEDInstrument, ApertureInstrument,
-                  "a distant instrument that outputs the spatially integrated flux density as an SED")
+    ITEM_CONCRETE(SpectralTimeMapInstrument, TimeInstrument,
+                  "a distant instrument that outputs the spatially integrated flux density as a spectral time map")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

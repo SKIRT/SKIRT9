@@ -51,6 +51,26 @@ void FITSInOut::write(const SimulationItem* item, string description, string fil
 
 ////////////////////////////////////////////////////////////////////
 
+void FITSInOut::writeMap(const SimulationItem* item, string description, string filename, const Array& data,
+                         string dataUnits, const Array& x, const Array& y, string xUnits, string yUnits,
+                         const ObserverInfo* obsInfo)
+{
+    // Only write the FITS file if this process is the root
+    if (ProcessManager::isRoot())
+    {
+        // Determine the path of the output FITS file
+        string filepath = item->find<FilePaths>()->output(filename + ".fits");
+
+        // Write the FITS file
+        FITSInOut::writeMap(filepath, data, dataUnits, x, y, xUnits, yUnits, obsInfo);
+
+        // Log the file path
+        item->find<Log>()->info(item->typeAndName() + " wrote " + description + " to FITS file " + filepath);
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 namespace
 {
     // mutex to guard the FITS input/output operations
@@ -187,6 +207,101 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits, int 
         // Write the single column
         void* gridpoints = const_cast<void*>(static_cast<const void*>(begin(z)));
         ffpcl(fptr, TDOUBLE, 1, 1, 1, nz, gridpoints, &status);
+        if (status) report_error(filepath, "writing", status);
+    }
+
+    // Close the file
+    ffclos(fptr, &status);
+    if (status) report_error(filepath, "writing", status);
+}
+
+////////////////////////////////////////////////////////////////////
+
+void FITSInOut::writeMap(string filepath, const Array& data, string dataUnits, const Array& x, const Array& y,
+                         string xUnits, string yUnits, const ObserverInfo* obsInfo)
+{
+    // Get the axis sizes
+    long nx = x.size();
+    long ny = y.size();
+
+    // Verify the data size
+    long nelements = data.size();
+    if (nelements != nx * ny) throw FATALERROR("Inconsistent data size when creating FITS file " + filepath);
+    long naxes[2] = {nx, ny};
+
+    // Acquire a global lock since the cfitsio library is not guaranteed to be reentrant
+    // (only when it is built with ./configure --enable-reentrant; make)
+    std::unique_lock<std::mutex> lock(_mutex);
+
+    // Generate time stamp
+    string stamp = System::timestamp(true);
+    stamp.erase(19);  // remove milliseconds
+
+    // Remove any existing file with the same name
+    remove(filepath.c_str());
+
+    // Create the fits file
+    int status = 0;
+    fitsfile* fptr;
+    ffdkinit(&fptr, filepath.c_str(), &status);
+    if (status) report_error(filepath, "creating", status);
+
+    // Create the primary image (32-bit floating point pixels)
+    ffcrim(fptr, FLOAT_IMG, 2, naxes, &status);
+    if (status) report_error(filepath, "creating", status);
+
+    // Add the relevant keywords
+    ffpkyg(fptr, "BSCALE", 1., 0, "Array value scale", &status);
+    ffpkyg(fptr, "BZERO", 0., 0, "Array value offset", &status);
+    ffpkys(fptr, "DATE", const_cast<char*>(stamp.c_str()), "Date and time of creation (UTC)", &status);
+    ffpkys(fptr, "ORIGIN", const_cast<char*>("SKIRT simulation"), "Astronomical Observatory, Ghent University",
+           &status);
+    ffpkys(fptr, "BUNIT", const_cast<char*>(dataUnits.c_str()), "Physical unit of the array values", &status);
+    ffpkys(fptr, "CUNIT1", const_cast<char*>(xUnits.c_str()), "Physical units of the X-axis", &status);
+    ffpkys(fptr, "CUNIT2", const_cast<char*>(yUnits.c_str()), "Physical units of the Y-axis", &status);
+    if (obsInfo)
+    {
+        ffpkyd(fptr, "CROTA1", obsInfo->inclination, 9, "Inclination angle, in deg", &status);
+        ffpkyd(fptr, "CROTA2", obsInfo->azimuth, 9, "Azimuth angle, in deg", &status);
+        ffpkyd(fptr, "CROTA3", obsInfo->roll, 9, "Roll angle, in deg", &status);
+        ffpkyd(fptr, "REDSHIFT", obsInfo->redshift, 9, "Redshift (if zero, distances are equal)", &status);
+        ffpkyd(fptr, "DISTLUMI", obsInfo->luminosityDistance, 9, "Luminosity distance", &status);
+        ffpkyd(fptr, "DISTANGD", obsInfo->angularDiameterDistance, 9, "Angular diameter distance", &status);
+        ffpkys(fptr, "DISTUNIT", const_cast<char*>(obsInfo->distanceUnits.c_str()), "Units of distances", &status);
+    }
+    if (status) report_error(filepath, "writing", status);
+
+    // Write the array of pixels to the image
+    ffpprd(fptr, 0, 1, nelements, const_cast<double*>(&data[0]), &status);
+    if (status) report_error(filepath, "writing", status);
+
+    // Write a FITS table extension with the values of the x axis
+    {
+        // Create the table
+        char* ttypev[] = {const_cast<char*>("GRID_POINTS")};
+        char* tformv[] = {const_cast<char*>("E16.9")};
+        char* tunitv[] = {const_cast<char*>("")};
+        ffcrtb(fptr, ASCII_TBL, 0, 1, ttypev, tformv, tunitv, "X-axis coordinate values", &status);
+        if (status) report_error(filepath, "writing", status);
+
+        // Write the single column
+        void* gridpoints = const_cast<void*>(static_cast<const void*>(begin(x)));
+        ffpcl(fptr, TDOUBLE, 1, 1, 1, nx, gridpoints, &status);
+        if (status) report_error(filepath, "writing", status);
+    }
+
+    // Write a FITS table extension with the values of the y axis
+    {
+        // Create the table
+        char* ttypev[] = {const_cast<char*>("GRID_POINTS")};
+        char* tformv[] = {const_cast<char*>("E16.9")};
+        char* tunitv[] = {const_cast<char*>("")};
+        ffcrtb(fptr, ASCII_TBL, 0, 1, ttypev, tformv, tunitv, "Y-axis coordinate values", &status);
+        if (status) report_error(filepath, "writing", status);
+
+        // Write the single column
+        void* gridpoints = const_cast<void*>(static_cast<const void*>(begin(y)));
+        ffpcl(fptr, TDOUBLE, 1, 1, 1, ny, gridpoints, &status);
         if (status) report_error(filepath, "writing", status);
     }
 
