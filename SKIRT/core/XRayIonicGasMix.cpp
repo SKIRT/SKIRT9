@@ -18,7 +18,9 @@
 #include "StoredTable.hpp"
 #include "StringUtils.hpp"
 #include "TextInFile.hpp"
+#include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <map>
 #include <set>
 #include <tuple>
@@ -424,10 +426,6 @@ void XRayIonicGasMix::setupSelfBefore()
     }
     _numIons = _ionParamv.size();
 
-    // check if number of ions and abundances match
-    if (_numIons != static_cast<int>(abundances().size()))
-        throw FATALERROR("Number of ions and abundances do not match");
-
     // store all unique N and ions
     std::set<int> usedN;
     std::unordered_set<int> ionSet;
@@ -436,6 +434,15 @@ void XRayIonicGasMix::setupSelfBefore()
         usedN.insert(ion.N);
         ionSet.insert(AtomUtils::ionIndex(ion.Z, ion.N));
     }
+
+    // check if number of ions and abundances match
+    if (_numIons != static_cast<int>(abundances().size()))
+        throw FATALERROR("Number of ions and abundances do not match");
+
+    // check if any ions that allow lyman scattering are present
+    auto it = std::find_if(usedN.begin(), usedN.end(), hasResource);
+    if (resonantScattering() && it == usedN.end())
+        throw FATALERROR("Resonant scattering requires ions that allow resonant scattering");
 
     // create scattering helpers depending on the user-configured implementation type
     switch (electronScattering())
@@ -747,7 +754,7 @@ void XRayIonicGasMix::setupSelfBefore()
 
     // provide temporary array for the non-normalized fluorescence/scattering contributions (at the current wavelength)
     int numInteractions = _numIons + _numFluo + _numLine;
-    Array sections(numInteractions);
+    Array sigmas(numInteractions);
 
     // calculate the above for every wavelength; as before, leave the values for the outer wavelength points at zero
     for (int ell = 1; ell < numLambda - 2; ++ell)
@@ -760,7 +767,7 @@ void XRayIonicGasMix::setupSelfBefore()
         {
             const auto& ion = _ionParamv[i];
 
-            sections[i] = _com->sectionSca(lambda, ion.Z) * _abundances[i];
+            sigmas[i] = _com->sectionSca(lambda, ion.Z) * _abundances[i];
         }
 
         // fluorescence: iterate over both cross section and fluorescence parameter sets in sync
@@ -769,8 +776,8 @@ void XRayIonicGasMix::setupSelfBefore()
             const auto& fluoRes = fluoResources[f];
             const auto& paRes = paResources[fluoRes.paIndex];
 
-            double section = paRes.photoAbsorbThermalSection(E) * _abundances[paRes.ionIndex] * fluoRes.omega;
-            sections[_numIons + f] = section;
+            double sigma = paRes.photoAbsorbThermalSection(E) * _abundances[paRes.ionIndex] * fluoRes.omega;
+            sigmas[_numIons + f] = sigma;
         }
 
         // resonant scattering
@@ -779,12 +786,12 @@ void XRayIonicGasMix::setupSelfBefore()
             const auto& lineRes = lineResources[r];
 
             double vth = vtherm(lineRes.Z);
-            double section = lineRes.section(lambda, vth) * _abundances[lineRes.ionIndex] * lineRes.scatterProb;
-            sections[_numIons + _numFluo + r] = section;
+            double sigma = lineRes.section(lambda, vth) * _abundances[lineRes.ionIndex] * lineRes.scatterProb;
+            sigmas[_numIons + _numFluo + r] = sigma;
         }
 
         // determine the normalized cumulative probability distribution and the cross section
-        _sigmascav[ell] = NR::cdf(_cumsigmascavv[ell], sections);
+        _sigmascav[ell] = NR::cdf(_cumsigmascavv[ell], sigmas);
     }
 }
 
