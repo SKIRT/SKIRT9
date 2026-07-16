@@ -7,6 +7,7 @@
 #define TREESPATIALGRID_HPP
 
 #include "BoxSpatialGrid.hpp"
+#include "CartesianCellInterface.hpp"
 class TextOutFile;
 class TreeNode;
 
@@ -24,7 +25,7 @@ class TreeNode;
     TreeNode, the tree can become an octtree (8 children per node) or a binary tree (2 children per
     node). Other node types could be implemented, as long as they are cuboids lined up with the
     coordinate axes. */
-class TreeSpatialGrid : public BoxSpatialGrid
+class TreeSpatialGrid : public BoxSpatialGrid, public CartesianCellInterface
 {
     ITEM_ABSTRACT(TreeSpatialGrid, BoxSpatialGrid, "a hierarchical tree spatial grid")
     ITEM_END()
@@ -71,6 +72,11 @@ protected:
 public:
     /** This function returns the number of cells in the grid. */
     int numCells() const override;
+
+    /** This function returns the box defining the cell with index \f$m\f$, implementing the
+        CartesianCellInterface. The function determines the node ID corresponding to the cell index
+        \f$m\f$, and then simply returns the corresponding bounding box. */
+    Box cellBox(int m) const override;
 
     /** This function returns the volume of the cell with index \f$m\f$. For a tree grid, it
         determines the node ID corresponding to the cell index \f$m\f$, and then simply calculates

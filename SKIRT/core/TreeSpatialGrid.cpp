@@ -83,6 +83,13 @@ int TreeSpatialGrid::numCells() const
 
 ////////////////////////////////////////////////////////////////////
 
+Box TreeSpatialGrid::cellBox(int m) const
+{
+    return nodeForCellIndex(m)->extent();
+}
+
+////////////////////////////////////////////////////////////////////
+
 double TreeSpatialGrid::volume(int m) const
 {
     return nodeForCellIndex(m)->volume();

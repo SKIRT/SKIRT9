@@ -33,6 +33,13 @@ int CartesianSpatialGrid::numCells() const
 
 //////////////////////////////////////////////////////////////////////
 
+Box CartesianSpatialGrid::cellBox(int m) const
+{
+    return box(m);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 double CartesianSpatialGrid::volume(int m) const
 {
     return box(m).volume();

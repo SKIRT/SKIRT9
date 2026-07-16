@@ -7,7 +7,9 @@
 #define PARTICLEMEDIUM_HPP
 
 #include "ImportedMedium.hpp"
+#include "MassInBoxInterface.hpp"
 #include "SmoothingKernel.hpp"
+class ParticleSnapshot;
 
 ////////////////////////////////////////////////////////////////////
 
@@ -56,7 +58,7 @@
     Finally, if the \em importVariableMixParams option is enabled, the remaining columns specify
     the parameters used by the configured material mix family to select a particular material mix
     for the particle. */
-class ParticleMedium : public ImportedMedium
+class ParticleMedium : public ImportedMedium, MassInBoxInterface
 {
     /** The enumeration type indicating the type of mass quantity to be imported. */
     ENUM_DEF(MassType, Mass, Number)
@@ -83,6 +85,19 @@ protected:
         it, and finally returns a pointer to the object. Ownership of the Snapshot object is
         transferred to the caller. */
     Snapshot* createAndOpenSnapshot() override;
+
+    //============= Other functions =============
+
+public:
+    /** This function returns the medium mass in the specified axis-aligned bounding box,
+        implementing the MassInBoxInterface. */
+    double massInBox(const Box& box) const override;
+
+    //===================== Data members ====================
+
+private:
+    // an extra pointer to our snapshot used to implement MassInBoxInterface (ownership is passed to base class)
+    ParticleSnapshot* _particleSnapshot{nullptr};
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -118,6 +118,12 @@ public:
     //======================== Resource files =======================
 
 public:
+    /** This function returns true if a resource with the specified filename is available, and
+        false otherwise. The filename should \em not include any directory segments (just the base
+        filename and filename extension). The function searches the list of available resource
+        files as described in the class header. */
+    static bool hasResource(string name);
+
     /** This function returns the absolute canonical path for a resource file with the specified
         filename. The filename should \em not include any directory segments (just the base
         filename and filename extension). The function searches the list of available resource

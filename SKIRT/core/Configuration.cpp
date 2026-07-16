@@ -5,15 +5,19 @@
 
 #include "Configuration.hpp"
 #include "AllCellsLibrary.hpp"
+#include "CartesianCellInterface.hpp"
 #include "Constants.hpp"
 #include "FatalError.hpp"
+#include "FilePaths.hpp"
 #include "InputModelFormProbe.hpp"
+#include "MassInBoxInterface.hpp"
 #include "MaterialMix.hpp"
 #include "MaterialWavelengthRangeInterface.hpp"
 #include "MonteCarloSimulation.hpp"
 #include "OligoWavelengthDistribution.hpp"
 #include "OligoWavelengthGrid.hpp"
 #include "ProbeSystem.hpp"
+#include "SpatialGrid.hpp"
 #include "StringUtils.hpp"
 #include "VoronoiMeshSpatialGrid.hpp"
 #include <set>
@@ -277,6 +281,17 @@ void Configuration::setupSelfBefore()
     // retrieve media sampling options
     _numDensitySamples = ms->samplingOptions()->numDensitySamples();
     _numPropertySamples = ms->samplingOptions()->numPropertySamples();
+
+    // verify conditions for using the "mass in box" technique
+    if (FilePaths::hasResource("UniformSmoothingKernel.stab"))
+    {
+        if (ms->grid()->interface<CartesianCellInterface>(0, false))
+        {
+            _usesMassInBox = true;
+            for (auto medium : ms->media())
+                if (medium->interface<MassInBoxInterface>(0, false)) _usesMassInBox = false;
+        }
+    }
 
     // retrieve symmetry dimensions
     _modelDimension = max(ss->dimension(), ms->dimension());

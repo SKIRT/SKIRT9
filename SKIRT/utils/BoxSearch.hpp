@@ -95,6 +95,11 @@ private:
         type, which in the current implementation is simply a reference to a standard vector. */
     using EntityGeneratorForPosition = const vector<int>&;
 
+    /** This typedef defines the generator return type of the entitiesFor function for a box.
+        It represents an iterable sequence of integers. We use a private typedef to hide the actual
+        type, which in the current implementation is simply a copy of a standard unordered set. */
+    using EntityGeneratorForBox = std::unordered_set<int>;
+
     /** This typedef defines the generator return type of the entitiesFor function for a ray.
         It represents an iterable sequence of integers. We use a private typedef to hide the actual
         type, which in the current implementation is simply a copy of a standard unordered set. */
@@ -110,6 +115,15 @@ public:
         the position. On the other hand, the sequence may contain entities whose bounding box does
         \em not overlap the position. */
     EntityGeneratorForPosition entitiesFor(Vec bfr) const;
+
+    /** This function returns an iterable sequence of indices \f$m\f$ of all entities that may
+        overlap the specified axis-aligned bounding box, in arbitrary order. The sequence may be
+        empty.
+
+        The function guarantees that the sequence includes all entities whose bounding box overlaps
+        the query box. On the other hand, the sequence may contain entities whose bounding box does
+        \em not overlap the query box. */
+    EntityGeneratorForBox entitiesFor(const Box& box) const;
 
     /** This function returns an iterable sequence of indices \f$m\f$ of all entities that may
         overlap the specified ray (starting point and direction), in arbitrary order. The sequence

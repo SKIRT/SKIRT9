@@ -11,26 +11,35 @@
 Snapshot* ParticleMedium::createAndOpenSnapshot()
 {
     // create and open the snapshot
-    auto snapshot = new ParticleSnapshot;
-    snapshot->open(this, filename(), "smoothed particles");
+     _particleSnapshot = new ParticleSnapshot;
+    _particleSnapshot->open(this, filename(), "smoothed particles");
 
     // honor custom column reordering
-    snapshot->useColumns(useColumns());
+    _particleSnapshot->useColumns(useColumns());
 
     // configure the position and size columns
-    snapshot->importPosition();
-    snapshot->importSize();
+    _particleSnapshot->importPosition();
+    _particleSnapshot->importSize();
 
     // configure the mass or number column
     switch (massType())
     {
-        case MassType::Mass: snapshot->importMass(); break;
-        case MassType::Number: snapshot->importNumber(); break;
+        case MassType::Mass: _particleSnapshot->importMass(); break;
+        case MassType::Number: _particleSnapshot->importNumber(); break;
     }
 
     // set the smoothing kernel
-    snapshot->setSmoothingKernel(smoothingKernel());
-    return snapshot;
+    _particleSnapshot->setSmoothingKernel(smoothingKernel());
+
+    return _particleSnapshot;
 }
+
+////////////////////////////////////////////////////////////////////
+
+double ParticleMedium::massInBox(const Box& box) const
+{
+    return _particleSnapshot->massInBox(box);
+}
+
 
 ////////////////////////////////////////////////////////////////////

@@ -8,6 +8,7 @@
 
 #include "Array.hpp"
 #include "BoxSpatialGrid.hpp"
+#include "CartesianCellInterface.hpp"
 #include "Mesh.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -15,7 +16,7 @@
 /** The CartesianSpatialGrid class is subclass of the BoxSpatialGrid class, and represents
     three-dimensional spatial grids based on a regular Cartesian grid. Each cell in such a grid is
     a little cuboid (not necessarily all with the same size or axis ratios). */
-class CartesianSpatialGrid : public BoxSpatialGrid
+class CartesianSpatialGrid : public BoxSpatialGrid, public CartesianCellInterface
 {
     ITEM_CONCRETE(CartesianSpatialGrid, BoxSpatialGrid, "a Cartesian spatial grid")
 
@@ -42,6 +43,12 @@ protected:
 public:
     /** This function returns the number of cells in the grid. */
     int numCells() const override;
+
+    /** This function returns the box defining the cell with index \f$m\f$, implementing the
+        CartesianCellInterface. The function determines the bin indices \f$i\f$, \f$j\f$ and
+        \f$k\f$ corresponding to the X, Y and Z directions and returns the corresponding
+        coordinates. */
+    Box cellBox(int m) const override;
 
     /** This function returns the volume of the cell with index \f$m\f$. For a cartesian grid, the
         function determines the bin indices \f$i\f$, \f$j\f$ and \f$k\f$ corresponding to the X, Y
