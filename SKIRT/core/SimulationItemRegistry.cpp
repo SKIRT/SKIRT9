@@ -300,6 +300,7 @@
 #include "WeingartnerDraineDustMix.hpp"
 #include "XRayAtomicGasMix.hpp"
 #include "XRayIonicGasMix.hpp"
+#include "XRayIonicGasMixFamily.hpp"
 #include "ZubkoDustMix.hpp"
 #include "ZubkoGraphiteGrainSizeDistribution.hpp"
 #include "ZubkoPAHGrainSizeDistribution.hpp"
@@ -615,6 +616,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // material mix families
     ItemRegistry::add<MaterialMixFamily>();
     ItemRegistry::add<SelectDustMixFamily>();
+    ItemRegistry::add<XRayIonicGasMixFamily>();
 
     // grain population
     ItemRegistry::add<GrainPopulation>();

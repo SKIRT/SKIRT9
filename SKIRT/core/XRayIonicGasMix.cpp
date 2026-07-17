@@ -20,7 +20,6 @@
 #include "TextInFile.hpp"
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 #include <map>
 #include <set>
 #include <tuple>
@@ -77,22 +76,22 @@ namespace
     constexpr double dipoleFractionFromJ(double lowerJ, double upperJ)
     {
         const double j = lowerJ;
-        const int deltaJ = static_cast<int>(std::round(upperJ - lowerJ));
+        const double deltaJ = upperJ - lowerJ;
 
         double E1 = 0.0;
         double E2 = 0.0;
 
-        if (deltaJ == 1)
+        if (deltaJ > 0)  // 1
         {
             E1 = 0.1 * 3.0 * j * (6.0 * j + 7.0) / ((j + 1.0) * (2.0 * j + 1.0));
             E2 = 0.1 * (2.0 * j + 5.0) * (j + 2.0) / ((j + 1.0) * (2.0 * j + 1.0));
         }
-        else if (deltaJ == 0)
+        else if (deltaJ == 0)  // 0
         {
             E1 = 0.1 * 3.0 * (2.0 * j * j + 2.0 * j + 1.0) / (j * (j + 1.0));
             E2 = 0.1 * (2.0 * j - 1.0) * (2.0 * j + 3.0) / (j * (j + 1.0));
         }
-        else if (deltaJ == -1)
+        else if (deltaJ < 0)  // -1
         {
             E1 = 0.1 * 3.0 * (j + 1.0) * (6.0 * j - 1.0) / (j * (2.0 * j + 1.0));
             E2 = 0.1 * (2.0 * j - 3.0) * (j - 1.0) / (j * (2.0 * j + 1.0));
@@ -407,6 +406,23 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
+XRayIonicGasMix::XRayIonicGasMix(SimulationItem* parent, string ions, vector<double> abundances, double temperature,
+                                 ElectronScattering electronScattering, bool resonantScattering, bool setup)
+{
+    _ions = ions;
+    _abundances = abundances;
+    _temperature = temperature;
+    _electronScattering = electronScattering;
+    _resonantScattering = resonantScattering;
+    if (setup)
+    {
+        parent->addChild(this);
+        this->setup();
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 void XRayIonicGasMix::setupSelfBefore()
 {
     MaterialMix::setupSelfBefore();
@@ -467,8 +483,7 @@ void XRayIonicGasMix::setupSelfBefore()
     auto fluoResources = loadPresent<FluorescenceResource, 7>(this, "Ionic_FL.txt", "fluorescence data", ionSet);
 
     // generic line data (recombination and resonant scattering)
-    // this data must be sorted by Z, N, lineIndex!
-    auto lineResources = loadPresent<LineResource, 7>(this, "Ionic_LN.txt", "sorted line data", ionSet);
+    auto lineResources = loadPresent<LineResource, 7>(this, "Ionic_LN.txt", "resonant line data", ionSet);
 
     // branching probability data
     vector<BranchResource> branchResources;
@@ -494,12 +509,15 @@ void XRayIonicGasMix::setupSelfBefore()
     // We can thus model it the same as fluorescence and will add it to the fluorescence resources.
     for (const auto& lineRes : lineResources)
     {
+        double Z = lineRes.Z;
+        double N = lineRes.N;
+        double lineIndex = lineRes.lineIndex;
         double E = wavelengthToFromEnergy(lineRes.lam);
-        double omega = recoResources[lineRes.N]((double)lineRes.Z, (double)lineRes.lineIndex, temperature());
+        double omega = recoResources[lineRes.N](Z, lineIndex, temperature());
 
         if (omega == 0) continue;
 
-        Array params = {(double)lineRes.Z, (double)lineRes.N, 1., 0., omega, E, 0.};
+        Array params = {Z, N, 1., 0., omega, E, 0.};
         fluoResources.emplace_back(params);
     }
 
@@ -509,10 +527,12 @@ void XRayIonicGasMix::setupSelfBefore()
         // Li-like and z lines only
         if (lineRes.N != 3 || lineRes.lineIndex != 0) continue;
 
+        double Z = lineRes.Z;
+        double N = lineRes.N;
         double E = wavelengthToFromEnergy(lineRes.lam);
         double omega = 0.75;  // inner-shell ionisation of Li-like populates upper level of z with 3/4
 
-        Array params = {(double)lineRes.Z, (double)lineRes.N, 1., 0., omega, E, 0.};
+        Array params = {Z, N, 1., 0., omega, E, 0.};
         fluoResources.emplace_back(params);
     }
 
@@ -545,11 +565,11 @@ void XRayIonicGasMix::setupSelfBefore()
         }
 
         // reference ion in each res
-        if (resonantScattering() && ion.N == 1)
+        if (resonantScattering())
         {
             for (auto& lineRes : lineResources)
             {
-                if (lineRes.Z == ion.Z) lineRes.ionIndex = i;
+                if (lineRes.Z == ion.Z && lineRes.N == ion.N) lineRes.ionIndex = i;
             }
         }
     }
@@ -737,10 +757,13 @@ void XRayIonicGasMix::setupSelfBefore()
         }
 
         // resonant scattering
-        for (const auto& lineRes : lineResources)
+        if (resonantScattering())
         {
-            double vth = vtherm(lineRes.Z);
-            sigma += lineRes.section(lambda, vth) * _abundances[lineRes.ionIndex];
+            for (const auto& lineRes : lineResources)
+            {
+                double vth = vtherm(lineRes.Z);
+                sigma += lineRes.section(lambda, vth) * _abundances[lineRes.ionIndex];
+            }
         }
 
         _sigmaextv[ell] = sigma;
@@ -781,13 +804,16 @@ void XRayIonicGasMix::setupSelfBefore()
         }
 
         // resonant scattering
-        for (int r = 0; r < _numLine; r++)
+        if (resonantScattering())
         {
-            const auto& lineRes = lineResources[r];
+            for (int r = 0; r < _numLine; r++)
+            {
+                const auto& lineRes = lineResources[r];
 
-            double vth = vtherm(lineRes.Z);
-            double sigma = lineRes.section(lambda, vth) * _abundances[lineRes.ionIndex] * lineRes.scatterProb;
-            sigmas[_numIons + _numFluo + r] = sigma;
+                double vth = vtherm(lineRes.Z);
+                double sigma = lineRes.section(lambda, vth) * _abundances[lineRes.ionIndex] * lineRes.scatterProb;
+                sigmas[_numIons + _numFluo + r] = sigma;
+            }
         }
 
         // determine the normalized cumulative probability distribution and the cross section

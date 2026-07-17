@@ -352,6 +352,9 @@ public:
         simulation to perform scattering. */
     void setupSelfBefore() override;
 
+    explicit XRayIonicGasMix(SimulationItem* parent, string ions, vector<double> abundances, double temperature,
+                             ElectronScattering electronScattering, bool resonantScattering, bool setup);
+
     /** The destructor destructs the phase function helpers that were created during setup. */
     ~XRayIonicGasMix();
 
