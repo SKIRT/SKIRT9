@@ -6,7 +6,6 @@
 #ifndef CONFIGURATION_HPP
 #define CONFIGURATION_HPP
 
-#include "Array.hpp"
 #include "Range.hpp"
 #include "SimulationItem.hpp"
 class DisjointWavelengthGrid;
@@ -272,6 +271,12 @@ public:
         emission. */
     double numPrimaryIterationPackets() const { return _numPrimaryIterationPackets; }
 
+    /** Returns the fraction of primary iteration packets to use in the first iteration. */
+    double primaryIterationInitialPacketsFraction() const { return _primaryIterationInitialPacketsFraction; }
+
+    /** Returns the geometric ramp-up factor for primary iteration photon packets. */
+    double primaryIterationPacketsRamp() const { return _primaryIterationPacketsRamp; }
+
     /** Returns the number of photon packets launched per regular secondary emission simulation
         segment. */
     double numSecondaryPackets() const { return _numSecondaryPackets; }
@@ -491,6 +496,8 @@ private:
     int _maxSecondaryIterations{10};
     double _numPrimaryPackets{0.};
     double _numPrimaryIterationPackets{0.};
+    double _primaryIterationInitialPacketsFraction{1.};
+    double _primaryIterationPacketsRamp{1.};
     double _numSecondaryPackets{0.};
     double _numSecondaryIterationPackets{0.};
     double _maxFractionOfPrimary{0.01};

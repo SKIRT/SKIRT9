@@ -228,7 +228,7 @@ public:
     {
         if (_off_velo)
         {
-            int i = _numVars * m + _off_velo;
+            size_t i = _numVars * m + _off_velo;
             return Vec(_data[i], _data[i + 1], _data[i + 2]);
         }
         return Vec();
@@ -240,7 +240,7 @@ public:
     {
         if (_off_mfld)
         {
-            int i = _numVars * m + _off_mfld;
+            size_t i = _numVars * m + _off_mfld;
             return Vec(_data[i], _data[i + 1], _data[i + 2]);
         }
         return Vec();
@@ -272,7 +272,7 @@ private:
     int _numCells{0};
     int _numMedia{0};
     int _numAggregateCells{0};
-    int _numVars{0};
+    size_t _numVars{0};
 
     // offsets used for mapping common and specific variables (for each medium component) to indices in the data array
     int _off_volu{0};

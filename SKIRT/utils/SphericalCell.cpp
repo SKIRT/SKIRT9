@@ -12,10 +12,26 @@
 
 //////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // snap a cosine or sine value to 0 or 1 to avoid rounding errors in the calculations
+    double snap(double v)
+    {
+        constexpr double eps = 1e-12;
+        if (abs(v) < eps) return 0.;
+        if (v > 1. - eps) return 1.;
+        if (v < -1. + eps) return -1.;
+        return v;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+
 SphericalCell::SphericalCell(double rmin, double thetamin, double phimin, double rmax, double thetamax, double phimax)
     : _rmin(rmin), _thetamin(thetamin), _phimin(phimin), _rmax(rmax), _thetamax(thetamax), _phimax(phimax),
-      _cosphimin(cos(phimin)), _sinphimin(sin(phimin)), _cosphimax(cos(phimax)), _sinphimax(sin(phimax)),
-      _costhetamin(cos(thetamin)), _sinthetamin(sin(thetamin)), _costhetamax(cos(thetamax)), _sinthetamax(sin(thetamax))
+      _cosphimin(snap(cos(phimin))), _sinphimin(snap(sin(phimin))), _cosphimax(snap(cos(phimax))),
+      _sinphimax(snap(sin(phimax))), _costhetamin(snap(cos(thetamin))), _sinthetamin(snap(sin(thetamin))),
+      _costhetamax(snap(cos(thetamax))), _sinthetamax(snap(sin(thetamax)))
 {}
 
 //////////////////////////////////////////////////////////////////////
