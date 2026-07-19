@@ -22,6 +22,9 @@ void CartesianSpatialGrid::setupSelfAfter()
     _xv = _meshX->mesh() * (xmax() - xmin()) + xmin();
     _yv = _meshY->mesh() * (ymax() - ymin()) + ymin();
     _zv = _meshZ->mesh() * (zmax() - zmin()) + zmin();
+
+    // make the BoxCellDensityMixIn verify whether we can offer the DensityInCellInterface
+    BoxCellDensityMixIn::setup(this);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -223,4 +226,11 @@ Box CartesianSpatialGrid::box(int m) const
         return Box(_xv[i], _yv[j], _zv[k], _xv[i + 1], _yv[j + 1], _zv[k + 1]);
 }
 
+////////////////////////////////////////////////////////////////////
+
+bool CartesianSpatialGrid::offersInterface(const std::type_info& interfaceTypeInfo) const
+{
+    if (interfaceTypeInfo == typeid(DensityInCellInterface)) return BoxCellDensityMixIn::offersInterface();
+    return SpatialGrid::offersInterface(interfaceTypeInfo);
+}
 //////////////////////////////////////////////////////////////////////

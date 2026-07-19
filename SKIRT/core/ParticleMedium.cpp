@@ -11,7 +11,7 @@
 Snapshot* ParticleMedium::createAndOpenSnapshot()
 {
     // create and open the snapshot
-     _particleSnapshot = new ParticleSnapshot;
+    _particleSnapshot = new ParticleSnapshot;
     _particleSnapshot->open(this, filename(), "smoothed particles");
 
     // honor custom column reordering
@@ -40,6 +40,5 @@ double ParticleMedium::massInBox(const Box& box) const
 {
     return _particleSnapshot->massInBox(box);
 }
-
 
 ////////////////////////////////////////////////////////////////////

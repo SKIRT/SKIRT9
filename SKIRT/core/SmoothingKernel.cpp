@@ -5,7 +5,6 @@
 
 #include "SmoothingKernel.hpp"
 #include "Box.hpp"
-#include "Configuration.hpp"
 #include "Random.hpp"
 
 //////////////////////////////////////////////////////////////////////
@@ -17,8 +16,8 @@ void SmoothingKernel::setupSelfBefore()
     // cache random generator
     _random = find<Random>();
 
-    // if needed, open the cumulative kernel table used in massInBox()
-    if (find<Configuration>()->usesMassInBox()) _cumkernel.open(this, type(), "X(1),Y(1),Z(1)", "Phi(1)", false);
+    // open the cumulative kernel table used in massInBox()
+    _cumkernel.open(this, type(), "X(1),Y(1),Z(1)", "Phi(1)", false);
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -235,12 +235,6 @@ public:
     /** Returns the number of random spatial samples for determining other properties. */
     int numPropertySamples() const { return _numPropertySamples; }
 
-    /** Returns true if all conditions are satisfied for using mass in box rather than density
-        sampling for obtaining the density is spatial grid cells. These conditions include: all
-        cells in the spatial grid must be axis-aligned boxes, and all media components support the
-        mass in box interface. */
-    bool usesMassInBox() const { return _usesMassInBox; }
-
     // ----> phases, iterations, number of packets
 
     /** Returns true if secondary emission must be calculated for any media type, and false
@@ -490,7 +484,6 @@ private:
     // media sampling
     int _numDensitySamples{100};
     int _numPropertySamples{1};
-    bool _usesMassInBox{false};
 
     // phases, iterations, number of packets
     bool _hasSecondaryEmission{false};

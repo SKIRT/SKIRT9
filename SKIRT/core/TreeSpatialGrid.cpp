@@ -72,6 +72,9 @@ void TreeSpatialGrid::setupSelfAfter()
                   + string(numStars, '*'));
     }
     log->info("  TOTAL   :" + StringUtils::toString(numCells, 'd', 0, 9) + " (100.0%)");
+
+    // make the BoxCellDensityMixIn verify whether we can offer the DensityInCellInterface
+    BoxCellDensityMixIn::setup(this);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -355,6 +358,14 @@ TreeNode* TreeSpatialGrid::nodeForCellIndex(int m) const
 int TreeSpatialGrid::cellIndexForNode(const TreeNode* node) const
 {
     return _cellindexv[node->id()];
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool TreeSpatialGrid::offersInterface(const std::type_info& interfaceTypeInfo) const
+{
+    if (interfaceTypeInfo == typeid(DensityInCellInterface)) return BoxCellDensityMixIn::offersInterface();
+    return SpatialGrid::offersInterface(interfaceTypeInfo);
 }
 
 ////////////////////////////////////////////////////////////////////

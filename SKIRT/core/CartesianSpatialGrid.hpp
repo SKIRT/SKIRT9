@@ -7,16 +7,17 @@
 #define CARTESIANSPATIALGRID_HPP
 
 #include "Array.hpp"
+#include "BoxCellDensityMixIn.hpp"
 #include "BoxSpatialGrid.hpp"
-#include "CartesianCellInterface.hpp"
 #include "Mesh.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 /** The CartesianSpatialGrid class is subclass of the BoxSpatialGrid class, and represents
     three-dimensional spatial grids based on a regular Cartesian grid. Each cell in such a grid is
-    a little cuboid (not necessarily all with the same size or axis ratios). */
-class CartesianSpatialGrid : public BoxSpatialGrid, public CartesianCellInterface
+    a cuboid lined up with the Cartesian coordinate axes. Then cells do not necessarily all have
+    the same size or axis ratios. */
+class CartesianSpatialGrid : public BoxSpatialGrid, public BoxCellDensityMixIn
 {
     ITEM_CONCRETE(CartesianSpatialGrid, BoxSpatialGrid, "a Cartesian spatial grid")
 
@@ -44,8 +45,8 @@ public:
     /** This function returns the number of cells in the grid. */
     int numCells() const override;
 
-    /** This function returns the box defining the cell with index \f$m\f$, implementing the
-        CartesianCellInterface. The function determines the bin indices \f$i\f$, \f$j\f$ and
+    /** This function returns the box defining the cell with index \f$m\f$, as required by the
+        BoxCellDensityMixIn class. The function determines the bin indices \f$i\f$, \f$j\f$ and
         \f$k\f$ corresponding to the X, Y and Z directions and returns the corresponding
         coordinates. */
     Box cellBox(int m) const override;
@@ -122,6 +123,14 @@ private:
         m/(N_y\,N_z) \rfloor \\ j &= \lfloor (m-i\,N_y\,N_z)/N_z \rfloor \\ k &=
         m\,{\text{mod}}\,N_z. \end{split} \f] */
     Box box(int m) const;
+
+protected:
+    /** This function is used by the interface() function to ensure that the receiving item can
+        actually offer the specified interface. If the requested interface is the
+        DensityInCellInterface, the implementation in this class returns the value returned by the
+        BoxCellDensityMixIn::offersInterface() function. For other requested interfaces, the
+        function invokes its counterpart in the base class. */
+    bool offersInterface(const std::type_info& interfaceTypeInfo) const override;
 
     //======================== Data Members ========================
 

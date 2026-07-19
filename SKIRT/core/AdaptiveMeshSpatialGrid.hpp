@@ -6,7 +6,6 @@
 #ifndef ADAPTIVEMESHSPATIALGRID_HPP
 #define ADAPTIVEMESHSPATIALGRID_HPP
 
-#include "CartesianCellInterface.hpp"
 #include "DensityInCellInterface.hpp"
 #include "SpatialGrid.hpp"
 class AdaptiveMeshSnapshot;
@@ -20,7 +19,7 @@ class AdaptiveMeshSnapshot;
     AdaptiveMeshSnapshot to represent its spatial distribution. If multiple media components are
     based on an imported AdaptiveMeshSnapshot, the first component (in configuration order) is used
     for the spatial grid. */
-class AdaptiveMeshSpatialGrid : public SpatialGrid, public DensityInCellInterface, public CartesianCellInterface
+class AdaptiveMeshSpatialGrid : public SpatialGrid, public DensityInCellInterface
 {
     ITEM_CONCRETE(AdaptiveMeshSpatialGrid, SpatialGrid, "a spatial grid taken from an imported adaptive mesh snapshot")
         ATTRIBUTE_TYPE_ALLOWED_IF(AdaptiveMeshSpatialGrid, "AdaptiveMeshInterface")
@@ -51,9 +50,6 @@ public:
 
     /** This function returns the diagonal of the cell with index \f$m\f$. */
     double diagonal(int m) const override;
-
-    /** This function returns the bounding box of the cell with index \f$m\f$. */
-    Box cellBox(int m) const override;
 
     /** This function returns the index \f$m\f$ of the cell that contains the position
         \f${\bf{r}}\f$. */
