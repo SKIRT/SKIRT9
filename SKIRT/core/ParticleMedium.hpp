@@ -89,6 +89,10 @@ protected:
     //============= Other functions =============
 
 public:
+    /** This function returns the mass for the medium component in the specified axis-aligned
+        bounding box, implementing the MassInBoxInterface. */
+    double massInBox(const Box& box) const override;
+
     /** This function returns the volume-integrated number density for the medium component in the
         specified axis-aligned bounding box, implementing the MassInBoxInterface. */
     double numberInBox(const Box& box) const override;

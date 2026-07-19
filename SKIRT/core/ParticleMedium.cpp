@@ -36,6 +36,15 @@ Snapshot* ParticleMedium::createAndOpenSnapshot()
 
 ////////////////////////////////////////////////////////////////////
 
+double ParticleMedium::massInBox(const Box& box) const
+{
+    double result = _particleSnapshot->massInBox(box);
+    if (_particleSnapshot->holdsNumber()) result *= mix()->mass();
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double ParticleMedium::numberInBox(const Box& box) const
 {
     double result = _particleSnapshot->massInBox(box);

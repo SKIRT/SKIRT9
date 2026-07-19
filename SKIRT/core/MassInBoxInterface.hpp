@@ -24,6 +24,10 @@ public:
     /** The empty destructor for the interface. */
     virtual ~MassInBoxInterface() {}
 
+    /** This function returns the mass for the medium component in the specified axis-aligned
+        bounding box. */
+    virtual double massInBox(const Box& box) const = 0;
+
     /** This function returns the volume-integrated number density for the medium component in the
         specified axis-aligned bounding box. */
     virtual double numberInBox(const Box& box) const = 0;
