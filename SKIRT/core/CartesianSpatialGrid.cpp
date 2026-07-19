@@ -231,6 +231,6 @@ Box CartesianSpatialGrid::box(int m) const
 bool CartesianSpatialGrid::offersInterface(const std::type_info& interfaceTypeInfo) const
 {
     if (interfaceTypeInfo == typeid(DensityInCellInterface)) return BoxCellDensityMixIn::offersInterface();
-    return SpatialGrid::offersInterface(interfaceTypeInfo);
+    return BoxSpatialGrid::offersInterface(interfaceTypeInfo);
 }
 //////////////////////////////////////////////////////////////////////

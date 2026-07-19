@@ -43,7 +43,7 @@ bool BoxCellDensityMixIn::offersInterface() const
 double BoxCellDensityMixIn::numberDensity(int h, int m) const
 {
     Box box = cellBox(m);
-    return _mibv[h]->massInBox(box) / box.volume();
+    return _mibv[h]->numberInBox(box) / box.volume();
 }
 
 //////////////////////////////////////////////////////////////////////

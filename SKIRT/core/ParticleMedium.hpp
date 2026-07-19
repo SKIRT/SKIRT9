@@ -58,7 +58,7 @@ class ParticleSnapshot;
     Finally, if the \em importVariableMixParams option is enabled, the remaining columns specify
     the parameters used by the configured material mix family to select a particular material mix
     for the particle. */
-class ParticleMedium : public ImportedMedium, MassInBoxInterface
+class ParticleMedium : public ImportedMedium, public MassInBoxInterface
 {
     /** The enumeration type indicating the type of mass quantity to be imported. */
     ENUM_DEF(MassType, Mass, Number)
@@ -89,9 +89,17 @@ protected:
     //============= Other functions =============
 
 public:
-    /** This function returns the medium mass in the specified axis-aligned bounding box,
-        implementing the MassInBoxInterface. */
-    double massInBox(const Box& box) const override;
+    /** This function returns the volume-integrated number density for the medium component in the
+        specified axis-aligned bounding box, implementing the MassInBoxInterface. */
+    double numberInBox(const Box& box) const override;
+
+protected:
+    /** This function is used by the interface() function to ensure that the receiving item can
+        actually offer the specified interface. If the requested interface is the
+        MassInBoxInterface, the implementation in this class returns true if the medium has a
+        spatially uniform material mix, and false if it has a variable material mix. For other
+        requested interfaces, the function invokes its counterpart in the base class. */
+    bool offersInterface(const std::type_info& interfaceTypeInfo) const override;
 
     //===================== Data members ====================
 

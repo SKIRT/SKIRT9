@@ -36,9 +36,19 @@ Snapshot* ParticleMedium::createAndOpenSnapshot()
 
 ////////////////////////////////////////////////////////////////////
 
-double ParticleMedium::massInBox(const Box& box) const
+double ParticleMedium::numberInBox(const Box& box) const
 {
-    return _particleSnapshot->massInBox(box);
+    double result = _particleSnapshot->massInBox(box);
+    if (!_particleSnapshot->holdsNumber()) result /= mix()->mass();
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool ParticleMedium::offersInterface(const std::type_info& interfaceTypeInfo) const
+{
+    if (interfaceTypeInfo == typeid(MassInBoxInterface)) return !hasVariableMix();
+    return ImportedMedium::offersInterface(interfaceTypeInfo);
 }
 
 ////////////////////////////////////////////////////////////////////
