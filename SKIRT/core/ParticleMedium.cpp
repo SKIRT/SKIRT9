@@ -56,7 +56,7 @@ double ParticleMedium::numberInBox(const Box& box) const
 
 bool ParticleMedium::offersInterface(const std::type_info& interfaceTypeInfo) const
 {
-    if (interfaceTypeInfo == typeid(MassInBoxInterface)) return !hasVariableMix();
+    if (interfaceTypeInfo == typeid(MassInBoxInterface)) return !hasVariableMix() && _smoothingKernel->hasMassInBox();
     return ImportedMedium::offersInterface(interfaceTypeInfo);
 }
 

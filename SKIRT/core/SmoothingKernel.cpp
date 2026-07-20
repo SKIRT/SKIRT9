@@ -5,6 +5,7 @@
 
 #include "SmoothingKernel.hpp"
 #include "Box.hpp"
+#include "FilePaths.hpp"
 #include "Random.hpp"
 
 //////////////////////////////////////////////////////////////////////
@@ -17,7 +18,7 @@ void SmoothingKernel::setupSelfBefore()
     _random = find<Random>();
 
     // open the cumulative kernel table used in massInBox()
-    _cumkernel.open(this, type(), "X(1),Y(1),Z(1)", "Phi(1)", false);
+    if (hasMassInBox()) _cumkernel.open(this, type(), "X(1),Y(1),Z(1)", "Phi(1)", false);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -47,6 +48,13 @@ double SmoothingKernel::massInBox(const Box& box) const
     box.extent(xm, ym, zm, xp, yp, zp);
     return PhiSigned(xp, yp, zp) - PhiSigned(xp, yp, zm) - PhiSigned(xp, ym, zp) + PhiSigned(xp, ym, zm)
            - PhiSigned(xm, yp, zp) + PhiSigned(xm, yp, zm) + PhiSigned(xm, ym, zp) - PhiSigned(xm, ym, zm);
+}
+
+//////////////////////////////////////////////////////////////////////
+
+bool SmoothingKernel::hasMassInBox() const
+{
+    return FilePaths::hasResource(type() + ".stab");
 }
 
 //////////////////////////////////////////////////////////////////////

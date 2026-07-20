@@ -62,6 +62,11 @@ public:
         classes can override the function to provide another implementation if desired. */
     virtual double massInBox(const Box& box) const;
 
+    /** This function returns true if this smoothing kernel offers the massInBox() feature. The
+        implementation in this base class returns true if the cumulative kernel resource file is
+        available, and false if not. Derived classes can override the function if desired. */
+    virtual bool hasMassInBox() const;
+
 protected:
     /** This function returns the simulation's random generator as a service to subclasses. */
     Random* random() const { return _random; }

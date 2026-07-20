@@ -65,7 +65,7 @@ void DensityTreePolicy::setupSelfBefore()
         if (maxDustFraction() > 0) _hasDustFraction = true;
         if (maxDustOpticalDepth() > 0) _hasDustOpticalDepth = true;
         if (maxDustDensityDispersion() > 0) _hasDustDensityDispersion = true;
-        _needDustSamples = _dustMIBv.empty() || _hasDustDensityDispersion;
+        _needDustSamples = _dustMIBv.empty() | _hasDustDensityDispersion;
         _hasDustMIB = !_dustMIBv.empty();
         if (_hasDustFraction)
         {
