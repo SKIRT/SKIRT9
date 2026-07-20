@@ -87,7 +87,7 @@ public:
         bounding box, determined by integrating (conceptually) over all smoothed particles. If the
         box is fully outside the domain, the function returns zero. If no density policy has been
         set or no mass information is being imported, the behavior is undefined. */
-    double massInBox(Box box) const;
+    double massInBox(const Box& box) const;
 
     /** This function returns the total mass represented by the snapshot, in other words the sum of
         the masses of all particles. If no density policy has been set or no mass information is
