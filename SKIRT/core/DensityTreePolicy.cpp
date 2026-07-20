@@ -43,7 +43,7 @@ void DensityTreePolicy::setupSelfBefore()
     }
 
     // build corresponding lists of MassInBoxInterface pointers
-    auto buildMIBlist = [](vector<MassInBoxInterface*> mibv, const vector<Medium*>& media) {
+    auto buildMIBlist = [](vector<MassInBoxInterface*>& mibv, const vector<Medium*>& media) {
         for (auto medium : media)
         {
             auto mib = medium->interface<MassInBoxInterface>(0, false);
@@ -243,6 +243,11 @@ vector<TreeNode*> DensityTreePolicy::constructTree(TreeNode* root)
 {
     auto log = find<Log>();
     auto parallel = find<ParallelFactory>()->parallelDistributed();
+
+    // inform user about the use of MassInBoxInterface
+    if (_hasDustMIB) find<Log>()->info("  (obtaining dust densities through calculation rather than sampling)");
+    if (_hasElectronMIB) find<Log>()->info("  (obtaining electron densities through calculation rather than sampling)");
+    if (_hasGasMIB) find<Log>()->info("  (obtaining gas densities through calculation rather than sampling)");
 
     // initialize the tree node list with the root node as the first item
     vector<TreeNode*> nodev{root};

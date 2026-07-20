@@ -285,8 +285,9 @@ void MediumSystem::setupSelfAfter()
 
     // ----- calculate medium properties parallelized on spatial cells -----
 
-    log->info("Calculating medium properties for " + std::to_string(_numCells) + " cells...");
+    log->info("Determining medium properties for " + std::to_string(_numCells) + " cells...");
     auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
+    if (dic) log->info("  (obtaining densities through calculation rather than sampling)");
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(_numCells, [this, log, dic](size_t firstIndex, size_t numIndices) {
         // construct a property sampler to be shared by all cells handled in the loop below
@@ -382,7 +383,7 @@ void MediumSystem::setupSelfAfter()
                     mix(m, h)->initializeSpecificState(&mst, Z, T, params);
                 }
             }
-            log->infoIfElapsed("Calculated medium properties: ", currentChunkSize);
+            log->infoIfElapsed("Determined medium properties: ", currentChunkSize);
             firstIndex += currentChunkSize;
             numIndices -= currentChunkSize;
         }
@@ -394,7 +395,7 @@ void MediumSystem::setupSelfAfter()
     // calculate the initial aggregate state, if needed
     _state.calculateAggregate();
 
-    log->info("Done calculating medium properties");
+    log->info("Done determining medium properties");
 }
 
 ////////////////////////////////////////////////////////////////////
