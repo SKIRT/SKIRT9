@@ -172,7 +172,7 @@ bool DensityTreePolicy::needsSubdivide(TreeNode* node)
     }
     if (_hasElectronMIB)
     {
-        for (auto mib : _electronMIBv) Ne += mib->massInBox(node->extent());
+        for (auto mib : _electronMIBv) Ne += mib->numberInBox(node->extent());
     }
     else
     {
@@ -180,7 +180,7 @@ bool DensityTreePolicy::needsSubdivide(TreeNode* node)
     }
     if (_hasGasMIB)
     {
-        for (auto mib : _gasMIBv) Ng += mib->massInBox(node->extent());
+        for (auto mib : _gasMIBv) Ng += mib->numberInBox(node->extent());
     }
     else
     {
