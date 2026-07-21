@@ -31,7 +31,39 @@ double SmoothingKernel::massInBox(const Box& box) const
         X = std::min(X, 1.0);
         Y = std::min(Y, 1.0);
         Z = std::min(Z, 1.0);
-        return _cumkernel(X, Y, Z);
+
+        // we could simply do: return _cumkernel(X, Y, Z);
+        // however, this would cost a binary search along each axis, so we perform the interpolation here,
+        // assuming that the three axes have range [0..1] with the same number of equidistant points
+        size_t num = _cumkernel.axisSize<0>() - 1;
+        X *= num;
+        Y *= num;
+        Z *= num;
+        size_t i0 = std::min(num - 1, static_cast<size_t>(X));
+        size_t j0 = std::min(num - 1, static_cast<size_t>(Y));
+        size_t k0 = std::min(num - 1, static_cast<size_t>(Z));
+        size_t i1 = i0 + 1;
+        size_t j1 = j0 + 1;
+        size_t k1 = k0 + 1;
+        double tx = X - i0;
+        double ty = Y - j0;
+        double tz = Z - k0;
+
+        double v000 = _cumkernel.valueAtIndices(i0, j0, k0);
+        double v100 = _cumkernel.valueAtIndices(i1, j0, k0);
+        double v010 = _cumkernel.valueAtIndices(i0, j1, k0);
+        double v110 = _cumkernel.valueAtIndices(i1, j1, k0);
+        double v001 = _cumkernel.valueAtIndices(i0, j0, k1);
+        double v101 = _cumkernel.valueAtIndices(i1, j0, k1);
+        double v011 = _cumkernel.valueAtIndices(i0, j1, k1);
+        double v111 = _cumkernel.valueAtIndices(i1, j1, k1);
+        double v00 = (1.0 - tx) * v000 + tx * v100;
+        double v10 = (1.0 - tx) * v010 + tx * v110;
+        double v01 = (1.0 - tx) * v001 + tx * v101;
+        double v11 = (1.0 - tx) * v011 + tx * v111;
+        double v0 = (1.0 - ty) * v00 + ty * v10;
+        double v1 = (1.0 - ty) * v01 + ty * v11;
+        return (1.0 - tz) * v0 + tz * v1;
     };
 
     // Signed Phi*(X,Y,Z) for arbitrary X,Y,Z
