@@ -203,11 +203,12 @@ namespace
     // resource data for resonant-scattering branching probabilities
     struct BranchResource
     {
-        BranchResource(const Array& a) : Z(a[0]), upperIndex(a[1]), lowerIndex(a[2]), prob(a[3]) {}
+        BranchResource(const Array& a) : Z(a[0]), N(a[1]), upperIndex(a[2]), lowerIndex(a[3]), prob(a[4]) {}
 
         int ionIndex{-1};  // index of the corresponding ion in the user-specified ion list
 
         int Z;           // atomic number
+        int N;           // number of electrons
         int upperIndex;  // index of the absorbed transition
         int lowerIndex;  // index of the emitted transition after branching
         double prob;     // branching probability from the upper transition to the lower transition
@@ -489,7 +490,7 @@ void XRayIonicGasMix::setupSelfBefore()
     vector<BranchResource> branchResources;
     if (resonantScattering())
         branchResources =
-            loadPresent<BranchResource, 4>(this, "Ionic_BR.txt", "resonant branching probabilities", ionSet);
+            loadPresent<BranchResource, 5>(this, "Ionic_BR.txt", "resonant branching probabilities", ionSet);
 
     // yields for recombination for each value of N
     std::map<int, StoredTable<3>> recoResources;
@@ -570,6 +571,10 @@ void XRayIonicGasMix::setupSelfBefore()
             for (auto& lineRes : lineResources)
             {
                 if (lineRes.Z == ion.Z && lineRes.N == ion.N) lineRes.ionIndex = i;
+            }
+            for (auto& braRes : branchResources)
+            {
+                if (braRes.Z == ion.Z && braRes.N == ion.N) braRes.ionIndex = i;
             }
         }
     }
