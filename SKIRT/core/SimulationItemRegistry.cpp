@@ -39,6 +39,7 @@
 #include "CellSource.hpp"
 #include "ClearDensityRecipe.hpp"
 #include "ClumpyGeometryDecorator.hpp"
+#include "ClumpySphericalSpatialGrid.hpp"
 #include "ClumpyTorusSpatialGrid.hpp"
 #include "CombineGeometryDecorator.hpp"
 #include "CompositeWavelengthGrid.hpp"
@@ -527,6 +528,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<VoronoiMeshSpatialGrid>();
     ItemRegistry::add<TetraMeshSpatialGrid>();
     ItemRegistry::add<ClumpyTorusSpatialGrid>();
+    ItemRegistry::add<ClumpySphericalSpatialGrid>();
 
     // spatial grid policies
     ItemRegistry::add<TreePolicy>();
