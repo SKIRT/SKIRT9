@@ -965,7 +965,9 @@ public:
                     return true;
                 }
 
-                // the original position was inside the grid
+                // the original position was inside the grid; it may already be inside a clump
+                // (e.g. a scattered photon relaunched from a scattering event inside a clump)
+                _clump = _grid->_bvh->anyClumpContaining(r());
                 if (!setCellIndices()) return abortPath();
                 setState(State::Inside);
 
@@ -979,6 +981,7 @@ public:
                 {
                     const Clump& c = _grid->_clumps[_clump];
                     double ds = firstIntersectionSphere(r(), k(), c.center(), c.radius());
+                    if (ds <= 0.) return abortPath();
                     setSegment(_clump, ds);
                     propagater(ds + _eps);
                     _clump = -1;
