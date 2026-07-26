@@ -103,15 +103,17 @@ public:
 
     /** This function returns the central location of the cell with index \f$m\f$. For a clump,
         this is the center of the sphere. For a structured cell, the function first tries the
-        nominal cell-center position; if that position happens to be inside one of the clumps
-        overlapping the cell, a random position is returned instead. */
+        nominal cell-center position; if that position happens to be inside one of the clumps (as
+        determined through an exact query of the bounding volume hierarchy), a random position is
+        returned instead. */
     Position centralPositionInCell(int m) const override;
 
     /** This function returns a random location from the cell with index \f$m\f$. For a clump, a
         random position within the sphere is generated through analytical inversion. For a
         structured cell, a random position within the cell's nominal spherical-coordinate ranges is
-        generated through analytical inversion, which is then rejected iteratively as long as it
-        happens to be inside one of the clumps overlapping the cell. */
+        generated through analytical inversion, which is then rejected iteratively -- based on an
+        exact query of the bounding volume hierarchy -- as long as it happens to be inside one of
+        the clumps. */
     Position randomPositionInCell(int m) const override;
 
     /** This function creates and hands over ownership of a path segment generator (an instance of
@@ -156,15 +158,15 @@ private:
     class Clump
     {
         double _x, _y, _z, _r;
-        bool _straddling{false};
+        int _numOverlappingCells{0};
 
     public:
         Clump(double x, double y, double z, double r) : _x{x}, _y{y}, _z{z}, _r{r} {}
         Position center() const { return Position(_x, _y, _z); }
         double radius() const { return _r; }
         Box bounds() const { return Box(_x - _r, _y - _r, _z - _r, _x + _r, _y + _r, _z + _r); }
-        void setStraddling(bool straddling) { _straddling = straddling; }
-        bool straddling() const { return _straddling; }
+        void setNumOverlappingCells(int n) { _numOverlappingCells = n; }
+        int numOverlappingCells() const { return _numOverlappingCells; }
     };
 
     // array defining the clumps
@@ -190,13 +192,6 @@ private:
     // the volume of each structured cell (local index s, 0 <= s < _Ncells), precomputed and cached
     // during setup as the nominal cell volume minus the volume of any overlapping clump portions
     vector<double> _cellVolume;
-
-    // flat (CSR-style) list of, for each structured cell (local index s), the indices of the clumps
-    // that overlap it: cell s's clump indices are _cellClumpIndex[_cellClumpOffset[s]..
-    // _cellClumpOffset[s+1]); this avoids the pointer chasing and memory fragmentation of a
-    // vector<vector<int>>
-    vector<int> _cellClumpOffset;  // size _Ncells+1
-    vector<int> _cellClumpIndex;   // flat, concatenated per cell
 
     // small value used to progress a path
     double _eps{0.};

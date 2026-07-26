@@ -674,32 +674,28 @@ void ClumpySphericalSpatialGrid::setupSelfAfter()
 
     // ---- for each clump, Monte Carlo sample its overlap with the structured cells ----
     //
-    // We sample K points uniformly inside the clump's own sphere (rather than inside each
-    // candidate structured cell) and determine which structured cell each sample lands in. This
-    // way, a single pass per clump both classifies the clump (does it land in one cell only, or
-    // does it straddle several?) and yields the fractional volume the clump contributes to each
-    // cell it touches -- and because every sample lands in exactly one cell, those fractional
-    // contributions always sum exactly to the clump's true volume, with no leakage even though
-    // the individual per-cell splits are Monte Carlo estimates.
+    // We sample points uniformly inside the clump's own sphere (rather than inside each candidate
+    // structured cell) and determine which structured cell each sample lands in. Because every
+    // sample lands in exactly one cell, the resulting per-cell hit counts always sum exactly to
+    // the total number of samples drawn, so the fractional volume contributions derived from them
+    // always sum exactly to the clump's true volume, with no leakage even though the individual
+    // per-cell splits are Monte Carlo estimates.
+    //
+    // A single fixed sample budget per clump would grow increasingly inaccurate for a clump that
+    // straddles many small cells, since each individual cell would then receive only a small
+    // fraction of the samples. To avoid that, sampling proceeds in two phases: phase 1 draws K
+    // samples and discovers how many distinct cells N are touched; if N>1, phase 2 tops up the
+    // budget to a total of N*K samples, so that every touched cell receives on the order of K
+    // samples on average, regardless of how many cells the clump straddles.
 
     Random* rnd = random();
     int K = find<Configuration>()->numDensitySamples();
 
-    // temporary (structured cell, clump) touches, used below to build the CSR overlap list
-    vector<std::pair<int, int>> touches;
-
-    int numStraddling = 0;
-    log->info("Estimating structured-cell volumes overlapped by " + std::to_string(_numClumps) + " clumps ("
-              + std::to_string(K) + " samples per clump)...");
-    for (int ci = 0; ci != _numClumps; ++ci)
-    {
-        Clump& clump = _clumps[ci];
-
-        // tally, for this clump, how many of the K samples land in each structured cell touched;
-        // typically only one or a handful of cells are touched, so a linear-scan association
-        // list is faster and lighter than a dense per-clump array of size _Ncells
-        vector<std::pair<int, int>> hits;
-        for (int n = 0; n != K; ++n)
+    // draws numSamples additional samples uniformly inside the clump's sphere and tallies, for
+    // each, which structured cell it lands in; typically only a handful of cells are touched, so
+    // a linear-scan association list is lighter than a dense per-clump array of size _Ncells
+    auto sampleAndTally = [&](const Clump& clump, int numSamples, vector<std::pair<int, int>>& hits) {
+        for (int n = 0; n != numSamples; ++n)
         {
             Position p = randomPositionInSphere(rnd, clump.center(), clump.radius());
             double r, theta, phi;
@@ -719,38 +715,44 @@ void ClumpySphericalSpatialGrid::setupSelfAfter()
                 }
             if (!found) hits.emplace_back(s, 1);
         }
+    };
 
+    int numStraddling = 0;
+    log->info("Estimating structured-cell volumes overlapped by " + std::to_string(_numClumps) + " clumps (at least "
+              + std::to_string(K) + " samples per clump)...");
+    vector<std::pair<int, int>> hits;  // reused across clumps to avoid reallocating on every iteration
+    for (int ci = 0; ci != _numClumps; ++ci)
+    {
+        Clump& clump = _clumps[ci];
         double clumpVolume = volumeSphere(clump.radius());
-        bool straddling = hits.size() > 1;
-        clump.setStraddling(straddling);
-        if (straddling) numStraddling++;
+
+        // phase 1: draw K samples and discover how many distinct cells are touched
+        hits.clear();
+        sampleAndTally(clump, K, hits);
+        int totalSamples = K;
+
+        // phase 2: if more than one cell was touched, top up the sample budget so that every
+        // touched cell receives on the order of K samples on average
+        if (hits.size() > 1)
+        {
+            int extraSamples = (static_cast<int>(hits.size()) - 1) * K;
+            sampleAndTally(clump, extraSamples, hits);
+            totalSamples += extraSamples;
+        }
+
+        int numOverlappingCells = static_cast<int>(hits.size());
+        clump.setNumOverlappingCells(numOverlappingCells);
+        if (numOverlappingCells > 1) numStraddling++;
 
         for (const auto& hit : hits)
         {
-            // if the clump does not straddle a cell wall, the single cell it landed in gets the
-            // full (exact) sphere volume rather than a noisy K-sample estimate of it
-            double fraction = straddling ? static_cast<double>(hit.second) / K : 1.;
+            double fraction = static_cast<double>(hit.second) / totalSamples;
             _cellVolume[hit.first] -= clumpVolume * fraction;
-            touches.emplace_back(hit.first, ci);
         }
     }
 
     // clamp away any small negative volumes caused by Monte Carlo noise or near-coincident boundaries
     for (double& v : _cellVolume) v = max(v, 0.);
-
-    // ---- build the CSR-style cell -> overlapping-clump list from the recorded touches ----
-    //
-    // two flat arrays rather than a vector<vector<int>>, to avoid the per-cell allocations and
-    // pointer chasing that the latter would incur
-
-    _cellClumpOffset.assign(_Ncells + 1, 0);
-    for (const auto& t : touches) _cellClumpOffset[t.first + 1]++;
-    for (int s = 0; s != _Ncells; ++s) _cellClumpOffset[s + 1] += _cellClumpOffset[s];
-    _cellClumpIndex.resize(touches.size());
-    {
-        vector<int> cursor(_cellClumpOffset.begin(), _cellClumpOffset.end() - 1);
-        for (const auto& t : touches) _cellClumpIndex[cursor[t.first]++] = t.second;
-    }
 
     // inform the user
     log->info("Summary:");
@@ -848,13 +850,10 @@ Position ClumpySphericalSpatialGrid::centralPositionInCell(int m) const
         double phi = 0.5 * (phimin + phimax);
         Position candidate(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
 
-        // if the nominal center happens to fall inside one of the clumps overlapping this cell,
-        // fall back to a random position instead
-        for (int idx = _cellClumpOffset[s]; idx != _cellClumpOffset[s + 1]; ++idx)
-        {
-            const Clump& c = _clumps[_cellClumpIndex[idx]];
-            if (isPositionInSphere(candidate, c.center(), c.radius())) return randomPositionInCell(m);
-        }
+        // if the nominal center happens to fall inside one of the clumps, fall back to a random
+        // position instead; the BVH gives an exact answer, unlike the (possibly incomplete, since
+        // it is built from Monte Carlo discovery -- see setupSelfAfter) per-cell clump list
+        if (_bvh->anyClumpContaining(candidate) >= 0) return randomPositionInCell(m);
         return candidate;
     }
     return Position();
@@ -877,18 +876,10 @@ Position ClumpySphericalSpatialGrid::randomPositionInCell(int m) const
             double phi = phimin + (phimax - phimin) * random()->uniform();
             Position candidate(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
 
-            // accept the position unless it falls inside one of the clumps overlapping this cell
-            bool inClump = false;
-            for (int idx = _cellClumpOffset[s]; idx != _cellClumpOffset[s + 1]; ++idx)
-            {
-                const Clump& c = _clumps[_cellClumpIndex[idx]];
-                if (isPositionInSphere(candidate, c.center(), c.radius()))
-                {
-                    inClump = true;
-                    break;
-                }
-            }
-            if (!inClump) return candidate;
+            // accept the position unless it falls inside one of the clumps; the BVH gives an
+            // exact answer, unlike the (possibly incomplete, since it is built from Monte Carlo
+            // discovery -- see setupSelfAfter) per-cell clump list
+            if (_bvh->anyClumpContaining(candidate) < 0) return candidate;
         }
     }
     return Position();
