@@ -5,12 +5,11 @@
 
 #include "ClumpySphericalSpatialGrid.hpp"
 #include "Configuration.hpp"
-#include "Cubic.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
-#include "Quadratic.hpp"
+#include "Quadrics.hpp"
 #include "Random.hpp"
 #include "SpatialGridPlotFile.hpp"
 #include "TextInFile.hpp"
@@ -22,77 +21,6 @@ namespace
 {
     // small value, used to progress a path; leave at 1e-10 -- with 1e-11, inaccuracies start to occur
     constexpr double EPS = 1e-10;
-
-    // small value, used only to detect a path direction parallel to a meridional plane
-    constexpr double PARALLEL_EPS = 1e-12;
-
-    // This function returns the square of a value
-    double square(double v)
-    {
-        return v * v;
-    }
-
-    // This function returns the cube of a value
-    double cube(double v)
-    {
-        return v * v * v;
-    }
-
-    // This function returns the volume of a sphere with given radius
-    double volumeSphere(double radius)
-    {
-        return (4. / 3.) * M_PI * cube(radius);
-    }
-
-    // This function returns true if the sphere with given center and radius is fully inside the
-    // spherical shell with given inner and outer radii (no straggling nor touching allowed)
-    bool isSphereInShell(double x, double y, double z, double r, double rmin, double rmax)
-    {
-        const double rho = std::sqrt(square(x) + square(y) + square(z));
-        return rho - r > rmin && rho + r < rmax;
-    }
-
-    // This function returns true if the given position is inside the given sphere
-    bool isPositionInSphere(Vec p, Vec center, double r)
-    {
-        return (p - center).norm2() <= square(r);
-    }
-
-    // This function returns true if the specified spheres overlap or touch, and false otherwise
-    bool doSpheresOverlap(Vec center1, double radius1, Vec center2, double radius2)
-    {
-        return (center1 - center2).norm2() <= square(radius1 + radius2);
-    }
-
-    // This function returns a random position in a uniform sphere with given center and radius
-    Position randomPositionInSphere(Random* random, Position center, double radius)
-    {
-        double r = std::cbrt(random->uniform());
-        Direction k = random->direction();
-        return Position(center + k * r * radius);
-    }
-
-    // Returns the smallest strictly positive root of the ray-sphere intersection, or 0 if there is
-    // none (either no real intersection, or both intersections lie behind the ray's origin).
-    double firstIntersectionSphere(Position r0, Direction k, Position center, double radius)
-    {
-        Vec d = r0 - center;
-        return Quadratic::smallestPositiveSolution(Vec::dot(d, k), d.norm2() - square(radius));
-    }
-
-    // Determines the circle formed by intersecting a sphere (given its radius and its center's
-    // coordinate along the axis perpendicular to the plane) with a coordinate plane through the
-    // origin. Returns true and sets circleRadius if the sphere reaches the plane; returns false
-    // (leaving circleRadius unchanged) if it doesn't. The circle's center in the plane is simply
-    // the sphere center's own two in-plane coordinates, so the caller already has those and
-    // doesn't need them returned here.
-    bool sphereIntersectsPlane(double sphereRadius, double outOfPlaneCenterCoord, double& circleRadius)
-    {
-        double r2 = square(sphereRadius) - square(outOfPlaneCenterCoord);
-        if (r2 <= 0.) return false;
-        circleRadius = std::sqrt(r2);
-        return true;
-    }
 
     // writes the axisymmetric structured-grid lines (spheres and cones) to a meridional plot;
     // shared by write_xz() and write_yz() since the structured grid itself is axisymmetric
@@ -392,7 +320,7 @@ public:
                         int m = _index[k];
                         if (!accepted[m]) continue;
                         const Clump& cm = (*_clumps)[m];
-                        if (doSpheresOverlap(ci.center(), ci.radius(), cm.center(), cm.radius()))
+                        if (Quadrics::doSpheresOverlap(ci.center(), ci.radius(), cm.center(), cm.radius()))
                         {
                             conflict = true;
                             break;
@@ -441,7 +369,7 @@ public:
                 {
                     int m = _index[k];
                     const Clump& c = (*_clumps)[m];
-                    if (isPositionInSphere(bfr, c.center(), c.radius())) return m;
+                    if (Quadrics::isPositionInSphere(bfr, c.center(), c.radius())) return m;
                 }
             }
             else
@@ -494,7 +422,7 @@ public:
                 {
                     int m = _index[i];
                     const Clump& c = (*_clumps)[m];
-                    double s0 = firstIntersectionSphere(r0, k, c.center(), c.radius());
+                    double s0 = Quadrics::firstIntersectionSphere(r0, k, c.center(), c.radius());
                     if (s0 > 0. && s0 < sBest)
                     {
                         sBest = s0;
@@ -623,7 +551,7 @@ void ClumpySphericalSpatialGrid::setupSelfAfter()
     {
         double rmin, thetamin, phimin, rmax, thetamax, phimax;
         getCoords(s, rmin, thetamin, phimin, rmax, thetamax, phimax);
-        _cellVolume[s] = (1. / 3.) * Cubic::pow3(rmin, rmax) * (cos(thetamin) - cos(thetamax)) * (phimax - phimin);
+        _cellVolume[s] = (1. / 3.) * Quadrics::pow3(rmin, rmax) * (cos(thetamin) - cos(thetamax)) * (phimax - phimin);
     }
 
     // ---- read the file defining the spherical clumps, rejecting those outside the domain ----
@@ -638,7 +566,7 @@ void ClumpySphericalSpatialGrid::setupSelfAfter()
         double x, y, z, r;
         while (infile.readRow(x, y, z, r))
         {
-            if (isSphereInShell(x, y, z, r, minRadius(), maxRadius()))
+            if (Quadrics::isSphereInShell(Vec(x, y, z), r, minRadius(), maxRadius()))
                 _clumps.emplace_back(x, y, z, r);
             else
                 numOutside++;
@@ -694,7 +622,7 @@ void ClumpySphericalSpatialGrid::setupSelfAfter()
     auto sampleAndTally = [&](const Clump& clump, int numSamples, vector<std::pair<int, int>>& hits) {
         for (int n = 0; n != numSamples; ++n)
         {
-            Position p = randomPositionInSphere(rnd, clump.center(), clump.radius());
+            Position p = rnd->positionInSphere(clump.center(), clump.radius());
             double r, theta, phi;
             p.spherical(r, theta, phi);
             int i = NR::locateClip(_rv, r);
@@ -721,7 +649,7 @@ void ClumpySphericalSpatialGrid::setupSelfAfter()
     for (int ci = 0; ci != _numClumps; ++ci)
     {
         Clump& clump = _clumps[ci];
-        double clumpVolume = volumeSphere(clump.radius());
+        double clumpVolume = Quadrics::volumeSphere(clump.radius());
 
         // phase 1: draw K samples and discover how many distinct cells are touched
         hits.clear();
@@ -792,7 +720,7 @@ int ClumpySphericalSpatialGrid::numCells() const
 
 double ClumpySphericalSpatialGrid::volume(int m) const
 {
-    if (m >= 0 && m < _numClumps) return volumeSphere(_clumps[m].radius());
+    if (m >= 0 && m < _numClumps) return Quadrics::volumeSphere(_clumps[m].radius());
     int s = m - _numClumps;
     if (s >= 0 && s < _Ncells) return _cellVolume[s];
     return 0.;
@@ -860,7 +788,7 @@ Position ClumpySphericalSpatialGrid::centralPositionInCell(int m) const
 
 Position ClumpySphericalSpatialGrid::randomPositionInCell(int m) const
 {
-    if (m >= 0 && m < _numClumps) return randomPositionInSphere(random(), _clumps[m].center(), _clumps[m].radius());
+    if (m >= 0 && m < _numClumps) return random()->positionInSphere(_clumps[m].center(), _clumps[m].radius());
 
     int s = m - _numClumps;
     double rmin, thetamin, phimin, rmax, thetamax, phimax;
@@ -868,7 +796,7 @@ Position ClumpySphericalSpatialGrid::randomPositionInCell(int m) const
     {
         while (true)
         {
-            double r = cbrt(Cubic::pow3(rmin) + Cubic::pow3(rmin, rmax) * random()->uniform());
+            double r = cbrt(Quadrics::pow3(rmin) + Quadrics::pow3(rmin, rmax) * random()->uniform());
             double theta = acos(cos(thetamin) + (cos(thetamax) - cos(thetamin)) * random()->uniform());
             double phi = phimin + (phimax - phimin) * random()->uniform();
             Position candidate(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
@@ -918,28 +846,17 @@ public:
 
     // returns the distance to the first intersection between the current path and the radial
     // boundary sphere with given bin index, or 0 if there is none
-    double firstIntersectionRadialBoundary(int i)
-    {
-        return Quadratic::smallestPositiveSolution(Vec::dot(r(), k()), r().norm2() - _grid->_rv[i] * _grid->_rv[i]);
-    }
+    double firstIntersectionRadialBoundary(int i) { return Quadrics::firstIntersectionSphere(r(), k(), _grid->_rv[i]); }
 
     // returns the distance to the first intersection between the current path and the cone with
     // given bin index, or 0 if there is none (the degenerate cone with zero cosine is treated separately)
-    double firstIntersectionCone(int j)
-    {
-        double c = _grid->_cv[j];
-        return c ? Quadratic::smallestPositiveSolution(c * c - kz() * kz(), c * c * Vec::dot(r(), k()) - rz() * kz(),
-                                                       c * c * r().norm2() - rz() * rz())
-                 : -rz() / kz();  // degenerate cone identical to xy-plane
-    }
+    double firstIntersectionCone(int j) { return Quadrics::firstIntersectionCone(r(), k(), _grid->_cv[j]); }
 
     // returns the distance to the intersection between the current path and the meridional plane
     // with the given bin index, or 0 if there is none
-    double intersectionMeridionalPlane(int k)
+    double intersectionMeridionalPlane(int kbin)
     {
-        double q = kx() * _grid->_sinv[k] - ky() * _grid->_cosv[k];
-        if (abs(q) < PARALLEL_EPS) return 0.;
-        return -(rx() * _grid->_sinv[k] - ry() * _grid->_cosv[k]) / q;
+        return Quadrics::intersectionMeridionalPlane(r(), k(), _grid->_sinv[kbin], _grid->_cosv[kbin]);
     }
 
     bool next() override
@@ -977,7 +894,7 @@ public:
                 if (_clump >= 0)
                 {
                     const Clump& c = _grid->_clumps[_clump];
-                    double ds = firstIntersectionSphere(r(), k(), c.center(), c.radius());
+                    double ds = Quadrics::firstIntersectionSphere(r(), k(), c.center(), c.radius());
                     if (ds <= 0.) return abortPath();
                     setSegment(_clump, ds);
                     propagater(ds + _eps);
@@ -1144,7 +1061,7 @@ void ClumpySphericalSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
     {
         const Clump& c = _clumps[m];
         double circleRadius;
-        if (sphereIntersectsPlane(c.radius(), c.center().z(), circleRadius))
+        if (Quadrics::sphereIntersectsPlane(c.radius(), c.center().z(), circleRadius))
             outfile->writeCircle(c.center().x(), c.center().y(), circleRadius);
     }
 }
@@ -1161,7 +1078,7 @@ void ClumpySphericalSpatialGrid::write_xz(SpatialGridPlotFile* outfile) const
     {
         const Clump& c = _clumps[m];
         double circleRadius;
-        if (sphereIntersectsPlane(c.radius(), c.center().y(), circleRadius))
+        if (Quadrics::sphereIntersectsPlane(c.radius(), c.center().y(), circleRadius))
             outfile->writeCircle(c.center().x(), c.center().z(), circleRadius);
     }
 }
@@ -1180,7 +1097,7 @@ void ClumpySphericalSpatialGrid::write_yz(SpatialGridPlotFile* outfile) const
     {
         const Clump& c = _clumps[m];
         double circleRadius;
-        if (sphereIntersectsPlane(c.radius(), c.center().x(), circleRadius))
+        if (Quadrics::sphereIntersectsPlane(c.radius(), c.center().x(), circleRadius))
             outfile->writeCircle(c.center().y(), c.center().z(), circleRadius);
     }
 }

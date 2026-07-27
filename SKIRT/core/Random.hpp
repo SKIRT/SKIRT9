@@ -130,6 +130,10 @@ public:
         cuboid lined up with the coordinate axes). */
     Position position(const Box& box);
 
+    /** This function generates a uniformly distributed random position in a sphere with given
+        center and radius, using analytical inversion. */
+    Position positionInSphere(Position center, double radius);
+
     /** This function generates a random velocity from a three-dimensional Maxwell-Boltzmann
         distribution with velocity dispersion 1, which is equivalent to a Gaussian distribution
         with mean 0 and standard deviation 1 for each of the Cartesian velocity components. The

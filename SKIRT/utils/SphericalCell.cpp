@@ -5,9 +5,8 @@
 
 #include "SphericalCell.hpp"
 #include "Box.hpp"
-#include "Cubic.hpp"
 #include "Position.hpp"
-#include "Quadratic.hpp"
+#include "Quadrics.hpp"
 #include <array>
 
 //////////////////////////////////////////////////////////////////////
@@ -38,7 +37,7 @@ SphericalCell::SphericalCell(double rmin, double thetamin, double phimin, double
 
 double SphericalCell::volume() const
 {
-    return (1. / 3.) * Cubic::pow3(_rmin, _rmax) * (_costhetamin - _costhetamax) * (_phimax - _phimin);
+    return (1. / 3.) * Quadrics::pow3(_rmin, _rmax) * (_costhetamin - _costhetamax) * (_phimax - _phimin);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -171,8 +170,8 @@ double SphericalCell::intersection(Vec r, const Vec k) const
     double rkz = r.z() * k.z();
 
     // intersections with the rmin and rmax boundary spheres
-    Quadratic::distinctSolutions(rk, r2 - _rmin * _rmin, sv[RMIN1], sv[RMIN2]);
-    Quadratic::distinctSolutions(rk, r2 - _rmax * _rmax, sv[RMAX1], sv[RMAX2]);
+    Quadrics::distinctSolutions(rk, r2 - _rmin * _rmin, sv[RMIN1], sv[RMIN2]);
+    Quadrics::distinctSolutions(rk, r2 - _rmax * _rmax, sv[RMAX1], sv[RMAX2]);
 
     // intersections with the thetamin boundary cone
     {
@@ -185,7 +184,7 @@ double SphericalCell::intersection(Vec r, const Vec k) const
             if (abs(a) >= eps)
             {
                 // general case
-                Quadratic::distinctSolutions(b / a, c / a, sv[THETAMIN1], sv[THETAMIN2]);
+                Quadrics::distinctSolutions(b / a, c / a, sv[THETAMIN1], sv[THETAMIN2]);
             }
             else
             {
@@ -211,7 +210,7 @@ double SphericalCell::intersection(Vec r, const Vec k) const
             if (abs(a) >= eps)
             {
                 // general case
-                Quadratic::distinctSolutions(b / a, c / a, sv[THETAMAX1], sv[THETAMAX2]);
+                Quadrics::distinctSolutions(b / a, c / a, sv[THETAMAX1], sv[THETAMAX2]);
             }
             else
             {

@@ -4,11 +4,10 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Sphere3DSpatialGrid.hpp"
-#include "Cubic.hpp"
 #include "FatalError.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
-#include "Quadratic.hpp"
+#include "Quadrics.hpp"
 #include "Random.hpp"
 #include "SpatialGridPlotFile.hpp"
 
@@ -16,7 +15,7 @@
 
 namespace
 {
-    // small value used to check for parallel directions
+    // small value
     constexpr double EPS = 1e-12;
 }
 
@@ -92,7 +91,7 @@ double Sphere3DSpatialGrid::volume(int m) const
     double rmin, thetamin, phimin, rmax, thetamax, phimax;
     if (getCoords(m, rmin, thetamin, phimin, rmax, thetamax, phimax))
     {
-        return (1. / 3.) * Cubic::pow3(rmin, rmax) * (cos(thetamin) - cos(thetamax)) * (phimax - phimin);
+        return (1. / 3.) * Quadrics::pow3(rmin, rmax) * (cos(thetamin) - cos(thetamax)) * (phimax - phimin);
     }
     return 0.;
 }
@@ -148,7 +147,7 @@ Position Sphere3DSpatialGrid::randomPositionInCell(int m) const
     double rmin, thetamin, phimin, rmax, thetamax, phimax;
     if (getCoords(m, rmin, thetamin, phimin, rmax, thetamax, phimax))
     {
-        double r = cbrt(Cubic::pow3(rmin) + Cubic::pow3(rmin, rmax) * random()->uniform());
+        double r = cbrt(Quadrics::pow3(rmin) + Quadrics::pow3(rmin, rmax) * random()->uniform());
         double theta = acos(cos(thetamin) + (cos(thetamax) - cos(thetamin)) * random()->uniform());
         double phi = phimin + (phimax - phimin) * random()->uniform();
         return Position(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
@@ -189,32 +188,19 @@ public:
         return false;
     }
 
-    // returns the distance to the first intersection (or 0 if there is no intersection)
+    // returns the distance to the first intersection (or 0 if there is no intersection) between
     // the current path and the sphere with given bin index
-    // or 0 if there is no intersection
-    double firstIntersectionSphere(int i)
-    {
-        return Quadratic::smallestPositiveSolution(Vec::dot(r(), k()), r().norm2() - _grid->_rv[i] * _grid->_rv[i]);
-    }
+    double firstIntersectionSphere(int i) { return Quadrics::firstIntersectionSphere(r(), k(), _grid->_rv[i]); }
 
-    // returns the distance to the first intersection (or 0 if there is no intersection)
-    // between the current path and the cone with given bin index
-    // (the degenarate cone with zero cosine is treated separately)
-    double firstIntersectionCone(int j)
-    {
-        double c = _grid->_cv[j];
-        return c ? Quadratic::smallestPositiveSolution(c * c - kz() * kz(), c * c * Vec::dot(r(), k()) - rz() * kz(),
-                                                       c * c * r().norm2() - rz() * rz())
-                 : -rz() / kz();  // degenerate cone identical to xy-plane
-    }
+    // returns the distance to the first intersection (or 0 if there is no intersection) between
+    // the current path and the cone with given bin index
+    double firstIntersectionCone(int j) { return Quadrics::firstIntersectionCone(r(), k(), _grid->_cv[j]); }
 
-    // returns the distance to the intersection (or 0 if there is no intersection)
-    // between the current path and the meridional plane with the given bin index
-    double intersectionMeridionalPlane(int k)
+    // returns the distance to the intersection (or 0 if there is no intersection) between the
+    // current path and the meridional plane with the given bin index
+    double intersectionMeridionalPlane(int kbin)
     {
-        double q = kx() * _grid->_sinv[k] - ky() * _grid->_cosv[k];
-        if (abs(q) < EPS) return 0.;
-        return -(rx() * _grid->_sinv[k] - ry() * _grid->_cosv[k]) / q;
+        return Quadrics::intersectionMeridionalPlane(r(), k(), _grid->_sinv[kbin], _grid->_cosv[kbin]);
     }
 
     bool next() override

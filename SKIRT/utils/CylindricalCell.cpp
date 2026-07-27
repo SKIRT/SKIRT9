@@ -6,7 +6,7 @@
 #include "CylindricalCell.hpp"
 #include "Box.hpp"
 #include "Position.hpp"
-#include "Quadratic.hpp"
+#include "Quadrics.hpp"
 #include <array>
 
 //////////////////////////////////////////////////////////////////////
@@ -143,11 +143,11 @@ double CylindricalCell::intersection(Vec r, const Vec k) const
             double b = (r.x() * k.x() + r.y() * k.y()) / a;
             {
                 double c = (r.x() * r.x() + r.y() * r.y() - _Rmin * _Rmin) / a;
-                Quadratic::distinctSolutions(b, c, sv[RMIN1], sv[RMIN2]);
+                Quadrics::distinctSolutions(b, c, sv[RMIN1], sv[RMIN2]);
             }
             {
                 double c = (r.x() * r.x() + r.y() * r.y() - _Rmax * _Rmax) / a;
-                Quadratic::distinctSolutions(b, c, sv[RMAX1], sv[RMAX2]);
+                Quadrics::distinctSolutions(b, c, sv[RMAX1], sv[RMAX2]);
             }
         }
     }

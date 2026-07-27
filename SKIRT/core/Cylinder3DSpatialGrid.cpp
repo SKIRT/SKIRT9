@@ -7,7 +7,7 @@
 #include "FatalError.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
-#include "Quadratic.hpp"
+#include "Quadrics.hpp"
 #include "Random.hpp"
 #include "SpatialGridPlotFile.hpp"
 
@@ -15,7 +15,7 @@
 
 namespace
 {
-    // small value used to check for parallel directions
+    // small value
     constexpr double EPS = 1e-12;
 }
 
@@ -181,27 +181,21 @@ public:
     // between the current path and the cylinder with the given bin index
     double firstIntersectionCylinder(int i)
     {
-        if (abs(_kq2) < EPS) return 0.;
-        double b = rx() * kx() + ry() * ky();
-        double c = rx() * rx() + ry() * ry() - _grid->_Rv[i] * _grid->_Rv[i];
-        return Quadratic::smallestPositiveSolution(b / _kq2, c / _kq2);
+        return Quadrics::firstIntersectionCylinder(r(), k(), _kq2, _grid->_Rv[i]);
     }
 
     // returns the distance to the intersection (or 0 if there is no intersection)
     // between the current path and the meridional plane with the given bin index
     double intersectionMeridionalPlane(int j)
     {
-        double q = kx() * _grid->_sinv[j] - ky() * _grid->_cosv[j];
-        if (abs(q) < EPS) return 0.;
-        return -(rx() * _grid->_sinv[j] - ry() * _grid->_cosv[j]) / q;
+        return Quadrics::intersectionMeridionalPlane(r(), k(), _grid->_sinv[j], _grid->_cosv[j]);
     }
 
     // returns the distance to the intersection (or 0 if there is no intersection)
     // between the current path and the horizontal plane with the given bin index
-    double intersectionHorizontalPlane(int k)
+    double intersectionHorizontalPlane(int kbin)
     {
-        if (abs(kz()) < EPS) return 0.;
-        return (_grid->_zv[k] - rz()) / kz();
+        return Quadrics::intersectionHorizontalPlane(r(), k(), _grid->_zv[kbin]);
     }
 
     bool next() override
