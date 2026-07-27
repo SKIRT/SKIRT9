@@ -20,7 +20,7 @@
 // Geometric helper functions
 namespace
 {
-    // small value, used to progress a path; leave at 1e-10 -- see ClumpyTorusSpatialGrid for rationale
+    // small value, used to progress a path; leave at 1e-10 -- with 1e-11, inaccuracies start to occur
     constexpr double EPS = 1e-10;
 
     // small value, used only to detect a path direction parallel to a meridional plane
@@ -133,9 +133,6 @@ namespace
 // using a surface area heuristic (SAH) for optimal balance. Construction of the data structure
 // runs in a single serial thread. Because the data structure does not change after initial
 // construction, all queries are thread-safe.
-//
-// This class is copied (rather than shared) from ClumpyTorusSpatialGrid; see the notes there
-// for a possible future refactor into a shared component.
 class ClumpySphericalSpatialGrid::BVH
 {
 private:

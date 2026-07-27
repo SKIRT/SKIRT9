@@ -14,38 +14,54 @@ class Random;
 
 /** An instance of the ClumpySphericalSpatialGrid class represents a spatial grid that superposes a
     classic 3D spherical grid (as offered by the Sphere3DSpatialGrid class) with a set of spherical
-    clumps (as offered by the ClumpyTorusSpatialGrid class). It is intended for models that need
-    the multi-scale clump geometry used for AGN torus models, but without the torus's conical
-    opening-angle restriction, and/or with a background medium that is not itself uniform (unlike
-    the single background cell of ClumpyTorusSpatialGrid).
+    clumps. It is intended for models that need a multi-scale clump geometry -- as used, for
+    example, in some models of the obscuring structure around Active Galactic Nuclei -- combined
+    with a background medium that need not be uniform.
 
     <b>%Geometry of the grid</b>
 
     The spatial domain of this grid is the spherical shell bounded by the inner and outer radii
-    \f$r_\text{min}\ge0\f$ and \f$r_\text{max}>r_\text{min}\f$ (unlike ClumpyTorusSpatialGrid, the
-    inner radius may be exactly zero, so that the domain includes the origin). Any medium outside
-    of this shell is ignored.
+    \f$r_\text{min}\ge0\f$ and \f$r_\text{max}>r_\text{min}\f$ (the inner radius may be exactly
+    zero, so that the domain includes the origin). Any medium outside of this shell is ignored.
 
     Within this shell, a classic 3D grid in spherical coordinates is defined through three sets of
     grid points exactly as described for the Sphere3DSpatialGrid class (radial, polar and azimuthal
-    meshes). In addition, a number of spheres ("clumps") with centers and radii loaded from an input
-    file are superposed on this structured grid. The clumps must be fully contained in the domain
-    and are not allowed to overlap each other, but -- in contrast to ClumpyTorusSpatialGrid -- a
-    clump \em is allowed to straddle the walls of one or more cells of the structured grid.
+    meshes). In addition, a number of spheres ("clumps") with centers and radii loaded from an
+    input file are superposed on this structured grid. The clumps must be fully contained in the
+    domain and are not allowed to overlap each other, but a clump \em is allowed to straddle the
+    walls of one or more cells of the structured grid.
 
     The grid cells partitioning the spatial domain thus consist of a number of spheres (the clumps)
     plus the cells of the structured grid, each of the latter reduced in volume by the portion of
     any clumps overlapping it. As a consequence, medium properties will be uniform within each
-    clump, and (given a uniform density field) uniform within each structured-grid cell that is not
-    overlapped by a clump.
+    clump, and uniform within each structured-grid cell that is not overlapped by a clump.
 
     <b>Configuring the medium</b>
 
-    As for the ClumpyTorusSpatialGrid class, the first four columns of the ParticleMedium import
-    file specify the center position and radius of each clump, and the same file can be read by
-    this specialty grid class to define the spheres; see the ClumpyTorusSpatialGrid documentation
-    for further details and caveats regarding matching the medium configuration to the grid
-    geometry. */
+    During setup, as for any spatial grid, SKIRT will sample the medium properties within each
+    spatial cell from the configured medium distribution. While any type of configuration will
+    work, it makes most sense to specify a medium distribution that closely matches the geometry of
+    this specialty grid. This can be accomplished by using a ParticleMedium with the
+    UniformSmoothingKernel to match the spheres in the grid geometry. The background medium can be
+    specified through any built-in geometry, such as a ShellGeometry or more likely a
+    TorusGeometry. In the latter case, it is worthwile to ensure that the polar mesh configured for
+    this specialty grid includes grid points exactly matching the opening angle boundaries of the
+    torus.
+
+    If the model includes multiple media types, different medium components can be combined (for
+    example, one ParticleMedium for dust clumps and another one for gas clumps).
+
+    The first four columns of the ParticleMedium import file specify the center position and radius
+    of each clump. The same file can be read by this specialty grid class to define the spheres;
+    the additional columns in the file are ignored. (If there are multiple ParticleMedium
+    instances, the import files should be concatenated to define all spheres).
+
+    This specialty grid class removes spheres from the imported list that (1) do not fully lie
+    inside the spherical shell domain or (2) overlap any of the previously read spheres. Obviously,
+    the ParticleMedium does NOT do this. As a result, the mass of these spheres will be taken into
+    account while sampling the density of the spatial grid cells, most likely distorting the
+    intended values. It is therefore best to ensure that the imported spheres are disjoint and
+    inside the domain. */
 class ClumpySphericalSpatialGrid : public SphereSpatialGrid
 {
     ITEM_CONCRETE(ClumpySphericalSpatialGrid, SphereSpatialGrid,
@@ -68,10 +84,10 @@ class ClumpySphericalSpatialGrid : public SphereSpatialGrid
     //============= Construction - Setup - Destruction =============
 
 public:
-    /** This function sets up the structured grid (as for Sphere3DSpatialGrid), reads the input file
-        defining the spherical clumps, and builds the data structures needed for the operation of
-        the grid, including the Monte Carlo estimate of the volume of each structured cell that is
-        reduced by one or more overlapping clumps. */
+    /** This function sets up the structured grid (as for Sphere3DSpatialGrid), reads the input
+        file defining the spherical clumps, and builds the data structures needed for the operation
+        of the grid, including the Monte Carlo estimate of the volume of each structured cell that
+        is reduced by one or more overlapping clumps. */
     void setupSelfAfter() override;
 
     /** The destructor destroys the custom BVH data structure. */
@@ -89,7 +105,8 @@ public:
 
     /** This function returns the volume of the cell with index \f$m\f$. For a clump, this is the
         spherical volume. For a structured cell, this is the nominal cell volume minus the combined
-        volume of the portions of any overlapping clumps, as estimated (and cached) during setup. */
+        volume of the portions of any overlapping clumps, as estimated (and cached) during setup.
+        */
     double volume(int m) const override;
 
     /** This function returns the diagonal of the cell with index \f$m\f$. For a clump, this is the
@@ -103,17 +120,15 @@ public:
 
     /** This function returns the central location of the cell with index \f$m\f$. For a clump,
         this is the center of the sphere. For a structured cell, the function first tries the
-        nominal cell-center position; if that position happens to be inside one of the clumps (as
-        determined through an exact query of the bounding volume hierarchy), a random position is
-        returned instead. */
+        nominal cell-center position; if that position happens to be inside one of the clumps, a
+        random position is returned instead. */
     Position centralPositionInCell(int m) const override;
 
     /** This function returns a random location from the cell with index \f$m\f$. For a clump, a
         random position within the sphere is generated through analytical inversion. For a
         structured cell, a random position within the cell's nominal spherical-coordinate ranges is
-        generated through analytical inversion, which is then rejected iteratively -- based on an
-        exact query of the bounding volume hierarchy -- as long as it happens to be inside one of
-        the clumps. */
+        generated through analytical inversion, which is then rejected iteratively as long as it
+        happens to be inside one of the clumps. */
     Position randomPositionInCell(int m) const override;
 
     /** This function creates and hands over ownership of a path segment generator (an instance of
@@ -145,9 +160,9 @@ private:
     int structuredIndex(int i, int j, int k) const;
 
     /** This function obtains the spherical coordinates for the corners of the structured cell with
-        local index \f$s\f$ (i.e. not counting the clump cells), exactly as for Sphere3DSpatialGrid.
-        If the index is out of range, the function returns false and leaves the provided arguments
-        unchanged. */
+        local index \f$s\f$ (i.e. not counting the clump cells), exactly as for
+        Sphere3DSpatialGrid. If the index is out of range, the function returns false and leaves
+        the provided arguments unchanged. */
     bool getCoords(int s, double& rmin, double& thetamin, double& phimin, double& rmax, double& thetamax,
                    double& phimax) const;
 
