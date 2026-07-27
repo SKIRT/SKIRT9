@@ -144,6 +144,52 @@ public:
         return rho - radius > rmin && rho + radius < rmax;
     }
 
+private:
+    // returns the minimum, over t ranging across the interval [tlo,thi], of amp*cos(t-phase),
+    // where amp is assumed nonnegative; used by isSphericalCellInSphere() to locate the point on a bounded
+    // arc (in azimuth or in polar angle) that lies farthest, in the sense of this cosine
+    // projection, from a given reference direction
+    static double minCosineOverInterval(double amp, double phase, double tlo, double thi)
+    {
+        double antipodal = phase + M_PI;                        // phase is in (-pi,pi], so this lies in (0,2pi]
+        if (antipodal > M_PI) antipodal -= 2. * M_PI;           // wrap back into (-pi,pi]
+        if (antipodal >= tlo && antipodal <= thi) return -amp;  // the global minimum falls inside the arc
+        return min(amp * cos(tlo - phase), amp * cos(thi - phase));
+    }
+
+public:
+    /** This function returns true if the "spherical box" cell -- the region with radius between
+        rmin and rmax, polar angle (colatitude) between thetaMin and thetaMax, and azimuth between
+        phiMin and phiMax, all measured around the origin -- lies fully inside the sphere with the
+        given center and radius (touching allowed).
+
+        The radial extent is handled exactly: for a fixed direction, the squared distance to a
+        point at radius r is a convex function of r, so its maximum over [rmin,rmax] is always
+        attained at one of the two endpoints, regardless of curvature. What remains is finding the
+        direction within the cell's angular box that lies farthest, in projection, from the
+        sphere's center. Because the azimuthal term of that projection is scaled by sin(theta),
+        which is nonnegative throughout the box, the farthest azimuth can be found first,
+        independently of theta, and the result then feeds a second, one-dimensional search over
+        theta. Each of those two searches reduces to checking whether the antipodal direction falls
+        within the relevant bound, and otherwise evaluating the two boundary values -- never a full
+        numerical optimization. */
+    static bool isSphericalCellInSphere(double rmin, double rmax, double thetaMin, double thetaMax, double phiMin,
+                                        double phiMax, Vec center, double radius)
+    {
+        double phiC = atan2(center.y(), center.x());
+        double Cxy = sqrt(square(center.x()) + square(center.y()));
+        double farthestAzimuthProjection = minCosineOverInterval(Cxy, phiC, phiMin, phiMax);
+
+        double psi = atan2(farthestAzimuthProjection, center.z());
+        double R = sqrt(square(farthestAzimuthProjection) + square(center.z()));
+        double farthestProjection = minCosineOverInterval(R, psi, thetaMin, thetaMax);
+
+        double c2 = center.norm2();
+        double d2min = square(rmin) - 2. * rmin * farthestProjection + c2;
+        double d2max = square(rmax) - 2. * rmax * farthestProjection + c2;
+        return max(d2min, d2max) <= square(radius);
+    }
+
     /** This function determines the circle formed by intersecting a sphere (given its radius and
         its center's coordinate along the axis perpendicular to the plane) with a coordinate plane
         through the origin. It returns true and sets circleRadius if the sphere reaches the plane;

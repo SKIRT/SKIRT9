@@ -158,10 +158,21 @@ void ClumpySphericalSpatialGrid::setupSelfAfter()
         {
             double fraction = static_cast<double>(hit.second) / totalSamples;
             _cellVolume[hit.first] -= clumpVolume * fraction;
+
+            // if this cell is entirely inside the clump, its true remaining volume is exactly
+            // zero regardless of what the Monte Carlo estimate above suggests; overriding it here
+            // sidesteps any inaccuracy in that estimate for a cell much smaller than the clump,
+            // and -- more importantly -- guarantees the exact zero that randomPositionInCell()
+            // relies on to avoid an unbounded rejection loop
+            double rmin, thetamin, phimin, rmax, thetamax, phimax;
+            getCoords(hit.first, rmin, thetamin, phimin, rmax, thetamax, phimax);
+            if (Quadrics::isSphericalCellInSphere(rmin, rmax, thetamin, thetamax, phimin, phimax, clump.center(),
+                                                  clump.radius()))
+                _cellVolume[hit.first] = 0.;
         }
     }
 
-    // clamp away any small negative volumes caused by Monte Carlo noise or near-coincident boundaries
+    // clamp away any negative volumes caused by Monte Carlo noise or near-coincident boundaries
     for (double& v : _cellVolume) v = max(v, 0.);
 
     // inform the user
@@ -245,12 +256,22 @@ Position ClumpySphericalSpatialGrid::randomPositionInCell(int m) const
     int s = m - _numClumps;
     if (s < 0 || s >= _Ncells) return Position();
 
-    while (true)
+    // if this cell has no free volume left -- most commonly because it is entirely inside a
+    // single clump, detected exactly during setup -- no rejection-sampled candidate could ever be
+    // accepted, so fall back directly to the cell's nominal center instead of looping forever
+    if (_cellVolume[s] <= 0.) return StructuredSphereSpatialGrid::centralPositionInCell(s);
+
+    // safety net for the one configuration setup does not check for exactly: a cell fully covered
+    // not by a single clump but by the union of several disjoint ones, leaving a nonzero but
+    // vanishingly small (or, due to Monte Carlo noise, nonzero but spurious) free volume; cap the
+    // number of rejection attempts and fall back to the same nominal center rather than hang
+    constexpr int MaxAttempts = 1000;
+    for (int attempt = 0; attempt != MaxAttempts; ++attempt)
     {
-        // accept the position unless it falls inside one of the clumps
         Position candidate = StructuredSphereSpatialGrid::randomPositionInCell(s);
         if (_bvh->anyClumpContaining(candidate) < 0) return candidate;
     }
+    return StructuredSphereSpatialGrid::centralPositionInCell(s);
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -153,7 +153,6 @@ protected:
         content can call this function to obtain the structured grid's own contribution. */
     void writeMeridionalStructure(SpatialGridPlotFile* outfile) const;
 
-private:
     /** This function obtains the spherical coordinates for the corners of the structured cell with
         index \f$m\f$. It determines the radial, polar and azimuthal bin indices \f$i\f$, \f$j\f$
         and \f$k\f$ corresponding to the cell index \f$m\f$ using the formulae \f[ \begin{split} i
