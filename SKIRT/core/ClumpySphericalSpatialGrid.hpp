@@ -145,6 +145,11 @@ protected:
         specified SpatialGridPlotFile object. */
     void write_yz(SpatialGridPlotFile* outfile) const override;
 
+    /** This function writes 3D information for the grid structure to the specified
+        SpatialGridPlotFile object. It calls the base class implementation to write the structured
+        grid, and then adds a coarse wireframe sphere for each clump. */
+    void write_xyz(SpatialGridPlotFile* outfile) const override;
+
     /** This function returns a more conservative (larger) epsilon scale factor than the base
         class's default, since paths in this class cross more boundaries of more varied kinds
         (structured-cell walls interleaved with clump entries and exits) within a given region. */

@@ -68,6 +68,13 @@ public:
         specified radius in the meridional plane with the specified angle. */
     void writeMeridionalHalfCircle(double radius, double phi);
 
+    /** This function outputs a number of 3D line segments describing a coarse wireframe
+        representation of a sphere with the specified center and radius, consisting of three
+        orthogonal circles (one each in the planes parallel to the xy, xz, and yz coordinate planes
+        through the center). The circles are drawn with fewer segments than writeCircle(), since
+        this function is intended for plotting many small spheres rather than one accurate one. */
+    void writeSphere(double x, double y, double z, double radius);
+
     /** This function outputs 3D line segments describing the specified polyhedron. Assuming
         the polyhedron has \f$n\f$ vertices, the first vector contains the \f$3n\f$ vertex
         coordinates as a sequence \f[x_0,y_0,z_0,x_1,y_1,z_1,...,x_{n-1},y_{n-1},y_{n-1}\f] The

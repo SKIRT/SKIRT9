@@ -15,6 +15,15 @@
 
 //////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // maximum number of clumps drawn in the 3D grid plot file, to avoid an excessively large file
+    // when there are many clumps
+    constexpr int MaxPlottedClumps = 100;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 double ClumpySphericalSpatialGrid::meshEpsilonScale() const
 {
     // leave at 1e-10 -- with 1e-11, inaccuracies start to occur.
@@ -523,6 +532,27 @@ void ClumpySphericalSpatialGrid::write_yz(SpatialGridPlotFile* outfile) const
     {
         const Clump& c = _clumps[hit.first];
         outfile->writeCircle(c.center().y(), c.center().z(), hit.second);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void ClumpySphericalSpatialGrid::write_xyz(SpatialGridPlotFile* outfile) const
+{
+    // structured grid
+    StructuredSphereSpatialGrid::write_xyz(outfile);
+
+    // a coarse wireframe sphere for each clump, up to a maximum to avoid an excessively large file
+    int numPlotted = min(_numClumps, MaxPlottedClumps);
+    for (int m = 0; m != numPlotted; ++m)
+    {
+        Position center = _clumps[m].center();
+        outfile->writeSphere(center.x(), center.y(), center.z(), _clumps[m].radius());
+    }
+    if (_numClumps > MaxPlottedClumps)
+    {
+        find<Log>()->info("Plotted only the first " + std::to_string(MaxPlottedClumps) + " of "
+                          + std::to_string(_numClumps) + " clumps in the 3D grid plot file");
     }
 }
 
