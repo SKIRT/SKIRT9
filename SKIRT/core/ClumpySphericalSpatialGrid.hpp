@@ -8,6 +8,7 @@
 
 #include "Mesh.hpp"
 #include "SphereSpatialGrid.hpp"
+#include "SphericalClumpBVH.hpp"
 class Random;
 
 ////////////////////////////////////////////////////////////////////
@@ -169,28 +170,15 @@ private:
     //======================== Data Members ========================
 
 private:
-    // data type defining a single clump
-    class Clump
-    {
-        double _x, _y, _z, _r;
-        int _numOverlappingCells{0};
-
-    public:
-        Clump(double x, double y, double z, double r) : _x{x}, _y{y}, _z{z}, _r{r} {}
-        Position center() const { return Position(_x, _y, _z); }
-        double radius() const { return _r; }
-        Box bounds() const { return Box(_x - _r, _y - _r, _z - _r, _x + _r, _y + _r, _z + _r); }
-        void setNumOverlappingCells(int n) { _numOverlappingCells = n; }
-        int numOverlappingCells() const { return _numOverlappingCells; }
-    };
+    // convenience alias for the clump type defined and used by SphericalClumpBVH
+    using Clump = SphericalClumpBVH::Clump;
 
     // array defining the clumps
     int _numClumps{0};      // the number of clumps AND the offset of the first structured cell index
     vector<Clump> _clumps;  // index on m, assuming m < _numClumps
 
-    // the custom bounding volume hierarchy that allows efficient querying for our purposes
-    class BVH;
-    BVH* _bvh{nullptr};
+    // the bounding volume hierarchy that allows efficient querying over the clumps
+    SphericalClumpBVH* _bvh{nullptr};
 
     // the structured grid, exactly as for Sphere3DSpatialGrid
     int _Nr{0};
