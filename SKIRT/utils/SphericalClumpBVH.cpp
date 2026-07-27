@@ -13,12 +13,12 @@ namespace
     // Number of candidate split planes ("bins") evaluated per axis during the SAH search
     // (binned SAH, Wald & Havran); O(N) work per node rather than O(N log N) for an exact
     // search, at negligible cost to tree quality.
-    constexpr int NumBins = 16;
+    constexpr int NumBins = 256;
 
     // A leaf never holds more clumps than this, regardless of what SAH suggests. Bounds the
     // cost of the linear scan at each leaf, and guarantees the build terminates even when
     // many clumps have coincident or near-coincident centers.
-    constexpr int MaxLeafSize = 4;
+    constexpr int MaxLeafSize = 32;
 }
 
 ////////////////////////////////////////////////////////////////////
