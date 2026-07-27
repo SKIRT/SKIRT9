@@ -5,7 +5,6 @@
 
 #include "ClumpySphericalSpatialGrid.hpp"
 #include "Configuration.hpp"
-#include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
@@ -14,83 +13,20 @@
 #include "SpatialGridPlotFile.hpp"
 #include "TextInFile.hpp"
 
-////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
 
-namespace
+double ClumpySphericalSpatialGrid::meshEpsilonScale() const
 {
-    // small value, used to progress a path; leave at 1e-10 -- with 1e-11, inaccuracies start to occur
-    constexpr double EPS = 1e-10;
-
-    // writes the axisymmetric structured-grid lines (spheres and cones) to a meridional plot;
-    // shared by write_xz() and write_yz() since the structured grid itself is axisymmetric
-    // (only the overlaid clumps differ between those two views)
-    void writeMeridionalStructure(SpatialGridPlotFile* outfile, const Array& rv, const Array& thetav)
-    {
-        for (double r : rv) outfile->writeCircle(r);
-
-        double r0 = rv[0];
-        double r1 = rv[rv.size() - 1];
-        for (double theta : thetav)
-        {
-            outfile->writeLine(r0 * sin(theta), r0 * cos(theta), r1 * sin(theta), r1 * cos(theta));
-            outfile->writeLine(-r0 * sin(theta), -r0 * cos(theta), -r1 * sin(theta), -r1 * cos(theta));
-        }
-    }
+    // leave at 1e-10 -- with 1e-11, inaccuracies start to occur.
+    return 1e-10;
 }
 
 ////////////////////////////////////////////////////////////////////
 
 void ClumpySphericalSpatialGrid::setupSelfAfter()
 {
-    SphereSpatialGrid::setupSelfAfter();
+    StructuredSphereSpatialGrid::setupSelfAfter();
     Log* log = find<Log>();
-
-    // ---- build the structured grid (copied from Sphere3DSpatialGrid::setupSelfAfter) ----
-
-    // radial
-    _Nr = _meshRadial->numBins();
-    _rv = _meshRadial->mesh() * (maxRadius() - minRadius()) + minRadius();
-
-    // limit the epsilon we use for progressing the path to a value smaller than the hole and/or the first bin
-    bool hasHole = _rv[0] > 0.;
-    double meshEps = min(EPS * maxRadius(), 0.1 * (hasHole ? min(_rv[0], _rv[1] - _rv[0]) : _rv[1]));
-
-    // if the grid has no hole, create an artificial hole larger than the epsilon we use for progressing the path
-    // so that the segment generator has a chance to reset the phi bin index when crossing the origin
-    if (!hasHole) _rv[0] = 2. * meshEps;
-
-    // polar
-    _Ntheta = initPolarGrid(_thetav, _cv, _meshPolar);
-
-    // azimuthal
-    _Nphi = _meshAzimuthal->numBins();
-    _phiv = _meshAzimuthal->mesh() * (2. * M_PI) - M_PI;
-
-    // verify that the azimuth bins are smaller than 120 degrees, with some leeway,
-    // so that the segment generator never inadvertently intersects the path with the reflected phi bin border
-    constexpr double maxPhi = 0.7 * M_PI;
-    for (int k = 0; k != _Nphi; ++k)
-        if (_phiv[k + 1] - _phiv[k] > maxPhi) throw FATALERROR("Azimuth bin is wider than 120 deg");
-
-    // pre-calculate sines and cosines for azimuthal bin borders; make sure that the outer boundary values are exact
-    _sinv = sin(_phiv);
-    _cosv = cos(_phiv);
-    _sinv[0] = 0.;
-    _cosv[0] = -1.;
-    _sinv[_Nphi] = 0.;
-    _cosv[_Nphi] = -1.;
-
-    // number of structured cells
-    _Ncells = _Nr * _Ntheta * _Nphi;
-
-    // precompute the nominal (clump-free) volume of each structured cell
-    _cellVolume.resize(_Ncells);
-    for (int s = 0; s != _Ncells; ++s)
-    {
-        double rmin, thetamin, phimin, rmax, thetamax, phimax;
-        getCoords(s, rmin, thetamin, phimin, rmax, thetamax, phimax);
-        _cellVolume[s] = (1. / 3.) * Quadrics::pow3(rmin, rmax) * (cos(thetamin) - cos(thetamax)) * (phimax - phimin);
-    }
 
     // ---- read the file defining the spherical clumps, rejecting those outside the domain ----
 
@@ -166,7 +102,7 @@ void ClumpySphericalSpatialGrid::setupSelfAfter()
             int i = NR::locateClip(_rv, r);
             int j = NR::locateClip(_thetav, theta);
             int k = NR::locateClip(_phiv, phi);
-            int s = structuredIndex(i, j, k);
+            int s = index(i, j, k);
 
             bool found = false;
             for (auto& hit : hits)
@@ -229,10 +165,12 @@ void ClumpySphericalSpatialGrid::setupSelfAfter()
 
     // ---- epsilon used to progress a path, small relative to both the mesh and the smallest clump ----
 
-    double smallestClumpRadius = maxRadius();
-    for (const Clump& clump : _clumps) smallestClumpRadius = min(smallestClumpRadius, clump.radius());
-    double clumpEps = _numClumps ? min(EPS * maxRadius(), 0.1 * smallestClumpRadius) : meshEps;
-    _eps = min(meshEps, clumpEps);
+    if (_numClumps)
+    {
+        double smallestClumpRadius = DBL_MAX;
+        for (const Clump& clump : _clumps) smallestClumpRadius = min(smallestClumpRadius, clump.radius());
+        _eps = min(_eps, 0.1 * smallestClumpRadius);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -240,13 +178,6 @@ void ClumpySphericalSpatialGrid::setupSelfAfter()
 ClumpySphericalSpatialGrid::~ClumpySphericalSpatialGrid()
 {
     delete _bvh;
-}
-
-//////////////////////////////////////////////////////////////////////
-
-int ClumpySphericalSpatialGrid::dimension() const
-{
-    return 3;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -261,9 +192,7 @@ int ClumpySphericalSpatialGrid::numCells() const
 double ClumpySphericalSpatialGrid::volume(int m) const
 {
     if (m >= 0 && m < _numClumps) return Quadrics::volumeSphere(_clumps[m].radius());
-    int s = m - _numClumps;
-    if (s >= 0 && s < _Ncells) return _cellVolume[s];
-    return 0.;
+    return StructuredSphereSpatialGrid::volume(m - _numClumps);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -271,16 +200,7 @@ double ClumpySphericalSpatialGrid::volume(int m) const
 double ClumpySphericalSpatialGrid::diagonal(int m) const
 {
     if (m >= 0 && m < _numClumps) return 2. * _clumps[m].radius();
-
-    int s = m - _numClumps;
-    double rmin, thetamin, phimin, rmax, thetamax, phimax;
-    if (getCoords(s, rmin, thetamin, phimin, rmax, thetamax, phimax))
-    {
-        Position p0(rmin, thetamin, phimin, Position::CoordinateSystem::SPHERICAL);
-        Position p1(rmax, thetamax, phimax, Position::CoordinateSystem::SPHERICAL);
-        return (p1 - p0).norm();
-    }
-    return 0.;
+    return StructuredSphereSpatialGrid::diagonal(m - _numClumps);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -290,14 +210,8 @@ int ClumpySphericalSpatialGrid::cellIndex(Position bfr) const
     int c = _bvh->anyClumpContaining(bfr);
     if (c >= 0) return c;
 
-    double r, theta, phi;
-    bfr.spherical(r, theta, phi);
-    int i = NR::locateFail(_rv, r);
-    if (i < 0) return -1;
-    int j = NR::locateClip(_thetav, theta);
-    int k = NR::locateClip(_phiv, phi);
-
-    return _numClumps + structuredIndex(i, j, k);
+    int s = StructuredSphereSpatialGrid::cellIndex(bfr);
+    return s < 0 ? -1 : _numClumps + s;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -306,22 +220,11 @@ Position ClumpySphericalSpatialGrid::centralPositionInCell(int m) const
 {
     if (m >= 0 && m < _numClumps) return _clumps[m].center();
 
-    int s = m - _numClumps;
-    double rmin, thetamin, phimin, rmax, thetamax, phimax;
-    if (getCoords(s, rmin, thetamin, phimin, rmax, thetamax, phimax))
-    {
-        double r = 0.5 * (rmin + rmax);
-        double theta = 0.5 * (thetamin + thetamax);
-        double phi = 0.5 * (phimin + phimax);
-        Position candidate(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
+    Position candidate = StructuredSphereSpatialGrid::centralPositionInCell(m - _numClumps);
 
-        // if the nominal center happens to fall inside one of the clumps, fall back to a random
-        // position instead; the BVH gives an exact answer, unlike the (possibly incomplete, since
-        // it is built from Monte Carlo discovery -- see setupSelfAfter) per-cell clump list
-        if (_bvh->anyClumpContaining(candidate) >= 0) return randomPositionInCell(m);
-        return candidate;
-    }
-    return Position();
+    // if the nominal center happens to fall inside one of the clumps, fall back to a random position instead
+    if (_bvh->anyClumpContaining(candidate) >= 0) return randomPositionInCell(m);
+    return candidate;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -331,23 +234,14 @@ Position ClumpySphericalSpatialGrid::randomPositionInCell(int m) const
     if (m >= 0 && m < _numClumps) return random()->positionInSphere(_clumps[m].center(), _clumps[m].radius());
 
     int s = m - _numClumps;
-    double rmin, thetamin, phimin, rmax, thetamax, phimax;
-    if (getCoords(s, rmin, thetamin, phimin, rmax, thetamax, phimax))
-    {
-        while (true)
-        {
-            double r = cbrt(Quadrics::pow3(rmin) + Quadrics::pow3(rmin, rmax) * random()->uniform());
-            double theta = acos(cos(thetamin) + (cos(thetamax) - cos(thetamin)) * random()->uniform());
-            double phi = phimin + (phimax - phimin) * random()->uniform();
-            Position candidate(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
+    if (s < 0 || s >= _Ncells) return Position();
 
-            // accept the position unless it falls inside one of the clumps; the BVH gives an
-            // exact answer, unlike the (possibly incomplete, since it is built from Monte Carlo
-            // discovery -- see setupSelfAfter) per-cell clump list
-            if (_bvh->anyClumpContaining(candidate) < 0) return candidate;
-        }
+    while (true)
+    {
+        // accept the position unless it falls inside one of the clumps
+        Position candidate = StructuredSphereSpatialGrid::randomPositionInCell(s);
+        if (_bvh->anyClumpContaining(candidate) < 0) return candidate;
     }
-    return Position();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -547,13 +441,13 @@ public:
                         // the tentative (i,j,k) computed above never actually apply since that
                         // boundary is not reached -- they are simply recomputed from scratch once
                         // the clump is exited, so there is no need to restore them here
-                        setSegment(_grid->_numClumps + _grid->structuredIndex(icur, jcur, kcur), dsClump);
+                        setSegment(_grid->_numClumps + _grid->index(icur, jcur, kcur), dsClump);
                         propagater(dsClump + _eps);
                         _clump = clumpHit;
                     }
                     else
                     {
-                        setSegment(_grid->_numClumps + _grid->structuredIndex(icur, jcur, kcur), ds);
+                        setSegment(_grid->_numClumps + _grid->index(icur, jcur, kcur), ds);
                         propagater(ds + _eps);
                         if (_i >= _grid->_Nr) setState(State::Outside);
                     }
@@ -591,10 +485,8 @@ std::unique_ptr<PathSegmentGenerator> ClumpySphericalSpatialGrid::createPathSegm
 
 void ClumpySphericalSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
 {
-    // structured grid: spheres and meridional planes
-    for (double r : _rv) outfile->writeCircle(r);
-    for (double phi : _phiv)
-        outfile->writeLine(_rv[0] * cos(phi), _rv[0] * sin(phi), _rv[_Nr] * cos(phi), _rv[_Nr] * sin(phi));
+    // structured grid
+    StructuredSphereSpatialGrid::write_xy(outfile);
 
     // spherical clumps crossing the xy plane
     for (const auto& hit : _bvh->clumpsCrossingPlane(2, 0.))
@@ -609,7 +501,7 @@ void ClumpySphericalSpatialGrid::write_xy(SpatialGridPlotFile* outfile) const
 void ClumpySphericalSpatialGrid::write_xz(SpatialGridPlotFile* outfile) const
 {
     // structured grid: spheres and cones
-    writeMeridionalStructure(outfile, _rv, _thetav);
+    writeMeridionalStructure(outfile);
 
     // spherical clumps crossing the xz plane
     for (const auto& hit : _bvh->clumpsCrossingPlane(1, 0.))
@@ -623,10 +515,8 @@ void ClumpySphericalSpatialGrid::write_xz(SpatialGridPlotFile* outfile) const
 
 void ClumpySphericalSpatialGrid::write_yz(SpatialGridPlotFile* outfile) const
 {
-    // structured grid: spheres and cones (identical to the xz view since the structured grid
-    // itself is axisymmetric; unlike Sphere3DSpatialGrid we cannot simply delegate to write_xz()
-    // for the full view here, because the overlaid clumps are not azimuthally symmetric)
-    writeMeridionalStructure(outfile, _rv, _thetav);
+    // structured grid: spheres and cones -- identical to the xz view since the structured grid is axisymmetric
+    writeMeridionalStructure(outfile);
 
     // spherical clumps crossing the yz plane
     for (const auto& hit : _bvh->clumpsCrossingPlane(0, 0.))
@@ -634,41 +524,6 @@ void ClumpySphericalSpatialGrid::write_yz(SpatialGridPlotFile* outfile) const
         const Clump& c = _clumps[hit.first];
         outfile->writeCircle(c.center().y(), c.center().z(), hit.second);
     }
-}
-
-//////////////////////////////////////////////////////////////////////
-
-void ClumpySphericalSpatialGrid::write_xyz(SpatialGridPlotFile* outfile) const
-{
-    // intentionally unimplemented
-    (void)outfile;
-}
-
-//////////////////////////////////////////////////////////////////////
-
-int ClumpySphericalSpatialGrid::structuredIndex(int i, int j, int k) const
-{
-    return k + (j + i * _Ntheta) * _Nphi;
-}
-
-//////////////////////////////////////////////////////////////////////
-
-bool ClumpySphericalSpatialGrid::getCoords(int s, double& rmin, double& thetamin, double& phimin, double& rmax,
-                                           double& thetamax, double& phimax) const
-{
-    if (s < 0 || s >= _Ncells) return false;
-
-    int i = s / (_Ntheta * _Nphi);
-    int j = (s / _Nphi) % _Ntheta;
-    int k = s % _Nphi;
-
-    rmin = _rv[i];
-    thetamin = _thetav[j];
-    phimin = _phiv[k];
-    rmax = _rv[i + 1];
-    thetamax = _thetav[j + 1];
-    phimax = _phiv[k + 1];
-    return true;
 }
 
 //////////////////////////////////////////////////////////////////////

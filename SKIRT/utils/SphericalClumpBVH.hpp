@@ -71,7 +71,8 @@ public:
         of that clump (into the vector most recently passed to loadClumps()) and the radius of the
         circle formed by the intersection of the clump's sphere with the plane. A cheap bounding-box
         test is used to prune the search, but every returned clump has already been confirmed by an
-        exact sphere/plane test, so the caller does not need to repeat it. */
+        exact sphere/plane test, so the caller does not need to repeat it. The ordering of the
+        returned clumps is unspecified. */
     vector<std::pair<int, double>> clumpsCrossingPlane(int axis, double value) const;
 
 private:

@@ -271,6 +271,7 @@
 #include "Starburst99SEDFamily.hpp"
 #include "StellarSurfaceSource.hpp"
 #include "StellarUnits.hpp"
+#include "StructuredSphereSpatialGrid.hpp"
 #include "SunSED.hpp"
 #include "SymCosMesh.hpp"
 #include "SymLogMesh.hpp"
@@ -512,6 +513,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // spatial grids
     ItemRegistry::add<SpatialGrid>();
     ItemRegistry::add<SphereSpatialGrid>();
+    ItemRegistry::add<StructuredSphereSpatialGrid>();
     ItemRegistry::add<CylinderSpatialGrid>();
     ItemRegistry::add<Sphere1DSpatialGrid>();
     ItemRegistry::add<Sphere2DSpatialGrid>();
