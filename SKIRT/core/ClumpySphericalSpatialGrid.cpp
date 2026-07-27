@@ -259,8 +259,8 @@ class ClumpySphericalSpatialGrid::MySegmentGenerator : public PathSegmentGenerat
 {
     const ClumpySphericalSpatialGrid* _grid{nullptr};
     double _eps{0.};
-    int _i{-1}, _j{-1}, _k{-1};  // structured bin indices; meaningful only while not inside a clump
     int _clump{-1};              // index of the clump currently inside, or -1 for the structured grid
+    int _i{-1}, _j{-1}, _k{-1};  // structured bin indices; meaningful only while not inside a clump
 
 public:
     MySegmentGenerator(const ClumpySphericalSpatialGrid* grid) : _grid(grid), _eps(grid->_eps) {}
@@ -325,7 +325,7 @@ public:
                 // the original position was inside the grid; it may already be inside a clump
                 // (e.g. a scattered photon relaunched from a scattering event inside a clump)
                 _clump = _grid->_bvh->anyClumpContaining(r());
-                if (!setCellIndices()) return abortPath();
+                if (_clump < 0 && !setCellIndices()) return abortPath();
                 setState(State::Inside);
 
                 // intentionally falls through to determine the first actual segment
@@ -479,7 +479,7 @@ public:
             {
             }
         }
-        return false;  // unreachable; silences a compiler warning about a missing return
+        return false;
     }
 };
 
