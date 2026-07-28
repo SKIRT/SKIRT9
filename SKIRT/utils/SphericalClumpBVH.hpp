@@ -75,6 +75,32 @@ public:
         returned clumps is unspecified. */
     vector<std::pair<int, double>> clumpsCrossingPlane(int axis, double value) const;
 
+    /** An instance of this struct holds summary statistics gathered by leafStatistics() from a
+        walk of the leaves of an already-built BVH: for each of the leaf depth, the number of
+        clumps in the leaf, and the diagonal of the leaf's bounding box, the minimum, maximum and
+        average value taken over all leaves. */
+    struct LeafStatistics
+    {
+        int minDepth{0};
+        int maxDepth{0};
+        double avgDepth{0.};
+        int minCount{0};
+        int maxCount{0};
+        double avgCount{0.};
+        double minDiagonal{0.};
+        double maxDiagonal{0.};
+        double avgDiagonal{0.};
+    };
+
+    /** This function walks all leaves of the already-built BVH and returns summary statistics on
+        (1) the depth of each leaf in the tree (the root has depth zero), (2) the number of clumps
+        held by each leaf, and (3) the diagonal of each leaf's bounding box. This is a read-only,
+        optional diagnostic pass performed after construction -- it does not affect, and is not
+        affected by, the build itself -- intended for logging or for tuning the BVH build
+        parameters (NumBins and MaxLeafSize in the source file). If the BVH is empty (no clumps
+        loaded), all statistics are zero. */
+    LeafStatistics leafStatistics() const;
+
 private:
     class Node
     {

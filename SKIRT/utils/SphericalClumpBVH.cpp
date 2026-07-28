@@ -427,3 +427,60 @@ vector<std::pair<int, double>> SphericalClumpBVH::clumpsCrossingPlane(int axis, 
 }
 
 ////////////////////////////////////////////////////////////////////
+
+SphericalClumpBVH::LeafStatistics SphericalClumpBVH::leafStatistics() const
+{
+    LeafStatistics stats;
+    if (_nodes.empty()) return stats;
+
+    stats.minDepth = std::numeric_limits<int>::max();
+    stats.minCount = std::numeric_limits<int>::max();
+    stats.minDiagonal = std::numeric_limits<double>::infinity();
+
+    int numLeaves = 0;
+    long depthSum = 0;
+    long countSum = 0;
+    double diagonalSum = 0.;
+
+    struct StackEntry
+    {
+        int nodeIndex;
+        int depth;
+    };
+    vector<StackEntry> stack;
+    stack.push_back({0, 0});
+    while (!stack.empty())
+    {
+        StackEntry top = stack.back();
+        stack.pop_back();
+        const Node& node = _nodes[top.nodeIndex];
+
+        if (node.isLeaf())
+        {
+            numLeaves++;
+            depthSum += top.depth;
+            countSum += node.numIndices;
+            double diagonal = node.box.diagonal();
+            diagonalSum += diagonal;
+
+            stats.minDepth = min(stats.minDepth, top.depth);
+            stats.maxDepth = max(stats.maxDepth, top.depth);
+            stats.minCount = min(stats.minCount, node.numIndices);
+            stats.maxCount = max(stats.maxCount, node.numIndices);
+            stats.minDiagonal = min(stats.minDiagonal, diagonal);
+            stats.maxDiagonal = max(stats.maxDiagonal, diagonal);
+        }
+        else
+        {
+            stack.push_back({node.left, top.depth + 1});
+            stack.push_back({node.right, top.depth + 1});
+        }
+    }
+
+    stats.avgDepth = static_cast<double>(depthSum) / numLeaves;
+    stats.avgCount = static_cast<double>(countSum) / numLeaves;
+    stats.avgDiagonal = diagonalSum / numLeaves;
+    return stats;
+}
+
+////////////////////////////////////////////////////////////////////

@@ -11,6 +11,7 @@
 #include "Quadrics.hpp"
 #include "Random.hpp"
 #include "SpatialGridPlotFile.hpp"
+#include "StringUtils.hpp"
 #include "TextInFile.hpp"
 
 //////////////////////////////////////////////////////////////////////
@@ -182,6 +183,19 @@ void ClumpySphericalSpatialGrid::setupSelfAfter()
     log->info("  Rejected (overlapping):     " + std::to_string(numOverlapping));
     log->info("  Remaining in spatial grid:  " + std::to_string(_numClumps));
     log->info("  Straddling a cell wall:     " + std::to_string(numStraddling));
+
+    // report BVH leaf statistics, a diagnostic aid for tuning the tree build parameters
+    // (NumBins and MaxLeafSize in SphericalClumpBVH.cpp); leaf diagonals are given relative to
+    // the domain's outer radius to make them dimensionless and comparable across models
+    ///auto leafStats = _bvh->leafStatistics();
+    ///log->info("Statistics:");
+    ///log->info("  Leaf depth:              min " + std::to_string(leafStats.minDepth) + ", max "
+    ///          + std::to_string(leafStats.maxDepth) + ", avg " + StringUtils::toString(leafStats.avgDepth, 'f', 2));
+    ///log->info("  Clumps per leaf:         min " + std::to_string(leafStats.minCount) + ", max "
+    ///          + std::to_string(leafStats.maxCount) + ", avg " + StringUtils::toString(leafStats.avgCount, 'f', 2));
+    ///log->info("  Leaf diagonal / rmax:    min " + StringUtils::toString(leafStats.minDiagonal / maxRadius(), 'f', 4)
+    ///          + ", max " + StringUtils::toString(leafStats.maxDiagonal / maxRadius(), 'f', 4) + ", avg "
+    ///          + StringUtils::toString(leafStats.avgDiagonal / maxRadius(), 'f', 4));
 
     // ---- epsilon used to progress a path, small relative to both the mesh and the smallest clump ----
 
