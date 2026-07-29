@@ -65,8 +65,9 @@ void StructuredSphereSpatialGrid::setupSelfAfter()
     for (int m = 0; m != _Ncells; ++m)
     {
         double rmin, thetamin, phimin, rmax, thetamax, phimax;
-        getCoords(m, rmin, thetamin, phimin, rmax, thetamax, phimax);
-        _cellVolume[m] = (1. / 3.) * Quadrics::cube(rmin, rmax) * (cos(thetamin) - cos(thetamax)) * (phimax - phimin);
+        if (getCoords(m, rmin, thetamin, phimin, rmax, thetamax, phimax))
+            _cellVolume[m] =
+                (1. / 3.) * Quadrics::cube(rmin, rmax) * (cos(thetamin) - cos(thetamax)) * (phimax - phimin);
     }
 }
 
