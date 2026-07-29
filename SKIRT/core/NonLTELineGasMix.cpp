@@ -26,24 +26,406 @@ void NonLTELineGasMix::setupSelfBefore()
     vector<string> colNames{"H2"};  // just molecular hydrogen by default
     switch (species())
     {
+        // molecular species
         case Species::Test: name = "TT"; break;
-        case Species::Hydroxyl: name = "OH"; break;
+        case Species::Hydroxyl:
+            name = "OH";
+            colNames = {"H2", "H", "He"};
+            break;
         case Species::HydroxylHFS: name = "OHhfs"; break;
         case Species::Formyl: name = "HCO+"; break;
+        case Species::HydrogenCyanide:
+            name = "HCN";
+            colNames = {"H2", "e-"};
+            break;
         case Species::CarbonMonoxide: name = "CO"; break;
-        case Species::AtomicCarbon:
-            name = "C";
-            colNames = {"H2", "H", "H+", "e-", "He"};
-            break;
-        case Species::IonizedCarbon:
-            name = "C+";
-            colNames = {"H2", "H", "e-"};
-            break;
         case Species::MolecularHydrogen:
             name = "H2";
             colNames = {"H2", "H", "H+", "He"};
             break;
+
+        // atomic species
+        case Species::AtomicCarbon:
+            name = "C_I";
+            colNames = {"H2", "H", "H+", "e-", "He"};
+            break;
+        case Species::IonizedCarbon:
+            name = "C_II";
+            colNames = {"H2", "H", "e-"};
+            break;
+        case Species::DoublyIonizedCarbon:
+            name = "C_III";
+            colNames = {"e-"};
+            break;
+        case Species::TriplyIonizedCarbon:
+            name = "C_IV";
+            colNames = {"e-"};
+            break;
+        case Species::FourTimesIonizedCarbon:
+            name = "C_V";
+            colNames = {"e-"};
+            break;
+        case Species::FiveTimesIonizedCarbon:
+            name = "C_VI";
+            colNames = {"e-"};
+            break;
+
+        case Species::AtomicNitrogen:
+            name = "N_I";
+            colNames = {"e-"};
+            break;
+        case Species::IonizedNitrogen:
+            name = "N_II";
+            colNames = {"H", "e-"};
+            break;
+        case Species::DoublyIonizedNitrogen:
+            name = "N_III";
+            colNames = {"e-"};
+            break;
+        case Species::TriplyIonizedNitrogen:
+            name = "N_IV";
+            colNames = {"e-"};
+            break;
+        case Species::FourTimesIonizedNitrogen:
+            name = "N_V";
+            colNames = {"e-"};
+            break;
+        case Species::FiveTimesIonizedNitrogen:
+            name = "N_VI";
+            colNames = {"e-"};
+            break;
+        case Species::SixTimesIonizedNitrogen:
+            name = "N_VII";
+            colNames = {"e-"};
+            break;
+
+        case Species::AtomicOxygen:
+            name = "O_I";
+            colNames = {"H2", "H", "H+", "e-", "He"};
+            break;
+        case Species::IonizedOxygen:
+            name = "O_II";
+            colNames = {"e-"};
+            break;
+        case Species::DoublyIonizedOxygen:
+            name = "O_III";
+            colNames = {"H", "e-"};
+            break;
+        case Species::TriplyIonizedOxygen:
+            name = "O_IV";
+            colNames = {"e-"};
+            break;
+        case Species::FourTimesIonizedOxygen:
+            name = "O_V";
+            colNames = {"e-"};
+            break;
+        case Species::FiveTimesIonizedOxygen:
+            name = "O_VI";
+            colNames = {"e-"};
+            break;
+        case Species::SixTimesIonizedOxygen:
+            name = "O_VII";
+            colNames = {"e-"};
+            break;
+        case Species::SevenTimesIonizedOxygen:
+            name = "O_VIII";
+            colNames = {"e-"};
+            break;
+
+        case Species::AtomicNeon:
+            name = "Ne_I";
+            colNames = {"e-"};
+            break;
+        case Species::IonizedNeon:
+            name = "Ne_II";
+            colNames = {"e-"};
+            break;
+        case Species::DoublyIonizedNeon:
+            name = "Ne_III";
+            colNames = {"e-"};
+            break;
+        case Species::TriplyIonizedNeon:
+            name = "Ne_IV";
+            colNames = {"e-"};
+            break;
+        case Species::FourTimesIonizedNeon:
+            name = "Ne_V";
+            colNames = {"e-"};
+            break;
+        case Species::FiveTimesIonizedNeon:
+            name = "Ne_VI";
+            colNames = {"e-"};
+            break;
+        case Species::SixTimesIonizedNeon:
+            name = "Ne_VII";
+            colNames = {"e-"};
+            break;
+        case Species::SevenTimesIonizedNeon:
+            name = "Ne_VIII";
+            colNames = {"e-"};
+            break;
+        case Species::EightTimesIonizedNeon:
+            name = "Ne_IX";
+            colNames = {"e-"};
+            break;
+        case Species::NineTimesIonizedNeon:
+            name = "Ne_X";
+            colNames = {"e-"};
+            break;
+
+        case Species::IonizedSodium:
+            name = "Na_II";
+            colNames = {"e-"};
+            break;
+        case Species::DoublyIonizedSodium:
+            name = "Na_III";
+            colNames = {"e-"};
+            break;
+        case Species::TriplyIonizedSodium:
+            name = "Na_IV";
+            colNames = {"e-"};
+            break;
+        case Species::FourTimesIonizedSodium:
+            name = "Na_V";
+            colNames = {"e-"};
+            break;
+        case Species::FiveTimesIonizedSodium:
+            name = "Na_VI";
+            colNames = {"e-"};
+            break;
+        case Species::SixTimesIonizedSodium:
+            name = "Na_VII";
+            colNames = {"e-"};
+            break;
+        case Species::SevenTimesIonizedSodium:
+            name = "Na_VIII";
+            colNames = {"e-"};
+            break;
+        case Species::EightTimesIonizedSodium:
+            name = "Na_IX";
+            colNames = {"e-"};
+            break;
+        case Species::NineTimesIonizedSodium:
+            name = "Na_X";
+            colNames = {"e-"};
+            break;
+        case Species::TenTimesIonizedSodium:
+            name = "Na_XI";
+            colNames = {"e-"};
+            break;
+
+        case Species::IonizedMagnesium:
+            name = "Mg_II";
+            colNames = {"e-"};
+            break;
+        case Species::DoublyIonizedMagnesium:
+            name = "Mg_III";
+            colNames = {"e-"};
+            break;
+        case Species::TriplyIonizedMagnesium:
+            name = "Mg_IV";
+            colNames = {"e-"};
+            break;
+        case Species::FourTimesIonizedMagnesium:
+            name = "Mg_V";
+            colNames = {"e-"};
+            break;
+        case Species::FiveTimesIonizedMagnesium:
+            name = "Mg_VI";
+            colNames = {"e-"};
+            break;
+        case Species::SixTimesIonizedMagnesium:
+            name = "Mg_VII";
+            colNames = {"e-"};
+            break;
+        case Species::SevenTimesIonizedMagnesium:
+            name = "Mg_VIII";
+            colNames = {"e-"};
+            break;
+        case Species::EightTimesIonizedMagnesium:
+            name = "Mg_IX";
+            colNames = {"e-"};
+            break;
+        case Species::NineTimesIonizedMagnesium:
+            name = "Mg_X";
+            colNames = {"e-"};
+            break;
+        case Species::TenTimesIonizedMagnesium:
+            name = "Mg_XI";
+            colNames = {"e-"};
+            break;
+
+        case Species::AtomicSilicon:
+            name = "Si_I";
+            colNames = {"H", "e-"};
+            break;
+        case Species::IonizedSilicon:
+            name = "Si_II";
+            colNames = {"e-"};
+            break;
+        case Species::DoublyIonizedSilicon:
+            name = "Si_III";
+            colNames = {"e-"};
+            break;
+        case Species::TriplyIonizedSilicon:
+            name = "Si_IV";
+            colNames = {"e-"};
+            break;
+        case Species::FourTimesIonizedSilicon:
+            name = "Si_V";
+            colNames = {"e-"};
+            break;
+        case Species::FiveTimesIonizedSilicon:
+            name = "Si_VI";
+            colNames = {"e-"};
+            break;
+        case Species::SixTimesIonizedSilicon:
+            name = "Si_VII";
+            colNames = {"e-"};
+            break;
+        case Species::SevenTimesIonizedSilicon:
+            name = "Si_VIII";
+            colNames = {"e-"};
+            break;
+        case Species::EightTimesIonizedSilicon:
+            name = "Si_IX";
+            colNames = {"e-"};
+            break;
+        case Species::NineTimesIonizedSilicon:
+            name = "Si_X";
+            colNames = {"e-"};
+            break;
+        case Species::TenTimesIonizedSilicon:
+            name = "Si_XI";
+            colNames = {"e-"};
+            break;
+
+        case Species::AtomicSulfur:
+            name = "S_I";
+            colNames = {"H", "e-"};
+            break;
+        case Species::IonizedSulfur:
+            name = "S_II";
+            colNames = {"e-"};
+            break;
+        case Species::DoublyIonizedSulfur:
+            name = "S_III";
+            colNames = {"e-"};
+            break;
+        case Species::TriplyIonizedSulfur:
+            name = "S_IV";
+            colNames = {"e-"};
+            break;
+        case Species::FourTimesIonizedSulfur:
+            name = "S_V";
+            colNames = {"e-"};
+            break;
+        case Species::FiveTimesIonizedSulfur:
+            name = "S_VI";
+            colNames = {"e-"};
+            break;
+        case Species::SixTimesIonizedSulfur:
+            name = "S_VII";
+            colNames = {"e-"};
+            break;
+        case Species::SevenTimesIonizedSulfur:
+            name = "S_VIII";
+            colNames = {"e-"};
+            break;
+        case Species::EightTimesIonizedSulfur:
+            name = "S_IX";
+            colNames = {"e-"};
+            break;
+        case Species::NineTimesIonizedSulfur:
+            name = "S_X";
+            colNames = {"e-"};
+            break;
+        case Species::TenTimesIonizedSulfur:
+            name = "S_XI";
+            colNames = {"e-"};
+            break;
+
+        case Species::IonizedIron:
+            name = "Fe_II";
+            colNames = {"e-"};
+            break;
+        case Species::DoublyIonizedIron:
+            name = "Fe_III";
+            colNames = {"e-"};
+            break;
+        case Species::TriplyIonizedIron:
+            name = "Fe_IV";
+            colNames = {"e-"};
+            break;
+        case Species::FourTimesIonizedIron:
+            name = "Fe_V";
+            colNames = {"e-"};
+            break;
+        case Species::FiveTimesIonizedIron:
+            name = "Fe_VI";
+            colNames = {"e-"};
+            break;
+        case Species::SixTimesIonizedIron:
+            name = "Fe_VII";
+            colNames = {"e-"};
+            break;
+        case Species::SevenTimesIonizedIron:
+            name = "Fe_VIII";
+            colNames = {"e-"};
+            break;
+        case Species::EightTimesIonizedIron:
+            name = "Fe_IX";
+            colNames = {"e-"};
+            break;
+        case Species::NineTimesIonizedIron:
+            name = "Fe_X";
+            colNames = {"e-"};
+            break;
+        case Species::TenTimesIonizedIron:
+            name = "Fe_XI";
+            colNames = {"e-"};
+            break;
+
+        case Species::DoublyIonizedArgon:
+            name = "Ar_III";
+            colNames = {"e-"};
+            break;
+        case Species::TriplyIonizedArgon:
+            name = "Ar_IV";
+            colNames = {"e-"};
+            break;
+        case Species::FourTimesIonizedArgon:
+            name = "Ar_V";
+            colNames = {"e-"};
+            break;
+        case Species::FiveTimesIonizedArgon:
+            name = "Ar_VI";
+            colNames = {"e-"};
+            break;
+        case Species::SixTimesIonizedArgon:
+            name = "Ar_VII";
+            colNames = {"e-"};
+            break;
+        case Species::SevenTimesIonizedArgon:
+            name = "Ar_VIII";
+            colNames = {"e-"};
+            break;
+        case Species::EightTimesIonizedArgon:
+            name = "Ar_IX";
+            colNames = {"e-"};
+            break;
+        case Species::NineTimesIonizedArgon:
+            name = "Ar_X";
+            colNames = {"e-"};
+            break;
+        case Species::TenTimesIonizedArgon:
+            name = "Ar_XI";
+            colNames = {"e-"};
+            break;
+
+            // user give any optical properties
     }
+    _name = name;
 
     // load the mass of the selected species
     {
@@ -88,6 +470,25 @@ void NonLTELineGasMix::setupSelfBefore()
         }
     }
     _numLines = _indexUpRad.size();
+
+    // calculate the branching ratios for each radiative transition from the same upper energy level
+    _branchRatio.resize(_numLines);
+    vector<double> sumA(_numLevels, 0.);
+
+    for (int k = 0; k != _numLines; ++k)
+    {
+        int indexUp = _indexUpRad[k];
+        sumA[indexUp] += _einsteinA[k];
+    }
+
+    for (int k = 0; k != _numLines; ++k)
+    {
+        int indexUp = _indexUpRad[k];
+        if (sumA[indexUp] > 0.)
+            _branchRatio[k] = _einsteinA[k] / sumA[indexUp];
+        else
+            _branchRatio[k] = 0.;
+    }
 
     // calculate the line centers and the Einstein B coefficients
     _center.resize(_numLines);
@@ -148,8 +549,20 @@ void NonLTELineGasMix::setupSelfBefore()
     if (_numLines == 0) throw FATALERROR("There are no radiative transitions; increase the number of energy levels");
     for (int k = 0; k != _numLines; ++k)
     {
-        log->info("  (" + StringUtils::toString(_indexUpRad[k]) + "-" + StringUtils::toString(_indexLowRad[k]) + ") "
-                  + StringUtils::toString(units->owavelength(_center[k])) + " " + units->uwavelength());
+        if (_branchRatio[k] > lowestBranchingRatio())
+        {
+            log->info("  (" + StringUtils::toString(_indexUpRad[k]) + "-" + StringUtils::toString(_indexLowRad[k])
+                      + ") " + StringUtils::toString(units->owavelength(_center[k])) + " " + units->uwavelength()
+                      + ", branch ratio=" + StringUtils::toString(_branchRatio[k]) + ">"
+                      + StringUtils::toString(lowestBranchingRatio()) + ": radiative transition included");
+        }
+        else
+        {
+            log->info("  (" + StringUtils::toString(_indexUpRad[k]) + "-" + StringUtils::toString(_indexLowRad[k])
+                      + ") " + StringUtils::toString(units->owavelength(_center[k])) + " " + units->uwavelength()
+                      + ", branch ratio=" + StringUtils::toString(_branchRatio[k]) + "<"
+                      + StringUtils::toString(lowestBranchingRatio()) + ": radiative transition excluded");
+        }
     }
 
     // log summary info on the collisional partner(s)
@@ -289,6 +702,19 @@ void NonLTELineGasMix::initializeSpecificState(MaterialState* state, double /*me
         double Tkin = temperature >= 0. ? temperature : defaultTemperature();
         state->setKineticTemperature(Tkin);
 
+        // check that the kinetic temperature is within the range of the collisional data
+        double Tmin_all_col = 1.0e10;
+        double Tmax_all_col = 0.0;
+
+        for (int c = 0; c != _numColPartners; ++c)
+        {
+            const auto& Tgrid = _colPartner[c].T;
+            double Tmin_col = Tgrid.min();
+            double Tmax_col = Tgrid.max();
+            Tmin_all_col = std::min(Tmin_all_col, Tmin_col);
+            Tmax_all_col = std::max(Tmax_all_col, Tmax_col);
+        }
+
         // set effective temperature, including imported or default turbulence
         double vturb = params.size() ? params[_numColPartners] : defaultTurbulenceVelocity();
         double Teff = Tkin + 0.5 * vturb * vturb * _mass / Constants::k();
@@ -310,13 +736,25 @@ void NonLTELineGasMix::initializeSpecificState(MaterialState* state, double /*me
 
         // initialize level population using boltzmann distribution (i.e., start with LTE)
         Array levelPops(_numLevels);
-        for (int p = 0; p != _numLevels; ++p) levelPops[p] = _weight[p] * exp(-_energy[p] / Constants::k() / Tkin);
-
-        // if the user configured a file with initial level populations, use those data instead
-        size_t m = state->cellIndex();
-        if (m < _initLevelPops.size())
-            for (int p = 0; p != _numLevels; ++p) levelPops[p] = _initLevelPops[m][p + 1];
-
+        if (initialLevelPopsCase() == InitialLevelPopsCase::LTE)
+        {
+            for (int p = 0; p != _numLevels; ++p) levelPops[p] = _weight[p] * exp(-_energy[p] / Constants::k() / Tkin);
+        }
+        else if (initialLevelPopsCase() == InitialLevelPopsCase::CollisionallyExcited)
+        {
+            // initilize level population based on the the detailed balance condition
+            // between collisional transitions and spontaneous emission (i.e., start with non-LTE)
+            Array Jv_zero(_numWavelengths);
+            Jv_zero = 0.0;
+            updateSpecificState(state, Jv_zero);
+        }
+        else if (initialLevelPopsCase() == InitialLevelPopsCase::Custom)
+        {
+            // if the user configured a file with initial level populations, use those data instead
+            size_t m = state->cellIndex();
+            if (m < _initLevelPops.size())
+                for (int p = 0; p != _numLevels; ++p) levelPops[p] = _initLevelPops[m][p + 1];
+        }
         // normalize and store
         levelPops *= state->numberDensity() / levelPops.sum();
         for (int p = 0; p != _numLevels; ++p) state->setLevelPopulation(p, levelPops[p]);
@@ -330,6 +768,7 @@ namespace
     // solve the square set of linear equations represented by the given matrix using LU decomposition
     // the matrix should have N rows and N+1 columns; its contents is overwritten and
     // the solution is returned as an array of size N
+    // Throws FATALERROR if the matrix is singular or nearly singular.
     Array solveMatrixEquation(vector<vector<double>>& matrix)
     {
         size_t size = matrix.size();
@@ -341,11 +780,35 @@ namespace
         // decomposition
         for (size_t k = 0; k < size - 1; ++k)
         {
+            // Swap rows if necessary
             if (matrix[k][k] == 0.0)
             {
-                std::swap(matrix[k], matrix[k + 1]);
-                std::swap(solution[k], solution[k + 1]);
+                // Find the row with the maximum absolute value in column k (partial pivoting)
+                size_t maxRow = k;
+                double maxVal = matrix[k][k];
+                for (size_t i = k + 1; i < size; ++i)
+                {
+                    double Val = matrix[i][k];
+                    if (Val != maxVal && std::abs(Val) > 0.0)
+                    {
+                        maxVal = Val;
+                        maxRow = i;
+                        break;  // Exit early on first difference
+                    }
+                }
+                if (maxRow != k)
+                {
+                    std::swap(matrix[k], matrix[maxRow]);
+                    std::swap(solution[k], solution[maxRow]);
+                }
+                else
+                {
+                    throw FATALERROR("The matrix is 0 in the diagonal at row " + std::to_string(k)
+                                     + " (pivot = " + StringUtils::toString(matrix[k][k], 'e', 6)
+                                     + " and the replacement was not found");
+                }
             }
+
             for (size_t i = k + 1; i < size; ++i)
             {
                 double inverse = matrix[i][k] / matrix[k][k];
@@ -363,6 +826,21 @@ namespace
         {
             for (size_t j = i + 1; j < size; ++j) solution[i] -= matrix[i][j] * solution[j];
             solution[i] /= matrix[i][i];
+
+            // Verify that the solution is finite (no NaN or Inf)
+            if (!std::isfinite(solution[i]))
+            {
+                throw FATALERROR(std::string("LU decomposition: non-finite solution at index ") + std::to_string(i)
+                                 + " (value = " + StringUtils::toString(solution[i], 'e', 6) + "), matrix("
+                                 + std::to_string(i) + ") = " + StringUtils::toString(matrix[i][i], 'e', 6)
+                                 + "). "
+                                   "The matrix for the level population is possibly too sparse."
+                                   "1. It might be due to the number density of the collision partners being zero. It "
+                                   "would be helpful"
+                                   " to set the number density to zero for cells with the low number density of the gas"
+                                   " (e.g., ignore cells with nH < 0.001 cm-3 ).  "
+                                   "2. If it does not help you, please consult with the SKIRT developers. ");
+            }
         }
 
         // return the solution
@@ -408,125 +886,178 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
     UpdateStatus status;
 
     // if the cell does not contain any material for this component, leave all properties untouched
-    if (state->numberDensity() > 0)
+    if (updateDynamicStatesFlag() == false)
     {
-        // allocate the statistical equilibrium matrix for the level populations
-        vector<vector<double>> matrix(_numLevels, vector<double>(_numLevels + 1));
-
-        // add the terms for the radiational transitions
-        for (int k = 0; k != _numLines; ++k)
+        status.updateConverged();
+    }
+    else
+    {
+        if (state->numberDensity() > 0)
         {
-            int up = _indexUpRad[k];
-            int low = _indexLowRad[k];
+            // allocate the statistical equilibrium matrix for the level populations
+            vector<vector<double>> matrix(_numLevels, vector<double>(_numLevels + 1));
 
-            // add the Einstein Aul coefficients (spontaneous emission)
-            matrix[up][up] -= _einsteinA[k];
-            matrix[low][up] += _einsteinA[k];
+            // add the terms for the radiational transitions
+            for (int k = 0; k != _numLines; ++k)
+            {
+                int up = _indexUpRad[k];
+                int low = _indexLowRad[k];
 
-            // calculate the mean intensity of the radiation field convolved over the normalized line profile g:
-            //   J_convolved = \int J_lambda(lambda) g(lambda) d lambda  /  \int g(lambda) d lambda
-            // we use all wavelength points within a given range around the line center and verify that the
-            // grid is sufficiently resolved to reproduce the normalizaton value of 1 = \int g(lambda) d lambda
-            double center = _center[k];
-            double sigma = sigmaForLine(center, state->temperature(), _mass);
-            double lambdamin = center - PROFILE_RANGE * sigma;
-            double lambdamax = center + PROFILE_RANGE * sigma;
-            int ellmin = std::lower_bound(begin(_lambdav), end(_lambdav), lambdamin) - begin(_lambdav);
-            int ellmax = std::upper_bound(begin(_lambdav), end(_lambdav), lambdamax) - begin(_lambdav);
-            double gsum = 0.;
-            double Jsum = 0.;
-            for (int ell = ellmin; ell != ellmax; ++ell)
-            {
-                double gdlambda = gaussian(_lambdav[ell], center, sigma) * _dlambdav[ell];
-                gsum += gdlambda;
-                Jsum += Jv[ell] * gdlambda;
-            }
-            if (abs(gsum - 1.) > MAX_GAUSS_ERROR_WARN)
-            {
-                auto units = find<Units>();
-                vector<string> message = {
-                    "Integral of Gaussian line profile over radiation field is inaccurate:",
-                    "  integral equals " + StringUtils::toString(gsum) + " rather than unity",
-                    "  over wavelengths from " + StringUtils::toString(units->owavelength(lambdamin)) + " "
-                        + units->uwavelength() + " to " + StringUtils::toString(units->owavelength(lambdamax)) + " "
-                        + units->uwavelength(),
-                    "  --> increase the resolution of the radiation field wavelength grid"};
-                if (abs(gsum - 1.) > MAX_GAUSS_ERROR_FAIL)
-                {
-                    auto log = find<Log>();
-                    log->info("Gausss(" + StringUtils::toString(_lambdav[ellmin])
-                              + ")=" + StringUtils::toString(gaussian(_lambdav[ellmin], center, sigma)) + "Gausss("
-                              + StringUtils::toString(_lambdav[ellmax - 1])
-                              + ")=" + StringUtils::toString(gaussian(_lambdav[ellmax - 1], center, sigma)));
-                    throw FATALERROR(StringUtils::join(message, "\n"));
-                }
+                // add the Einstein Aul coefficients (spontaneous emission)
+                matrix[up][up] -= _einsteinA[k];
+                matrix[low][up] += _einsteinA[k];
+
+                if (_branchRatio[k] < lowestBranchingRatio()) continue;
                 auto log = find<Log>();
-                log->warning(message[0]);
-                for (size_t i = 1; i != message.size(); ++i) find<Log>()->info(message[i]);
+
+                // calculate the mean intensity of the radiation field convolved over the normalized line profile g:
+                //   J_convolved = \int J_lambda(lambda) g(lambda) d lambda  /  \int g(lambda) d lambda
+                // we use all wavelength points within a given range around the line center and verify that the
+                // grid is sufficiently resolved to reproduce the normalizaton value of 1 = \int g(lambda) d lambda
+                double center = _center[k];
+                double sigma = sigmaForLine(center, state->temperature(), _mass);
+                double lambdamin = center - PROFILE_RANGE * sigma;
+                double lambdamax = center + PROFILE_RANGE * sigma;
+                int ellmin = std::lower_bound(begin(_lambdav), end(_lambdav), lambdamin) - begin(_lambdav);
+                int ellmax = std::upper_bound(begin(_lambdav), end(_lambdav), lambdamax) - begin(_lambdav);
+                double gsum = 0.;
+                double Jsum = 0.;
+                for (int ell = ellmin; ell != ellmax; ++ell)
+                {
+                    double gdlambda = gaussian(_lambdav[ell], center, sigma) * _dlambdav[ell];
+                    gsum += gdlambda;
+                    Jsum += Jv[ell] * gdlambda;
+                }
+                if (abs(gsum - 1.) > MAX_GAUSS_ERROR_WARN)
+                {
+                    auto units = find<Units>();
+                    vector<string> message1 = {
+                        "Integral of Gaussian line profile over radiation field is inaccurate for ",
+                        +" " + _name + " for transition (" + StringUtils::toString(up) + "-"
+                            + StringUtils::toString(low) + ")",
+                        std::string("  integral equals ") + StringUtils::toString(gsum) + " rather than unity",
+                        std::string("  over wavelengths from ") + StringUtils::toString(units->owavelength(lambdamin))
+                            + " " + units->uwavelength() + " to " + StringUtils::toString(units->owavelength(lambdamax))
+                            + " " + units->uwavelength() + "."};
+                    vector<string> message2 = {// Concatenate with std::string to include dynamic values
+                                               std::string(" 1. Set the wavelength coverage from a velocity window of "
+                                                           "±5 x total turbulent velocity (vturb) ")
+                                               + " (i.e., Vmin = -5 vturb, Vmax = +5 vturb) for the radiation field "
+                                                 "and sample it with around 100"
+                                               + " points. The total turbulent velocity includes the micro-turbulent "
+                                                 "velocity and thermal velocity."
+                                               + " Now, vturb = " + StringUtils::toString(units->ovelocity(sigma)) + " "
+                                               + units->uvelocity() + "."};
+
+                    if (abs(gsum - 1.) > MAX_GAUSS_ERROR_FAIL and warningForGaussianIntegral())
+                    {
+                        log->info(std::string("Gausss(") + StringUtils::toString(_lambdav[ellmin])
+                                  + ")=" + StringUtils::toString(gaussian(_lambdav[ellmin], center, sigma)) + "Gausss("
+                                  + StringUtils::toString(_lambdav[ellmax - 1])
+                                  + ")=" + StringUtils::toString(gaussian(_lambdav[ellmax - 1], center, sigma)));
+                        log->info(message2[0]);
+                        throw FATALERROR(StringUtils::join(message1, "\n"));
+                    }
+
+                    log->warning(message1[0]);
+                    log->info(message2[0]);
+                    for (size_t i = 1; i != message1.size(); ++i) find<Log>()->info(message1[i]);
+                }
+                double J = Jsum;
+                if (storeMeanIntensities()) state->setMeanIntensity(k, J);
+                if (!std::isfinite(J))
+                {
+                    throw FATALERROR("Mean intensity J is not finite for transition (" + StringUtils::toString(up) + "-"
+                                     + StringUtils::toString(low) + ") of " + _name + "The value of J is "
+                                     + StringUtils::toString(J) + ". The line center is "
+                                     + StringUtils::toString(_center[k]) + ".");
+                }
+
+                // add the Einstein Bul coefficients (stimulated emission)
+                matrix[up][up] -= _einsteinBul[k] * J;
+                matrix[low][up] += _einsteinBul[k] * J;
+
+                // add the Einstein Blu coefficients (absorption)
+                matrix[low][low] -= _einsteinBlu[k] * J;
+                matrix[up][low] += _einsteinBlu[k] * J;
             }
-            double J = Jsum / gsum;
-            if (storeMeanIntensities()) state->setMeanIntensity(k, J);
 
-            // add the Einstein Bul coefficients (stimulated emission)
-            matrix[up][up] -= _einsteinBul[k] * J;
-            matrix[low][up] += _einsteinBul[k] * J;
-
-            // add the Einstein Blu coefficients (absorption)
-            matrix[low][low] -= _einsteinBlu[k] * J;
-            matrix[up][low] += _einsteinBlu[k] * J;
-        }
-
-        // add the terms for the collisional transitions
-        double T = state->kineticTemperature();
-        for (int c = 0; c != _numColPartners; ++c)
-        {
-            const auto& partner = _colPartner[c];
-
-            for (int t = 0; t != partner.numColTrans; ++t)
+            // add the terms for the collisional transitions
+            double T = state->kineticTemperature();
+            for (int c = 0; c != _numColPartners; ++c)
             {
-                int up = partner.indexUpCol[t];
-                int low = partner.indexLowCol[t];
-                double weightRatio = _weight[up] / _weight[low];
-                double energyDiff = _energy[up] - _energy[low];
-                double Kconversion = weightRatio * exp(-energyDiff / Constants::k() / T);
-                // determine Kul by interpolation from the temperature-dependent table
-                double Kul = NR::clampedValue<NR::interpolateLogLog>(T, partner.T, partner.Kul[t]);
+                const auto& partner = _colPartner[c];
+                const auto& Tgrid = _colPartner[c].T;
+                double Tmin_col = Tgrid.min();
+                double Tmax_col = Tgrid.max();
 
-                // determine Klu from Kul
-                double Klu = Kul * Kconversion;
+                for (int t = 0; t != partner.numColTrans; ++t)
+                {
+                    int up = partner.indexUpCol[t];
+                    int low = partner.indexLowCol[t];
+                    double weightRatio = _weight[up] / _weight[low];
+                    double energyDiff = _energy[up] - _energy[low];
+                    double Kconversion = std::max(weightRatio * exp(-energyDiff / Constants::k() / T), 1e-15);
+                    // determine Kul by interpolation from the temperature-dependent table
+                    double T_rep = std::max(Tmin_col, std::min(T, Tmax_col));
+                    double Kul = NR::clampedValue<NR::interpolateLogLog>(T_rep, partner.T, partner.Kul[t]);
+                    auto log = find<Log>();
+                    // determine Klu from Kul
+                    double Klu = Kul * Kconversion;
+                    if (Kul <= 0.)
+                    {
+                        log->warning("collisional transition rate Kul is " + StringUtils::toString(Kul)
+                                     + " for collisional partner " + partner.name
+                                     + " at T = " + StringUtils::toString(T) + " of " + _name + " for transition ("
+                                     + StringUtils::toString(up) + "-" + StringUtils::toString(low)
+                                     + "). the excitation energy is "
+                                     + StringUtils::toString(energyDiff / Constants::k()) + " K. Setting it to 1e-20.");
+                        Kul = 1.0e-20;
+                    }
+                    if (Klu <= 0.)
+                    {
+                        log->warning("collisional transition rate Klu is " + StringUtils::toString(Klu)
+                                     + " for collisional partner " + partner.name
+                                     + " at T = " + StringUtils::toString(T) + " of " + _name + " K for transition ("
+                                     + StringUtils::toString(up) + "-" + StringUtils::toString(low)
+                                     + "). the excitation energy is "
+                                     + StringUtils::toString(energyDiff / Constants::k()) + " K. Setting it to 1e-20.");
+                        Klu = 1.0e-20 * Kul;
+                    }
 
-                // add the coefficients after multiplication by the partner number density
-                double n = state->colPartnerDensity(c);
-                matrix[up][up] -= Kul * n;
-                matrix[low][low] -= Klu * n;
-                matrix[up][low] += Klu * n;
-                matrix[low][up] += Kul * n;
+                    // add the coefficients after multiplication by the partner number density
+                    double n = max(state->colPartnerDensity(c), 1.0e-20);  // avoid zero density
+                    matrix[up][up] -= Kul * n;
+                    matrix[low][low] -= Klu * n;
+                    matrix[up][low] += Klu * n;
+                    matrix[low][up] += Kul * n;
+                }
             }
+
+            // replace the last row of the matrix by the normalization of the number density
+            for (int p = 0; p != _numLevels; ++p) matrix[_numLevels - 1][p] = 1.;
+            matrix[_numLevels - 1][_numLevels] = state->numberDensity();
+
+            // solve the set of equations represented by the matrix
+            Array solution = solveMatrixEquation(matrix);
+
+            // update the level populations, keeping track of the amount of change
+            double change = 0.;
+            for (int p = 0; p != _numLevels; ++p)
+            {
+                double oldPop = state->levelPopulation(p);
+                double newPop = solution[p];
+                state->setLevelPopulation(p, newPop);
+                change += abs(oldPop / newPop - 1.);
+            }
+            change /= _numLevels;
+
+            // verify convergence
+            if (change > maxChangeInLevelPopulations())
+                status.updateNotConverged();
+            else
+                status.updateConverged();
         }
-
-        // replace the last row of the matrix by the normalization of the number density
-        for (int p = 0; p != _numLevels; ++p) matrix[_numLevels - 1][p] = 1.;
-        matrix[_numLevels - 1][_numLevels] = state->numberDensity();
-
-        // solve the set of equations represented by the matrix
-        Array solution = solveMatrixEquation(matrix);
-
-        // update the level populations, keeping track of the amount of change
-        double change = 0.;
-        for (int p = 0; p != _numLevels; ++p)
-        {
-            double oldPop = state->levelPopulation(p);
-            double newPop = solution[p];
-            state->setLevelPopulation(p, newPop);
-            change += abs(oldPop / newPop - 1.);
-        }
-        change /= _numLevels;
-
-        // verify convergence
-        if (change > maxChangeInLevelPopulations())
-            status.updateNotConverged();
-        else
-            status.updateConverged();
     }
     return status;
 }
@@ -536,32 +1067,40 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
 bool NonLTELineGasMix::isSpecificStateConverged(int numCells, int /*numUpdated*/, int numNotConverged,
                                                 MaterialState* currentAggregate, MaterialState* previousAggregate) const
 {
-    // calculate fraction of not converged cells
-    double fractionNotConverged = static_cast<double>(numNotConverged) / static_cast<double>(numCells);
-
-    // calculate maximum relative difference between level populations of previous and current iteration
-    double changeInGlobalLevelPops = 0.;
-    for (int p = 0; p != _numLevels; ++p)
+    if (updateDynamicStatesFlag() == false)
     {
-        double currentPop = currentAggregate->levelPopulation(p);
-        double previousPop = previousAggregate->levelPopulation(p);
-        double diff = abs((currentPop - previousPop) / previousPop);
-        if (diff > changeInGlobalLevelPops) changeInGlobalLevelPops = diff;
+        return true;
     }
+    else
+    {
+        // calculate fraction of not converged cells
+        double fractionNotConverged = static_cast<double>(numNotConverged) / static_cast<double>(numCells);
 
-    // log convergence info
-    auto log = find<Log>();
-    log->info("NonLTELineGasMix convergence info:");
-    log->info("  Fraction of not converged cells is " + StringUtils::toString(fractionNotConverged * 100., 'f', 2)
-              + "% (convergence criterion is " + StringUtils::toString(maxFractionNotConvergedCells() * 100., 'f', 2)
-              + "%)");
-    log->info("  Global level populations changed by " + StringUtils::toString(changeInGlobalLevelPops * 100., 'f', 2)
-              + "% compared to previous iteration (convergence criterion is "
-              + StringUtils::toString(maxChangeInGlobalLevelPopulations() * 100., 'f', 2) + "%)");
+        // calculate maximum relative difference between level populations of previous and current iteration
+        double changeInGlobalLevelPops = 0.;
+        for (int p = 0; p != _numLevels; ++p)
+        {
+            double currentPop = currentAggregate->levelPopulation(p);
+            double previousPop = previousAggregate->levelPopulation(p);
+            double diff = abs((currentPop - previousPop) / previousPop);
+            if (diff > changeInGlobalLevelPops) changeInGlobalLevelPops = diff;
+        }
 
-    // convergence is reached when both criteria are satisfied
-    return fractionNotConverged <= maxFractionNotConvergedCells()
-           && changeInGlobalLevelPops <= maxChangeInGlobalLevelPopulations();
+        // log convergence info
+        auto log = find<Log>();
+        log->info("NonLTELineGasMix convergence info:");
+        log->info(std::string("  Fraction of not converged cells is ")
+                  + StringUtils::toString(fractionNotConverged * 100., 'f', 2) + "% (convergence criterion is "
+                  + StringUtils::toString(maxFractionNotConvergedCells() * 100., 'f', 2) + "%)");
+        log->info(std::string("  Global level populations changed by ")
+                  + StringUtils::toString(changeInGlobalLevelPops * 100., 'f', 2)
+                  + "% compared to previous iteration (convergence criterion is "
+                  + StringUtils::toString(maxChangeInGlobalLevelPopulations() * 100., 'f', 2) + "%)");
+
+        // convergence is reached when both criteria are satisfied
+        return fractionNotConverged <= maxFractionNotConvergedCells()
+               && changeInGlobalLevelPops <= maxChangeInGlobalLevelPopulations();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -604,6 +1143,7 @@ double NonLTELineGasMix::opacityAbs(double lambda, const MaterialState* state, c
         // accumulate the opacities for all radiational transitions
         for (int k = 0; k != _numLines; ++k)
         {
+            if (_branchRatio[k] < lowestBranchingRatio()) continue;
             double center = _center[k];
             double sigma = sigmaForLine(center, state->temperature(), _mass);
             Range range(center - PROFILE_RANGE * sigma, center + PROFILE_RANGE * sigma);
@@ -648,7 +1188,21 @@ double NonLTELineGasMix::opacityExt(double lambda, const MaterialState* state, c
     return opacityAbs(lambda, state, pp);
 }
 
-///////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+
+bool NonLTELineGasMix::peeloffScattering(double& /*I*/, double& /*Q*/, double& /*U*/, double& /*V*/, double& /*lambda*/,
+                                         Direction /*bfkobs*/, Direction /*bfky*/, const MaterialState* /*state*/,
+                                         const PhotonPacket* /*pp*/) const
+{
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void NonLTELineGasMix::performScattering(double /*lambda*/, const MaterialState* /*state*/, PhotonPacket* /*pp*/) const
+{}
+
+////////////////////////////////////////////////////////////////////
 
 Array NonLTELineGasMix::lineEmissionCenters() const
 {
@@ -673,7 +1227,16 @@ Array NonLTELineGasMix::lineEmissionSpectrum(const MaterialState* state, const A
     {
         double front = Constants::h() * Constants::c() * state->volume();
         for (int k = 0; k != _numLines; ++k)
-            luminosities[k] = front / _center[k] * _einsteinA[k] * state->levelPopulation(_indexUpRad[k]);
+        {
+            if (_branchRatio[k] < lowestBranchingRatio())
+            {
+                luminosities[k] = 0.;
+            }
+            else
+            {
+                luminosities[k] = front / _center[k] * _einsteinA[k] * state->levelPopulation(_indexUpRad[k]);
+            }
+        }
     }
     return luminosities;
 }
