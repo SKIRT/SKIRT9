@@ -33,6 +33,14 @@ public:
         form is used because it is more numerically stable. */
     static double cube(double x0, double x1) { return (x1 - x0) * (x1 * x1 + x1 * x0 + x0 * x0); }
 
+    /** This function returns \f$\sqrt{a^2-b^2}\f$ for \f$|a|\ge|b|\f$, computed as
+        \f$\sqrt{(a-b)(a+b)}\f$ rather than directly from \f$a^2-b^2\f$, to avoid the loss of
+        precision that direct evaluation would incur through catastrophic cancellation when
+        \f$|a|\f$ and \f$|b|\f$ are close. The argument to the square root is clamped to zero in
+        case rounding error would otherwise make it (slightly) negative even though the exact
+        value is nonnegative. */
+    static double sqrtDiffSquares(double a, double b) { return sqrt(max(0., (a - b) * (a + b))); }
+
     //======================== Quadratic equations =======================
 
 public:
@@ -217,9 +225,8 @@ public:
         \f[ \rho = \sqrt{R^2 - d^2}, \f] which is real, and thus returned, only if \f$|d|<R\f$. */
     static bool sphereIntersectsPlane(double sphereRadius, double outOfPlaneCenterCoord, double& circleRadius)
     {
-        double r2 = square(sphereRadius) - square(outOfPlaneCenterCoord);
-        if (r2 <= 0.) return false;
-        circleRadius = std::sqrt(r2);
+        if (std::abs(outOfPlaneCenterCoord) >= sphereRadius) return false;
+        circleRadius = sqrtDiffSquares(sphereRadius, outOfPlaneCenterCoord);
         return true;
     }
 

@@ -5,6 +5,7 @@
 
 #include "HyperboloidGeometry.hpp"
 #include "FatalError.hpp"
+#include "Quadrics.hpp"
 #include "Random.hpp"
 
 //////////////////////////////////////////////////////////////////////
@@ -20,7 +21,7 @@ void HyperboloidGeometry::setupSelfBefore()
     _b = _D * sin(_Delta);
 
     // determine the imaginary axis of the hyperboloid
-    _c = _a * _zmax / sqrt(_b * _b - _a * _a);
+    _c = _a * _zmax / Quadrics::sqrtDiffSquares(_b, _a);
 
     // determine the normalization factor
     _A = 3. / 2. / M_PI / (_zmax * (2 * _a * _a + _b * _b) - 4. * pow(_rmin, 3));
@@ -43,8 +44,8 @@ double HyperboloidGeometry::density(double R, double z) const
     }
     if (z > _zmax) return 0.;
     if (z < -_zmax) return 0.;
-    if ((z >= 0.) && (z < _c / _a * sqrt(R * R - _a * _a))) return 0.;
-    if ((z < 0.) && (z > -_c / _a * sqrt(R * R - _a * _a))) return 0.;
+    if ((z >= 0.) && (z < _c / _a * Quadrics::sqrtDiffSquares(R, _a))) return 0.;
+    if ((z < 0.) && (z > -_c / _a * Quadrics::sqrtDiffSquares(R, _a))) return 0.;
     return _A;
 }
 

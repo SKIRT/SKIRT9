@@ -6,6 +6,7 @@
 #include "Cylinder2DSpatialGrid.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
+#include "Quadrics.hpp"
 #include "Random.hpp"
 #include "SpatialGridPlotFile.hpp"
 
@@ -131,7 +132,7 @@ public:
         if (_kq == 0.0) _kq = 1e-20;  // avoid moving exactly parallel to the z-axis
         if (_kz == 0.0) _kz = 1e-20;  // avoid moving exactly parallel to the equatorial plane
         _q = (rx() * kx() + ry() * ky()) / _kq;
-        _p = sqrt(max(0., (_R - _q) * (_R + _q)));  // make sure that p>=0 in case of rounding errors
+        _p = Quadrics::sqrtDiffSquares(_R, _q);
 
         // get boundaries
         double Rmax = _grid->maxRadius();
@@ -152,7 +153,7 @@ public:
                 return false;
             else
             {
-                double qmin = -sqrt((Rmax - _p) * (Rmax + _p));
+                double qmin = -Quadrics::sqrtDiffSquares(Rmax, _p);
                 double ds = (qmin - _q) / _kq;
                 _q = qmin;
                 _R = Rmax - 1e-8 * (_grid->_Rv[_grid->_NR] - _grid->_Rv[_grid->_NR - 1]);
@@ -246,7 +247,7 @@ public:
                     case Phase::UpInwards:
                     {
                         double RN = _grid->_Rv[_i];
-                        double qN = -sqrt((RN - _p) * (RN + _p));
+                        double qN = -Quadrics::sqrtDiffSquares(RN, _p);
                         double zN = _grid->_zv[_k + 1];
 
                         int m = _grid->index(_i, _k);
@@ -279,7 +280,7 @@ public:
                     case Phase::UpOutwards:
                     {
                         double RN = _grid->_Rv[_i + 1];
-                        double qN = sqrt((RN - _p) * (RN + _p));
+                        double qN = Quadrics::sqrtDiffSquares(RN, _p);
                         double zN = _grid->_zv[_k + 1];
 
                         int m = _grid->index(_i, _k);
@@ -316,7 +317,7 @@ public:
                     case Phase::DownInwards:
                     {
                         double RN = _grid->_Rv[_i];
-                        double qN = -sqrt((RN - _p) * (RN + _p));
+                        double qN = -Quadrics::sqrtDiffSquares(RN, _p);
                         double zN = _grid->_zv[_k];
 
                         int m = _grid->index(_i, _k);
@@ -349,7 +350,7 @@ public:
                     case Phase::DownOutwards:
                     {
                         double RN = _grid->_Rv[_i + 1];
-                        double qN = sqrt((RN - _p) * (RN + _p));
+                        double qN = Quadrics::sqrtDiffSquares(RN, _p);
                         double zN = _grid->_zv[_k];
 
                         int m = _grid->index(_i, _k);
