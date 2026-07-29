@@ -258,6 +258,24 @@ double ParticleSnapshot::density(Position bfr) const
 
 ////////////////////////////////////////////////////////////////////
 
+double ParticleSnapshot::massInBox(const Box& box) const
+{
+    double sum = 0.;
+    for (int m : _search.entitiesFor(box))
+    {
+        // avoid mass outside sphere due to rounding errors
+        if (box.intersects(_pv[m].center(), _pv[m].radius()))
+        {
+            Vec rmin = (box.rmin() - _pv[m].center()) / _pv[m].radius();
+            Vec rmax = (box.rmax() - _pv[m].center()) / _pv[m].radius();
+            sum += _kernel->massInBox(Box(rmin, rmax)) * _pv[m].mass();
+        }
+    }
+    return sum > 0. ? sum : 0.;  // guard against negative mass
+}
+
+////////////////////////////////////////////////////////////////////
+
 double ParticleSnapshot::mass() const
 {
     return _mass;

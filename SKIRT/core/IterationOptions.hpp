@@ -55,6 +55,22 @@ class IterationOptions : public SimulationItem
         ATTRIBUTE_RELEVANT_IF(primaryIterationPacketsMultiplier, "IteratePrimary|includePrimaryEmission")
         ATTRIBUTE_DISPLAYED_IF(primaryIterationPacketsMultiplier, "Level3")
 
+        PROPERTY_DOUBLE(primaryIterationInitialPacketsFraction,
+                        "the fraction of primary iteration photon packets to use in the first iteration")
+        ATTRIBUTE_MIN_VALUE(primaryIterationInitialPacketsFraction, "]0")
+        ATTRIBUTE_MAX_VALUE(primaryIterationInitialPacketsFraction, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(primaryIterationInitialPacketsFraction, "1")
+        ATTRIBUTE_RELEVANT_IF(primaryIterationInitialPacketsFraction, "IteratePrimary")
+        ATTRIBUTE_DISPLAYED_IF(primaryIterationInitialPacketsFraction, "Level3")
+
+        PROPERTY_DOUBLE(primaryIterationPacketsRamp,
+                        "the geometric ramp-up factor per primary iteration for the photon packet count")
+        ATTRIBUTE_MIN_VALUE(primaryIterationPacketsRamp, "]1")
+        ATTRIBUTE_MAX_VALUE(primaryIterationPacketsRamp, "100]")
+        ATTRIBUTE_DEFAULT_VALUE(primaryIterationPacketsRamp, "2")
+        ATTRIBUTE_RELEVANT_IF(primaryIterationPacketsRamp, "IteratePrimary&primaryIterationInitialPacketsFraction")
+        ATTRIBUTE_DISPLAYED_IF(primaryIterationPacketsRamp, "Level3")
+
         PROPERTY_DOUBLE(secondaryIterationPacketsMultiplier,
                         "the multiplier on the number of photon packets launched for each secondary emission iteration")
         ATTRIBUTE_MIN_VALUE(secondaryIterationPacketsMultiplier, "]0")

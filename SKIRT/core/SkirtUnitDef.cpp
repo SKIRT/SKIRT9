@@ -214,6 +214,18 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("time", "Myr", 1e6 * year);
     addUnit("time", "Gyr", 1e9 * year);
 
+    // time lag
+    addUnit("timelag", "s", 1.);
+    addUnit("timelag", "min", 60.);
+    addUnit("timelag", "hour", 3600.);
+    addUnit("timelag", "day", 24. * 3600.);
+    addUnit("timelag", "yr", year);
+    addUnit("timelag", "m", 1. / c);
+    addUnit("timelag", "km", 1e3 / c);
+    addUnit("timelag", "AU", AU / c);
+    addUnit("timelag", "pc", pc / c);
+    addUnit("timelag", "kpc", 1e3 * pc / c);
+
     // transition rate
     addUnit("transitionrate", "1/s", 1.);
 
@@ -313,6 +325,13 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("neutralmeanintensity", "erg/s/cm2/sr", 1e-3);
     addUnit("neutralmeanintensity", "erg/s/cm2/arcsec2", 1e-3 / arcsec2);
 
+    // neutral-style time flux density (F_t)
+    addUnit("neutraltimefluxdensity", "W/m2/s", 1.);
+    addUnit("neutraltimefluxdensity", "W/cm2/s", 1e4);
+
+    // neutral-style spectral time flux density (lambda f_{lambda,t})
+    addUnit("neutralspectraltimefluxdensity", "W/m2/s", 1.);
+
     // wavelength monochromatic luminosity (L_lambda)
     addUnit("wavelengthmonluminosity", "W/m", 1.);
     addUnit("wavelengthmonluminosity", "W/micron", 1e6);
@@ -383,6 +402,14 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("wavelengthmeanintensity", "erg/s/cm2/Angstrom/arcsec2", 1e7 / arcsec2);
     addUnit("wavelengthmeanintensity", "erg/s/Angstrom/cm2/arcsec2", 1e7 / arcsec2);
 
+    // wavelength-style time flux density (F_t)
+    addUnit("wavelengthtimefluxdensity", "W/m2/s", 1.);
+    addUnit("wavelengthtimefluxdensity", "W/cm2/s", 1e4);
+
+    // wavelength-style spectral time flux density (f_{lambda,t})
+    addUnit("wavelengthspectraltimefluxdensity", "W/m3/s", 1.);
+    addUnit("wavelengthspectraltimefluxdensity", "W/m2/micron/s", 1e6);
+
     // frequency monochromatic luminosity (L_nu)
     addUnit("frequencymonluminosity", "W/Hz", 1.);
     addUnit("frequencymonluminosity", "erg/s/Hz", 1e-7);
@@ -429,6 +456,13 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("frequencymeanintensity", "Jy/arcsec2", 1e-26 / arcsec2);
     addUnit("frequencymeanintensity", "MJy/sr", 1e-20);
     addUnit("frequencymeanintensity", "MJy/arcsec2", 1e-20 / arcsec2);
+
+    // frequency-style time flux density (F_t)
+    addUnit("frequencytimefluxdensity", "W/m2/s", 1.);
+    addUnit("frequencytimefluxdensity", "W/cm2/s", 1e4);
+
+    // frequency-style spectral time flux density (f_{nu,t})
+    addUnit("frequencyspectraltimefluxdensity", "W/m2/Hz/s", 1.);
 
     // energy monochromatic luminosity (L_E)
     addUnit("energymonluminosity", "1/s/J", 1.);
@@ -496,6 +530,14 @@ SkirtUnitDef::SkirtUnitDef()
     addUnit("energymeanintensity", "/s/cm2/keV/arcsec2", 10. / Qel / arcsec2);
     addUnit("energymeanintensity", "/s/keV/cm2/arcsec2", 10. / Qel / arcsec2);
 
+    // energy-style time flux density (F_t)
+    addUnit("energytimefluxdensity", "1/s/m2/s", 1.);
+    addUnit("energytimefluxdensity", "1/s/cm2/s", 1e4);
+
+    // energy-style spectral time flux density (f_{E,t})
+    addUnit("energyspectraltimefluxdensity", "1/s/m2/J/s", 1.);
+    addUnit("energyspectraltimefluxdensity", "1/s/cm2/keV/s", 10. / Qel);
+
     // angular size (for objects in the sky)
     addUnit("angle", "rad", 1.);
     addUnit("angle", "deg", M_PI / 180.);
@@ -538,6 +580,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("SIUnits", "masscoefficient", "m2/kg");
     addDefaultUnit("SIUnits", "opacity", "1/m");
     addDefaultUnit("SIUnits", "time", "s");
+    addDefaultUnit("SIUnits", "timelag", "s");
     addDefaultUnit("SIUnits", "temperature", "K");
     addDefaultUnit("SIUnits", "energy", "J");
     addDefaultUnit("SIUnits", "magneticfield", "T");
@@ -553,21 +596,29 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("SIUnits", "neutralfluxdensity", "W/m2");
     addDefaultUnit("SIUnits", "neutralsurfacebrightness", "W/m2/sr");
     addDefaultUnit("SIUnits", "neutralmeanintensity", "W/m2/sr");
+    addDefaultUnit("SIUnits", "neutraltimefluxdensity", "W/m2/s");
+    addDefaultUnit("SIUnits", "neutralspectraltimefluxdensity", "W/m2/s");
     addDefaultUnit("SIUnits", "wavelengthmonluminosity", "W/m");
     addDefaultUnit("SIUnits", "wavelengthmonluminosityvolumedensity", "W/m4");
     addDefaultUnit("SIUnits", "wavelengthfluxdensity", "W/m3");
     addDefaultUnit("SIUnits", "wavelengthsurfacebrightness", "W/m3/sr");
     addDefaultUnit("SIUnits", "wavelengthmeanintensity", "W/m3/sr");
+    addDefaultUnit("SIUnits", "wavelengthtimefluxdensity", "W/m2/s");
+    addDefaultUnit("SIUnits", "wavelengthspectraltimefluxdensity", "W/m3/s");
     addDefaultUnit("SIUnits", "frequencymonluminosity", "W/Hz");
     addDefaultUnit("SIUnits", "frequencymonluminosityvolumedensity", "W/Hz/m3");
     addDefaultUnit("SIUnits", "frequencyfluxdensity", "W/m2/Hz");
     addDefaultUnit("SIUnits", "frequencysurfacebrightness", "W/m2/Hz/sr");
     addDefaultUnit("SIUnits", "frequencymeanintensity", "W/m2/Hz/sr");
+    addDefaultUnit("SIUnits", "frequencytimefluxdensity", "W/m2/s");
+    addDefaultUnit("SIUnits", "frequencyspectraltimefluxdensity", "W/m2/Hz/s");
     addDefaultUnit("SIUnits", "energymonluminosity", "1/s/J");
     addDefaultUnit("SIUnits", "energymonluminosityvolumedensity", "1/s/J/m3");
     addDefaultUnit("SIUnits", "energyfluxdensity", "1/s/m2/J");
     addDefaultUnit("SIUnits", "energysurfacebrightness", "1/s/m2/J/sr");
     addDefaultUnit("SIUnits", "energymeanintensity", "1/s/m2/J/sr");
+    addDefaultUnit("SIUnits", "energytimefluxdensity", "1/s/m2/s");
+    addDefaultUnit("SIUnits", "energyspectraltimefluxdensity", "1/s/m2/J/s");
     addDefaultUnit("SIUnits", "angle", "rad");
     addDefaultUnit("SIUnits", "posangle", "rad");
     addDefaultUnit("SIUnits", "solidangle", "sr");
@@ -597,6 +648,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "masscoefficient", "m2/kg");
     addDefaultUnit("StellarUnits", "opacity", "1/AU");
     addDefaultUnit("StellarUnits", "time", "Gyr");
+    addDefaultUnit("StellarUnits", "timelag", "s");
     addDefaultUnit("StellarUnits", "temperature", "K");
     addDefaultUnit("StellarUnits", "energy", "J");
     addDefaultUnit("StellarUnits", "magneticfield", "uG");
@@ -612,21 +664,29 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("StellarUnits", "neutralfluxdensity", "W/m2");
     addDefaultUnit("StellarUnits", "neutralsurfacebrightness", "W/m2/arcsec2");
     addDefaultUnit("StellarUnits", "neutralmeanintensity", "W/m2/sr");
+    addDefaultUnit("StellarUnits", "neutraltimefluxdensity", "W/m2/s");
+    addDefaultUnit("StellarUnits", "neutralspectraltimefluxdensity", "W/m2/s");
     addDefaultUnit("StellarUnits", "wavelengthmonluminosity", "Lsun/micron");
     addDefaultUnit("StellarUnits", "wavelengthmonluminosityvolumedensity", "Lsun/micron/AU3");
     addDefaultUnit("StellarUnits", "wavelengthfluxdensity", "W/m2/micron");
     addDefaultUnit("StellarUnits", "wavelengthsurfacebrightness", "W/m2/micron/arcsec2");
     addDefaultUnit("StellarUnits", "wavelengthmeanintensity", "W/m2/micron/sr");
+    addDefaultUnit("StellarUnits", "wavelengthtimefluxdensity", "W/m2/s");
+    addDefaultUnit("StellarUnits", "wavelengthspectraltimefluxdensity", "W/m2/micron/s");
     addDefaultUnit("StellarUnits", "frequencymonluminosity", "W/Hz");
     addDefaultUnit("StellarUnits", "frequencymonluminosityvolumedensity", "Lsun/Hz/AU3");
     addDefaultUnit("StellarUnits", "frequencyfluxdensity", "Jy");
     addDefaultUnit("StellarUnits", "frequencysurfacebrightness", "MJy/sr");
     addDefaultUnit("StellarUnits", "frequencymeanintensity", "W/m2/Hz/sr");
+    addDefaultUnit("StellarUnits", "frequencytimefluxdensity", "W/m2/s");
+    addDefaultUnit("StellarUnits", "frequencyspectraltimefluxdensity", "W/m2/Hz/s");
     addDefaultUnit("StellarUnits", "energymonluminosity", "1/s/keV");
     addDefaultUnit("StellarUnits", "energymonluminosityvolumedensity", "1/s/keV/AU3");
     addDefaultUnit("StellarUnits", "energyfluxdensity", "1/s/cm2/keV");
     addDefaultUnit("StellarUnits", "energysurfacebrightness", "1/s/cm2/keV/arcsec2");
     addDefaultUnit("StellarUnits", "energymeanintensity", "1/s/m2/J/sr");
+    addDefaultUnit("StellarUnits", "energytimefluxdensity", "1/s/cm2/s");
+    addDefaultUnit("StellarUnits", "energyspectraltimefluxdensity", "1/s/cm2/keV/s");
     addDefaultUnit("StellarUnits", "angle", "arcsec");
     addDefaultUnit("StellarUnits", "posangle", "deg");
     addDefaultUnit("StellarUnits", "solidangle", "arcsec2");
@@ -656,6 +716,7 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "masscoefficient", "m2/kg");
     addDefaultUnit("ExtragalacticUnits", "opacity", "1/pc");
     addDefaultUnit("ExtragalacticUnits", "time", "Gyr");
+    addDefaultUnit("ExtragalacticUnits", "timelag", "s");
     addDefaultUnit("ExtragalacticUnits", "temperature", "K");
     addDefaultUnit("ExtragalacticUnits", "energy", "J");
     addDefaultUnit("ExtragalacticUnits", "magneticfield", "uG");
@@ -671,21 +732,29 @@ SkirtUnitDef::SkirtUnitDef()
     addDefaultUnit("ExtragalacticUnits", "neutralfluxdensity", "W/m2");
     addDefaultUnit("ExtragalacticUnits", "neutralsurfacebrightness", "W/m2/arcsec2");
     addDefaultUnit("ExtragalacticUnits", "neutralmeanintensity", "W/m2/sr");
+    addDefaultUnit("ExtragalacticUnits", "neutraltimefluxdensity", "W/m2/s");
+    addDefaultUnit("ExtragalacticUnits", "neutralspectraltimefluxdensity", "W/m2/s");
     addDefaultUnit("ExtragalacticUnits", "wavelengthmonluminosity", "Lsun/micron");
     addDefaultUnit("ExtragalacticUnits", "wavelengthmonluminosityvolumedensity", "Lsun/micron/pc3");
     addDefaultUnit("ExtragalacticUnits", "wavelengthfluxdensity", "W/m2/micron");
     addDefaultUnit("ExtragalacticUnits", "wavelengthsurfacebrightness", "W/m2/micron/arcsec2");
     addDefaultUnit("ExtragalacticUnits", "wavelengthmeanintensity", "W/m2/micron/sr");
+    addDefaultUnit("ExtragalacticUnits", "wavelengthtimefluxdensity", "W/m2/s");
+    addDefaultUnit("ExtragalacticUnits", "wavelengthspectraltimefluxdensity", "W/m2/micron/s");
     addDefaultUnit("ExtragalacticUnits", "frequencymonluminosity", "W/Hz");
     addDefaultUnit("ExtragalacticUnits", "frequencymonluminosityvolumedensity", "Lsun/Hz/pc3");
     addDefaultUnit("ExtragalacticUnits", "frequencyfluxdensity", "Jy");
     addDefaultUnit("ExtragalacticUnits", "frequencysurfacebrightness", "MJy/sr");
     addDefaultUnit("ExtragalacticUnits", "frequencymeanintensity", "W/m2/Hz/sr");
+    addDefaultUnit("ExtragalacticUnits", "frequencytimefluxdensity", "W/m2/s");
+    addDefaultUnit("ExtragalacticUnits", "frequencyspectraltimefluxdensity", "W/m2/Hz/s");
     addDefaultUnit("ExtragalacticUnits", "energymonluminosity", "1/s/keV");
     addDefaultUnit("ExtragalacticUnits", "energymonluminosityvolumedensity", "1/s/keV/pc3");
     addDefaultUnit("ExtragalacticUnits", "energyfluxdensity", "1/s/cm2/keV");
     addDefaultUnit("ExtragalacticUnits", "energysurfacebrightness", "1/s/cm2/keV/arcsec2");
     addDefaultUnit("ExtragalacticUnits", "energymeanintensity", "1/s/m2/J/sr");
+    addDefaultUnit("ExtragalacticUnits", "energytimefluxdensity", "1/s/cm2/s");
+    addDefaultUnit("ExtragalacticUnits", "energyspectraltimefluxdensity", "1/s/cm2/keV/s");
     addDefaultUnit("ExtragalacticUnits", "angle", "arcsec");
     addDefaultUnit("ExtragalacticUnits", "posangle", "deg");
     addDefaultUnit("ExtragalacticUnits", "solidangle", "arcsec2");

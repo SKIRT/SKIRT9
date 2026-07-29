@@ -11,26 +11,53 @@
 Snapshot* ParticleMedium::createAndOpenSnapshot()
 {
     // create and open the snapshot
-    auto snapshot = new ParticleSnapshot;
-    snapshot->open(this, filename(), "smoothed particles");
+    _particleSnapshot = new ParticleSnapshot;
+    _particleSnapshot->open(this, filename(), "smoothed particles");
 
     // honor custom column reordering
-    snapshot->useColumns(useColumns());
+    _particleSnapshot->useColumns(useColumns());
 
     // configure the position and size columns
-    snapshot->importPosition();
-    snapshot->importSize();
+    _particleSnapshot->importPosition();
+    _particleSnapshot->importSize();
 
     // configure the mass or number column
     switch (massType())
     {
-        case MassType::Mass: snapshot->importMass(); break;
-        case MassType::Number: snapshot->importNumber(); break;
+        case MassType::Mass: _particleSnapshot->importMass(); break;
+        case MassType::Number: _particleSnapshot->importNumber(); break;
     }
 
     // set the smoothing kernel
-    snapshot->setSmoothingKernel(smoothingKernel());
-    return snapshot;
+    _particleSnapshot->setSmoothingKernel(smoothingKernel());
+
+    return _particleSnapshot;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ParticleMedium::massInBox(const Box& box) const
+{
+    double result = _particleSnapshot->massInBox(box);
+    if (_particleSnapshot->holdsNumber()) result *= mix()->mass();
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double ParticleMedium::numberInBox(const Box& box) const
+{
+    double result = _particleSnapshot->massInBox(box);
+    if (!_particleSnapshot->holdsNumber()) result /= mix()->mass();
+    return result;
+}
+
+////////////////////////////////////////////////////////////////////
+
+bool ParticleMedium::offersInterface(const std::type_info& interfaceTypeInfo) const
+{
+    if (interfaceTypeInfo == typeid(MassInBoxInterface)) return !hasVariableMix() && _smoothingKernel->hasMassInBox();
+    return ImportedMedium::offersInterface(interfaceTypeInfo);
 }
 
 ////////////////////////////////////////////////////////////////////

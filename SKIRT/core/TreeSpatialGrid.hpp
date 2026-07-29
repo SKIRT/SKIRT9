@@ -6,6 +6,7 @@
 #ifndef TREESPATIALGRID_HPP
 #define TREESPATIALGRID_HPP
 
+#include "BoxCellDensityMixIn.hpp"
 #include "BoxSpatialGrid.hpp"
 class TextOutFile;
 class TreeNode;
@@ -24,7 +25,7 @@ class TreeNode;
     TreeNode, the tree can become an octtree (8 children per node) or a binary tree (2 children per
     node). Other node types could be implemented, as long as they are cuboids lined up with the
     coordinate axes. */
-class TreeSpatialGrid : public BoxSpatialGrid
+class TreeSpatialGrid : public BoxSpatialGrid, public BoxCellDensityMixIn
 {
     ITEM_ABSTRACT(TreeSpatialGrid, BoxSpatialGrid, "a hierarchical tree spatial grid")
     ITEM_END()
@@ -71,6 +72,11 @@ protected:
 public:
     /** This function returns the number of cells in the grid. */
     int numCells() const override;
+
+    /** This function returns the box defining the cell with index \f$m\f$, as required by the
+        BoxCellDensityMixIn class. The function determines the node ID corresponding to the cell
+        index \f$m\f$, and then simply returns the corresponding bounding box. */
+    Box cellBox(int m) const override;
 
     /** This function returns the volume of the cell with index \f$m\f$. For a tree grid, it
         determines the node ID corresponding to the cell index \f$m\f$, and then simply calculates
@@ -164,6 +170,14 @@ private:
         node ID from the node and determines the corresponding cell index from the precalculated
         cell index vector. */
     int cellIndexForNode(const TreeNode* node) const;
+
+protected:
+    /** This function is used by the interface() function to ensure that the receiving item can
+        actually offer the specified interface. If the requested interface is the
+        DensityInCellInterface, the implementation in this class returns the value returned by the
+        BoxCellDensityMixIn::offersInterface() function. For other requested interfaces, the
+        function invokes its counterpart in the base class. */
+    bool offersInterface(const std::type_info& interfaceTypeInfo) const override;
 
     //======================== Data Members ========================
 

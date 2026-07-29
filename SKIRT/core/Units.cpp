@@ -5,14 +5,14 @@
 
 #include "Units.hpp"
 #include "Constants.hpp"
-#include "FatalError.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
 namespace
 {
-    const double c = Constants::c();
-    const double hc2 = Constants::h() * Constants::c() * Constants::h() * Constants::c();
+    constexpr double c = Constants::c();
+    constexpr double hc = Constants::h() * Constants::c();
+    constexpr double hc2 = hc * hc;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -156,6 +156,20 @@ double Units::owavelength(double lambda) const
         case WavelengthOutputStyle::Energy: return out("energywavelength", lambda);
     }
     return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+string Units::utimelag() const
+{
+    return unit("timelag");
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::otimelag(double t) const
+{
+    return out("timelag", t);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -632,6 +646,85 @@ double Units::omeanintensity(double lambda, double Jlambda) const
         case FluxOutputStyle::Wavelength: return out("wavelengthmeanintensity", Jlambda);
         case FluxOutputStyle::Frequency: return out("frequencymeanintensity", lambda * lambda * Jlambda / c);
         case FluxOutputStyle::Energy: return out("energymeanintensity", lambda * lambda * lambda * Jlambda / hc2);
+    }
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+string Units::stimefluxdensity() const
+{
+    return "F_t";
+}
+
+////////////////////////////////////////////////////////////////////
+
+string Units::utimefluxdensity() const
+{
+    switch (_fluxOutputStyle)
+    {
+        case FluxOutputStyle::Neutral: return unit("neutraltimefluxdensity");
+        case FluxOutputStyle::Wavelength: return unit("wavelengthtimefluxdensity");
+        case FluxOutputStyle::Frequency: return unit("frequencytimefluxdensity");
+        case FluxOutputStyle::Energy: return unit("energytimefluxdensity");
+    }
+    return string();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::otimefluxdensity(double Ftime, double lambdaFtime) const
+{
+    switch (_fluxOutputStyle)
+    {
+        case FluxOutputStyle::Neutral: return out("neutraltimefluxdensity", Ftime);
+        case FluxOutputStyle::Wavelength: return out("wavelengthtimefluxdensity", Ftime);
+        case FluxOutputStyle::Frequency: return out("frequencytimefluxdensity", Ftime);
+        case FluxOutputStyle::Energy: return out("energytimefluxdensity", lambdaFtime / hc);
+    }
+    return 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+string Units::sspectraltimefluxdensity() const
+{
+    switch (_fluxOutputStyle)
+    {
+        case FluxOutputStyle::Neutral: return "lambda*f_{lambda,t}";
+        case FluxOutputStyle::Wavelength: return "f_{lambda,t}";
+        case FluxOutputStyle::Frequency: return "f_{nu,t}";
+        case FluxOutputStyle::Energy: return "f_{E,t}";
+    }
+    return string();
+}
+
+////////////////////////////////////////////////////////////////////
+
+string Units::uspectraltimefluxdensity() const
+{
+    switch (_fluxOutputStyle)
+    {
+        case FluxOutputStyle::Neutral: return unit("neutralspectraltimefluxdensity");
+        case FluxOutputStyle::Wavelength: return unit("wavelengthspectraltimefluxdensity");
+        case FluxOutputStyle::Frequency: return unit("frequencyspectraltimefluxdensity");
+        case FluxOutputStyle::Energy: return unit("energyspectraltimefluxdensity");
+    }
+    return string();
+}
+
+////////////////////////////////////////////////////////////////////
+
+double Units::ospectraltimefluxdensity(double lambda, double flambdatime) const
+{
+    switch (_fluxOutputStyle)
+    {
+        case FluxOutputStyle::Neutral: return out("neutralspectraltimefluxdensity", lambda * flambdatime);
+        case FluxOutputStyle::Wavelength: return out("wavelengthspectraltimefluxdensity", flambdatime);
+        case FluxOutputStyle::Frequency:
+            return out("frequencyspectraltimefluxdensity", lambda * lambda * flambdatime / c);
+        case FluxOutputStyle::Energy:
+            return out("energyspectraltimefluxdensity", lambda * lambda * lambda * flambdatime / hc2);
     }
     return 0.;
 }

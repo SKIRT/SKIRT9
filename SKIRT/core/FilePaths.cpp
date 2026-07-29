@@ -239,6 +239,15 @@ string FilePaths::output(string name) const
 
 ////////////////////////////////////////////////////////////////////
 
+bool FilePaths::hasResource(string name)
+{
+    std::call_once(_initialized, findResources);
+
+    return _resourcePaths.count(name) > 0;
+}
+
+////////////////////////////////////////////////////////////////////
+
 string FilePaths::resource(string name)
 {
     std::call_once(_initialized, findResources);

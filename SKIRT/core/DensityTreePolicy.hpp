@@ -10,6 +10,7 @@
 #include "TreePolicy.hpp"
 class Medium;
 class Random;
+class MassInBoxInterface;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -164,15 +165,29 @@ private:
     vector<Medium*> _electronMedia;
     vector<Medium*> _gasMedia;
 
+    // lists of MassInBoxInterface pointers corresponding to the medium component lists above
+    // list remains empty if not all of the medium components of that type offer MassInBoxInterface
+    vector<MassInBoxInterface*> _dustMIBv;
+    vector<MassInBoxInterface*> _electronMIBv;
+    vector<MassInBoxInterface*> _gasMIBv;
+
     // flags become true if corresponding criterion is enabled
     // (i.e. configured maximum is nonzero and material type is present)
-    bool _hasAny{false};
-    bool _hasDustAny{false};
     bool _hasDustFraction{false};
     bool _hasDustOpticalDepth{false};
     bool _hasDustDensityDispersion{false};
     bool _hasElectronFraction{false};
     bool _hasGasFraction{false};
+    bool _hasAny{false};
+
+    // flah becomes true if we need samples versus the MassInBoxInterface
+    bool _needDustSamples{false};
+    bool _needElectronSamples{false};
+    bool _needGasSamples{false};
+    bool _needAnySamples{false};
+    bool _hasDustMIB{false};
+    bool _hasElectronMIB{false};
+    bool _hasGasMIB{false};
 
     // cached values for each material type (valid if corresponding flag is enabled)
     double _dustMass{0.};

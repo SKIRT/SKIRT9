@@ -12,6 +12,7 @@
 class MediumSystem;
 class PhotonPacket;
 class SimulationItem;
+class TimeGrid;
 class WavelengthGrid;
 
 ////////////////////////////////////////////////////////////////////
@@ -22,45 +23,54 @@ class WavelengthGrid;
     Features
     --------
 
-    Depending on an instrument's needs, a FluxRecorder instance records an %SED (spectral energy
-    density) with a spatially integrated flux density for each wavelength bin, and/or a full IFU
-    (integral field unit data cube) with a surface brightness for each pixel in an image frame for
-    each wavelength bin. In each case, flux information can be recorded and written to file
-    depending on user configuration.
+    Depending on an instrument's type and user configuration, a FluxRecorder instance can record
+    and write to file any of the following simulated observational data:
 
-    Specifically, the class can record the individual contributions to the total flux from primary
-    and secondary sources (i.e. emission by media), in each case splitting direct and scattered
-    radiation. It can also store the flux as it would be seen without any attenuation, i.e. a
-    transparent view of the system as if there were no media. Furthermore, the contributions from
-    individual scattering levels (for primary radiation only) up to a certain maximum level can be
-    recorded separately. When the maximum level is set to zero, this feature is disabled. Finally,
-    the class can also record the elements of the Stokes vector for the total flux, \f$(I, Q, U,
-    V)\f$, where the intensity \f$I\f$ corresponds to the total flux itself. Note that the Stokes
-    \f$Q, U, V\f$ "flux" values can be negative.
+    - an %SED (spectral energy density) with a spatially integrated flux density for each
+    wavelength bin,
 
-    Upon request, the class can also record information intended for calculating statistical
-    properties of the results. Let \f$N\f$ denote the number of primary and secondary photon
-    packets launched during the peel-off segments of the simulation. We define \f$w_i,
-    i=1,\dots,N\f$ as the contribution of the \f$i\f$th photon packet to a particular bin (a
-    wavelength bin for an %SED, or a pixel in one of the wavelength frames for an IFU). The value
-    of \f$w_i\f$ includes the contributions of all photon packets peeled-off and/or scattered from
-    the originally launched packet (called the \em history of that packet). Given this definition,
-    the class tracks and outputs the sums \f$\sum_i w_i^k\f$, with \f$k=0,\dots,4\f$ for each bin.
-    These sums allow calculating second order statistical properties such as the relative error
-    \f$R\f$ and fourth order statistical properties such as the variance of the variance VOV. For
-    more information, see, e.g., the user manual for the MCNP code (A General Monte Carlo
-    N-Particle Transport Code, Version 5, April 24, 2003, Revised 2/1/2008, Los Alamos National
-    Laboratory, USA) or Camps and Baes 2018 (ApJ).
+    - an IFU (integral field unit data cube) with a surface brightness for each pixel in an image
+    frame for each wavelength bin,
 
-    All of these output possibilities are summarized in the table below. A separate IFU output file
-    is written for each line in the table; the first column in the table lists the portion of the
-    output filename <tt>prefix_instr_XXX.fits</tt> indicating the IFU type. Note that an output
-    file is created only if the corresponding information has been requested \em and it is
-    meaningful. For example, if the transparent flux is know to be identical to the total flux
-    (because there are no media), the transparent file is not written. Also, if the simulation does
-    not include media emission, the secondary flux files are not written.
+    - a light curve (LC), the spatially and spectrally integrated timelag response to a pulse in
+    the source luminosity as a function of arrival time,
 
-    IFU file name          | Description | Configured by
+    - a spectral-time map (STM), the spatially integrated timelag response to a pulse in the source
+    luminosity as a function of both wavelength and arrival time.
+
+    For all of these output types, the class can record the individual contributions from primary
+    and secondary sources, in each case splitting direct and scattered radiation. It can also store
+    the flux as it would be seen without any attenuation, i.e. a transparent view of the system as
+    if there were no media. Furthermore, the contributions from individual scattering levels (for
+    primary radiation only) up to a certain maximum level can be recorded separately. Finally, the
+    class can also record the elements of the Stokes vector for the total flux, \f$(I, Q, U, V)\f$,
+    where the intensity \f$I\f$ corresponds to the total flux itself. Note that the Stokes \f$Q, U,
+    V\f$ "flux" values can be negative.
+
+    The class can also record information intended for calculating statistical properties of the
+    results. Let \f$N\f$ denote the number of primary and secondary photon packets launched during
+    the peel-off segments of the simulation. We define \f$w_i, i=1,\dots,N\f$ as the contribution
+    of the \f$i\f$th photon packet to a particular bin (a wavelength bin for an %SED, or a pixel in
+    one of the wavelength frames for an IFU). The value of \f$w_i\f$ includes the contributions of
+    all photon packets peeled-off and/or scattered from the originally launched packet (called the
+    \em history of that packet). Given this definition, the class tracks and outputs the sums
+    \f$\sum_i w_i^k\f$, with \f$k=0,\dots,4\f$ for each bin. These sums allow calculating second
+    order statistical properties such as the relative error \f$R\f$ and fourth order statistical
+    properties such as the variance of the variance VOV. For more information, see, e.g., the user
+    manual for the MCNP code (A General Monte Carlo N-Particle Transport Code, Version 5, April 24,
+    2003, Revised 2/1/2008, Los Alamos National Laboratory, USA) or Camps and Baes 2018 (ApJ).
+
+    \note Currently, statistics are not implemented for the LC and STM output types.
+
+    All of these output possibilities are summarized in the table below. A separate IFU or STM
+    output file is written for each line in the table; the first column in the table lists the
+    portion of the output filename <tt>prefix_instr_XXX.fits</tt> indicating the output type. Note
+    that an output file is created only if the corresponding information has been requested \em and
+    it is meaningful. For example, if the transparent flux is know to be identical to the total
+    flux (because there are no media), the transparent file is not written. Also, if the simulation
+    does not include media emission, the secondary flux files are not written.
+
+    File name              | Description | Configured by
     -----------------------|-------------|--------------
     total                  | Total attenuated flux | always on
     transparent            | Transparent flux from primary sources | \em recordComponents = true
@@ -75,20 +85,22 @@ class WavelengthGrid;
     stokesV                | Stokes vector element V for total flux | \em recordPolarization = true
     statsN                 | Sum of individual photon contributions to the power of N | \em recordStatistics = true
 
-    The %SED information is written in a maximum of two text column files. The first file, called
-    <tt>prefix_instr_sed.txt</tt>, includes a column for each of the requested flux components in
-    the order indicated by the table below. The columns for each block are either all present or
-    all absent as requested in the configuration, even if the numbers are zero or identical to
-    other columns. This allows the column indices to be determined solely based on knowledge of the
-    instrument configuration flags, without taking into account whether the simulation actually
-    includes the corresponding feature (e.g., media emission or polarization).
+    The %SED or LC information is written in a maximum of two text column files. The first file,
+    called <tt>prefix_instr_sed.txt</tt> or <tt>prefix_instr_lc.txt</tt>, includes a column for
+    each of the requested flux components in the order indicated by the table below. The columns
+    for each block are either all present or all absent as requested in the configuration, even if
+    the numbers are zero or identical to other columns. This allows the column indices to be
+    determined solely based on knowledge of the instrument configuration flags, without taking into
+    account whether the simulation actually includes the corresponding feature (e.g., media
+    emission or polarization).
 
-    Block                                  | Configured by
-    ---------------------------------------|--------------
-    Total flux                             | always on
-    Transparent fluxes and flux components | \em recordComponents = true
-    Stokes vector elements                 | \em recordPolarization = true
-    N-times scattered primary flux         | \em recordComponents = true & \em numScatteringLevels > 0
+    Block                                      | Configured by
+    -------------------------------------------|--------------
+    Total flux                                 | always on
+    Transparent fluxes and flux components     | \em recordComponents = true
+    Stokes vector elements                     | \em recordPolarization = true
+    Flux components for Stokes vector elements | \em recordComponents = true & \em recordPolarization = true
+    N-times scattered primary flux             | \em recordComponents = true & \em numScatteringLevels > 0
 
     The second file, called <tt>prefix_instr_sedstats.txt</tt>, is written only if statistics are
     requested. It includes a column for the wavelength plus a column for each of the individual
@@ -98,11 +110,10 @@ class WavelengthGrid;
     ----------------
 
     A FluxRecorder instance expects a rigourous calling sequence. During setup, the instrument
-    configures the FluxRecorder's operation, specifying the wavelength grid, the items to be
-    recorded (%SED, IFU, individual flux components, statistics), flux calibration settings
-    (instrument type, distance, redshift), and some additional information on the simulation in
-    which the instrument is embedded (e.g., is there any secondary emission). The configuration
-    must be completed by calling the finalizeConfiguration() function.
+    configures the FluxRecorder's operation, passing on the expected output types and recording
+    options as described above, the flux calibration settings (see below), and information on the
+    simulation in which the instrument is embedded. The configuration must be completed by calling
+    the finalizeConfiguration() function.
 
     To record the effects of detecting a photon packet, the instrument invokes the detect()
     function. This function is thread-safe, so it may be (and often is) called from multiple
@@ -179,11 +190,16 @@ public:
     FluxRecorder(const SimulationItem* parentItem);
 
     /** This function configures information on the simulation in which the recorder is embedded.
-        In order of appearance, the arguments specify the name of the associated instrument, the
-        wavelength grid of the instrument, whether the simulation includes at least some media, and
-        whether the simulation includes emission from those media. */
-    void setSimulationInfo(string instrumentName, const WavelengthGrid* lambdagrid, bool hasMedium,
-                           bool hasMediumEmission);
+        In order of appearance, the arguments specify the name of the associated instrument,
+        whether the simulation includes at least some media, and whether the simulation includes
+        emission from those media. */
+    void setSimulationInfo(string instrumentName, bool hasMedium, bool hasMediumEmission);
+
+    /** This function configures the wavelength grid for the instrument, if applicable. */
+    void setWavelengthGrid(const WavelengthGrid* lambdagrid);
+
+    /** This function configures the time lag grid for the instrument, if applicable. */
+    void setTimeGrid(const TimeGrid* timegrid);
 
     /** This function configures the user requirements for recording, respectively, flux
         components, individual scattering level contributions, polarization, and information for
@@ -221,6 +237,15 @@ public:
         for a local instrument. */
     void includeSurfaceBrightnessForDistant(int numPixelsX, int numPixelsY, double pixelSizeX, double pixelSizeY,
                                             double centerX, double centerY);
+
+    /** This function enables recording of light curves for a distant instrument. This requires a
+        time grid to be configured. */
+    void includeLightCurve();
+
+    /** This function enables recording of a spectral-time map for a distant instrument, i.e. a 2D
+        map of the spatially integrated flux density for each wavelength and time. This requires a
+        time grid to be configured. */
+    void includeSpectralTimeMap();
 
     /** This function enables recording of IFU data cubes, i.e. a surface brightness image frame
         for each wavelength, for a local instrument. The solid ange per pixel is used to calibrate
@@ -324,6 +349,7 @@ private:
     const SimulationItem* _parentItem{nullptr};
     string _instrumentName;
     const WavelengthGrid* _lambdagrid{nullptr};
+    const TimeGrid* _timegrid{nullptr};
     bool _hasMedium{false};
     bool _hasMediumEmission{false};  // relevant only when hasMedium is true
 
@@ -334,6 +360,8 @@ private:
     bool _recordStatistics{false};
     bool _includeFluxDensity{false};
     bool _includeSurfaceBrightness{false};
+    bool _includeLightCurve{false};
+    bool _includeSpectralTimeMap{false};
 
     // recorder configuration on observer angles, received from client during configuration
     double _inclination{0};
@@ -362,10 +390,14 @@ private:
     MediumSystem* _ms{nullptr};   // pointer to medium system, if present (used only if hasMedium is true)
     bool _recordTotalOnly{true};  // becomes false if recordComponents and hasMedium are both true
     size_t _numPixelsInFrame{0};  // number of pixels in a single IFU frame
+    int _numWavelengths{0};       // number of wavelengths in wavelength grid
 
     // detector arrays that need to be calibrated, initialized when configuration is finalized
     vector<Array> _sed;
     vector<Array> _ifu;
+    vector<Array> _lc;
+    vector<Array> _lcw;
+    vector<Array> _stm;
 
     // detector arrays for statistics that should not be calibrated, initialized when configuration is finalized
     vector<Array> _wsed;

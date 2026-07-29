@@ -21,6 +21,7 @@ void PhotonPacket::launch(size_t historyIndex, double lambda, double L, Position
     _lambda = lambda;
     _W = L * lambda;
     _lambda0 = lambda;
+    _D = 0;
     _bvi = bvi;
     _adi = adi;
     _ppi = ppi;
@@ -67,6 +68,7 @@ void PhotonPacket::launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk)
     _lambda = pp->_lambda;
     _W = pp->_W;
     _lambda0 = pp->_lambda0;
+    _D = -Vec::dot(bfk, pp->position());
     _compIndex = pp->_compIndex;
     _historyIndex = pp->_historyIndex;
     _nscatt = 0;
@@ -89,6 +91,7 @@ void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk
     _lambda = bfv.isNull() ? lambda : shiftedEmissionWavelength(lambda, bfk, bfv);
     _W = pp->_W * w;
     _lambda0 = pp->_lambda0;
+    _D = pp->_D - Vec::dot(bfk, pp->position());
     _compIndex = pp->_compIndex;
     _historyIndex = pp->_historyIndex;
     _nscatt = pp->_nscatt + 1;
@@ -104,6 +107,7 @@ void PhotonPacket::launchScatteringPeelOff(const PhotonPacket* pp, Direction bfk
 void PhotonPacket::propagate(double s)
 {
     propagatePosition(s);
+    _D += s;
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -11,9 +11,25 @@
 
 //////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // snap a cosine or sine value to 0 or 1 to avoid rounding errors in the calculations
+    double snap(double v)
+    {
+        constexpr double eps = 1e-12;
+        if (abs(v) < eps) return 0.;
+        if (v > 1. - eps) return 1.;
+        if (v < -1. + eps) return -1.;
+        return v;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+
 CylindricalCell::CylindricalCell(double Rmin, double phimin, double zmin, double Rmax, double phimax, double zmax)
-    : _Rmin(Rmin), _phimin(phimin), _zmin(zmin), _Rmax(Rmax), _phimax(phimax), _zmax(zmax), _cosphimin(cos(phimin)),
-      _sinphimin(sin(phimin)), _cosphimax(cos(phimax)), _sinphimax(sin(phimax))
+    : _Rmin(Rmin), _phimin(phimin), _zmin(zmin), _Rmax(Rmax), _phimax(phimax), _zmax(zmax),
+      _cosphimin(snap(cos(phimin))), _sinphimin(snap(sin(phimin))), _cosphimax(snap(cos(phimax))),
+      _sinphimax(snap(sin(phimax)))
 {}
 
 //////////////////////////////////////////////////////////////////////

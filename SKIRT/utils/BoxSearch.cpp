@@ -130,7 +130,7 @@ void BoxSearch::loadEntities(int numEntities, std::function<Box(int)> bounds,
     // calculate statistics
     _minEntitiesPerBlock = numEntities;
     _maxEntitiesPerBlock = 0;
-    int totalEntityReferences = 0;
+    size_t totalEntityReferences = 0;
     for (const auto& list : _listv)
     {
         int size = list.size();
@@ -204,6 +204,47 @@ BoxSearch::EntityGeneratorForPosition BoxSearch::entitiesFor(Vec bfr) const
         return _listv[blockIndex(bfr)];
     else
         return _empty;
+}
+
+////////////////////////////////////////////////////////////////////
+
+BoxSearch::EntityGeneratorForBox BoxSearch::entitiesFor(const Box& box) const
+{
+    EntityGeneratorForBox entities;
+
+    if (_numBlocks)
+    {
+        // find the indices for first and last block, in each spatial direction,
+        // overlapped by the query box
+        int i1 = NR::locateClip(_xgrid, box.xmin());
+        int i2 = NR::locateClip(_xgrid, box.xmax());
+        int j1 = NR::locateClip(_ygrid, box.ymin());
+        int j2 = NR::locateClip(_ygrid, box.ymax());
+        int k1 = NR::locateClip(_zgrid, box.zmin());
+        int k2 = NR::locateClip(_zgrid, box.zmax());
+
+        // loop over all blocks in that 3D range
+        for (int i = i1; i <= i2; i++)
+        {
+            for (int j = j1; j <= j2; j++)
+            {
+                for (int k = k1; k <= k2; k++)
+                {
+                    // if the query box intersects the block
+                    Box block(_xgrid[i], _ygrid[j], _zgrid[k], _xgrid[i + 1], _ygrid[j + 1], _zgrid[k + 1]);
+                    if (block.intersects(box))
+                    {
+                        // add all entities overlapping that block to the output list
+                        for (int m : _listv[blockIndex(i, j, k)])
+                        {
+                            entities.insert(m);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return entities;
 }
 
 ////////////////////////////////////////////////////////////////////

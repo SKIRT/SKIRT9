@@ -7,7 +7,9 @@
 #define SMOOTHINGKERNEL_HPP
 
 #include "SimulationItem.hpp"
+#include "StoredTable.hpp"
 class Random;
+class Box;
 
 //////////////////////////////////////////////////////////////////////
 
@@ -25,7 +27,8 @@ class SmoothingKernel : public SimulationItem
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function caches the simulation's random generator for use by subclasses. */
+    /** This function caches the simulation's random generator for use by subclasses and opens
+     *  the stored table with the tabulated cumulative kernel. */
     void setupSelfBefore() override;
 
     //======================== Other Functions =======================
@@ -48,6 +51,22 @@ public:
         function appropriately. */
     virtual double generateRadius() const = 0;
 
+    /** This function returns the portion of the smoothing kernel mass contained in the specified
+        axis-aligned bounding box, i.e.: \f[ m_\text{box} = \int_{x_\text{min}}^{x_\text{max}}
+        \int_{y_\text{min}}^{y_\text{max}} \int_{z_\text{min}}^{z_\text{max}} \text{d}x \text{d}y
+        \text{d}z. \f]
+
+        The implementation in this base class uses the technique described by Baes et al. 2026 in
+        prep, reducing the calculation to eight interpolations in the tabulated cumulative kernel
+        provided as a stored table resource with the same name as the final derived class. Derived
+        classes can override the function to provide another implementation if desired. */
+    virtual double massInBox(const Box& box) const;
+
+    /** This function returns true if this smoothing kernel offers the massInBox() feature. The
+        implementation in this base class returns true if the cumulative kernel resource file is
+        available, and false if not. Derived classes can override the function if desired. */
+    virtual bool hasMassInBox() const;
+
 protected:
     /** This function returns the simulation's random generator as a service to subclasses. */
     Random* random() const { return _random; }
@@ -57,6 +76,9 @@ protected:
 private:
     // data member initialized during setup
     Random* _random{nullptr};
+
+    // the tabulated cumulative kernel used in massInBox()
+    StoredTable<3> _cumkernel;
 };
 
 //////////////////////////////////////////////////////////////////////

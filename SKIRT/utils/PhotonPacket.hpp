@@ -28,15 +28,15 @@ class VelocityInterface;
     indirectly affects the luminosity represented by the packet, because the latter is directly
     proportional to the frequency and thus inversely proportional to the wavelength.
 
-    Apart from its wavelength and weight, a photon packet carries information about its polarization
-    state, about its origin (e.g. emission by a primary or secondary source), about the
-    interactions it experienced since its emission (e.g. the number of scattering events), and
-    about its current path (e.g. starting position, propagation direction, spatial grid cells being
-    crossed). A photon packet also carries a unique identifier (within the current emission
-    segment) for the \em history it is part of, i.e. the collection of scattered and peeled-off
-    packets derived from the same originally launched packet (emitted by a primary or secondary
-    source). This history index can be used by instruments to group the fluxes of all photon
-    packets belonging to the same history.
+    Apart from its wavelength and weight, a photon packet carries information about its
+    polarization state, about its origin (e.g. emission by a primary or secondary source), about
+    the interactions it experienced since its emission (e.g. the number of scattering events),
+    about the distance traveled since its emission, and about its current path (e.g. starting
+    position, propagation direction, spatial grid cells being crossed). A photon packet also
+    carries a unique identifier (within the current emission segment) for the \em history it is
+    part of, i.e. the collection of scattered and peeled-off packets derived from the same
+    originally launched packet (emitted by a primary or secondary source). This history index can
+    be used by instruments to group the fluxes of all photon packets belonging to the same history.
 
     Implementation notes
     --------------------
@@ -126,6 +126,9 @@ public:
         polarization state is set according to its propagation direction; otherwise its
         polarization state is set to unpolarized.
 
+        The distance traveled is adjusted for the peel-off position relative to its direction,
+        ensuring consistent arrival times in TimeInstrument observers.
+
         The current path of the peel off photon packet is invalidated, and all information about
         its previous life cycle is lost. The base photon packet remains unchanged. */
     void launchEmissionPeelOff(const PhotonPacket* pp, Direction bfk);
@@ -137,6 +140,9 @@ public:
         function copies the relevant values from the base photon packet to the peel off photon
         packet, updates the peel off direction, the wavelength and weight, and increments the
         scattering counter.
+
+        The distance traveled is adjusted for the peel-off position relative to its direction,
+        ensuring consistent arrival times in TimeInstrument observers.
 
         The peel off photon packet is initialized to an unpolarized state; the polarization state
         should be properly updated after the launch through the StokesVector class functions. The
@@ -174,6 +180,9 @@ public:
     /** This function returns the luminosity \f$L\f$ represented by the photon packet, calculated
         from its current wavelength and weight. */
     double luminosity() const { return _W / _lambda; }
+
+    /** This function returns the cumulative distance traveled by the photon packet. */
+    double distance() const { return _D; }
 
     /** This function returns true if the photon packet originated from a primary source, false
         otherwise. */
@@ -329,6 +338,7 @@ private:
     // current physical properties (in addition to inherited data members)
     double _lambda{0};  // current wavelength relative to the model coordinate system
     double _W{0};       // current weight, defined as L*lambda to avoid division and multiplication by hc
+    double _D{0};       // current cumulative distance traveled
 
     // physical information on radiation source; the interfaces are not used in peel-off photon packets
     double _lambda0{0};  // original wavelength in the rest-frame of the source

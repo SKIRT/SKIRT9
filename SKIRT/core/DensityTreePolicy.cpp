@@ -6,8 +6,8 @@
 #include "DensityTreePolicy.hpp"
 #include "Array.hpp"
 #include "Configuration.hpp"
-#include "FatalError.hpp"
 #include "Log.hpp"
+#include "MassInBoxInterface.hpp"
 #include "MaterialMix.hpp"
 #include "MediumSystem.hpp"
 #include "Parallel.hpp"
@@ -42,12 +42,31 @@ void DensityTreePolicy::setupSelfBefore()
         }
     }
 
+    // build corresponding lists of MassInBoxInterface pointers
+    auto buildMIBlist = [](vector<MassInBoxInterface*>& mibv, const vector<Medium*>& media) {
+        for (auto medium : media)
+        {
+            auto mib = medium->interface<MassInBoxInterface>(0, false);
+            if (!mib)
+            {
+                mibv.clear();  // if any medium component lacks support, clear the complete list
+                return;
+            }
+            mibv.push_back(mib);
+        }
+    };
+    buildMIBlist(_dustMIBv, _dustMedia);
+    buildMIBlist(_electronMIBv, _electronMedia);
+    buildMIBlist(_gasMIBv, _gasMedia);
+
     // precalculate information for dust
     if (!_dustMedia.empty())
     {
-        if (maxDustFraction() > 0) _hasAny = _hasDustAny = _hasDustFraction = true;
-        if (maxDustOpticalDepth() > 0) _hasAny = _hasDustAny = _hasDustOpticalDepth = true;
-        if (maxDustDensityDispersion() > 0) _hasAny = _hasDustAny = _hasDustDensityDispersion = true;
+        if (maxDustFraction() > 0) _hasDustFraction = true;
+        if (maxDustOpticalDepth() > 0) _hasDustOpticalDepth = true;
+        if (maxDustDensityDispersion() > 0) _hasDustDensityDispersion = true;
+        _needDustSamples = _dustMIBv.empty() | _hasDustDensityDispersion;
+        _hasDustMIB = !_dustMIBv.empty();
         if (_hasDustFraction)
         {
             for (auto medium : _dustMedia) _dustMass += medium->mass();
@@ -68,16 +87,25 @@ void DensityTreePolicy::setupSelfBefore()
     // precalculate information for electrons
     if (!_electronMedia.empty() && maxElectronFraction() > 0)
     {
-        _hasAny = _hasElectronFraction = true;
+        _hasElectronFraction = true;
+        _needElectronSamples = _electronMIBv.empty();
+        _hasElectronMIB = !_electronMIBv.empty();
         for (auto medium : _electronMedia) _electronNumber += medium->number();
     }
 
     // precalculate information for gas
     if (!_gasMedia.empty() && maxGasFraction() > 0)
     {
-        _hasAny = _hasGasFraction = true;
+        _hasGasFraction = true;
+        _needGasSamples = _gasMIBv.empty();
+        _hasGasMIB = !_gasMIBv.empty();
         for (auto medium : _gasMedia) _gasNumber += medium->number();
     }
+
+    // determine composite flags
+    _hasAny =
+        _hasDustFraction | _hasDustOpticalDepth | _hasDustDensityDispersion | _hasElectronFraction | _hasGasFraction;
+    _needAnySamples = _needDustSamples | _needElectronSamples | _needGasSamples;
 
     // warn user if none of the criteria were enabled
     if (!_hasAny) find<Log>()->warning("None of the tree subdivision criteria are enabled");
@@ -98,8 +126,8 @@ bool DensityTreePolicy::needsSubdivide(TreeNode* node)
     double ne = 0;            // electron number density
     double ng = 0.;           // gas number density
 
-    // sample densities in node
-    if (_hasAny)
+    // sample densities in node, if needed
+    if (_needAnySamples)
     {
         double rhosum = 0;
         double nesum = 0;
@@ -107,7 +135,7 @@ bool DensityTreePolicy::needsSubdivide(TreeNode* node)
         for (int i = 0; i != _numSamples; ++i)
         {
             Position bfr = _random->position(node->extent());
-            if (_hasDustAny)
+            if (_needDustSamples)
             {
                 double rhoi = 0.;
                 for (auto medium : _dustMedia) rhoi += medium->massDensity(bfr);
@@ -115,9 +143,9 @@ bool DensityTreePolicy::needsSubdivide(TreeNode* node)
                 if (rhoi < rhomin) rhomin = rhoi;
                 if (rhoi > rhomax) rhomax = rhoi;
             }
-            if (_hasElectronFraction)
+            if (_needElectronSamples)
                 for (auto medium : _electronMedia) nesum += medium->numberDensity(bfr);
-            if (_hasGasFraction)
+            if (_needGasSamples)
                 for (auto medium : _gasMedia) ngsum += medium->numberDensity(bfr);
         }
         rho = rhosum / _numSamples;
@@ -125,10 +153,44 @@ bool DensityTreePolicy::needsSubdivide(TreeNode* node)
         ng = ngsum / _numSamples;
     }
 
+    // results for the volume-integrated mass or number
+    double M = 0.;   // volume-integrated dust mass
+    double Ne = 0.;  // volume-integrated electron number
+    double Ng = 0.;  // volume-integrated gas number
+
+    double V = node->volume();  // node volume
+
+    // calculate volume-integrated quantities and densities from MIB if possible, and else from samples
+    if (_hasDustMIB)
+    {
+        for (auto mib : _dustMIBv) M += mib->massInBox(node->extent());
+        rho = M / V;
+    }
+    else
+    {
+        M = rho * V;
+    }
+    if (_hasElectronMIB)
+    {
+        for (auto mib : _electronMIBv) Ne += mib->numberInBox(node->extent());
+    }
+    else
+    {
+        Ne = ne * V;
+    }
+    if (_hasGasMIB)
+    {
+        for (auto mib : _gasMIBv) Ng += mib->numberInBox(node->extent());
+    }
+    else
+    {
+        Ng = ng * V;
+    }
+
     // handle maximum dust mass fraction
     if (_hasDustFraction)
     {
-        double delta = rho * node->volume() / _dustMass;
+        double delta = M / _dustMass;
         if (delta > maxDustFraction()) return true;
     }
 
@@ -149,14 +211,14 @@ bool DensityTreePolicy::needsSubdivide(TreeNode* node)
     // handle maximum electron number fraction
     if (_hasElectronFraction)
     {
-        double delta = ne * node->volume() / _electronNumber;
+        double delta = Ne / _electronNumber;
         if (delta > maxElectronFraction()) return true;
     }
 
     // handle maximum gas number fraction
     if (_hasGasFraction)
     {
-        double delta = ng * node->volume() / _gasNumber;
+        double delta = Ng / _gasNumber;
         if (delta > maxGasFraction()) return true;
     }
 
@@ -181,6 +243,11 @@ vector<TreeNode*> DensityTreePolicy::constructTree(TreeNode* root)
 {
     auto log = find<Log>();
     auto parallel = find<ParallelFactory>()->parallelDistributed();
+
+    // inform user about the use of MassInBoxInterface
+    if (_hasDustMIB) find<Log>()->info("  (obtaining dust densities through calculation rather than sampling)");
+    if (_hasElectronMIB) find<Log>()->info("  (obtaining electron densities through calculation rather than sampling)");
+    if (_hasGasMIB) find<Log>()->info("  (obtaining gas densities through calculation rather than sampling)");
 
     // initialize the tree node list with the root node as the first item
     vector<TreeNode*> nodev{root};
