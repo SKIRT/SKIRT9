@@ -366,6 +366,7 @@ public:
                 // intentionally falls through to determine the first actual segment
             }
 
+            // intentionally falls through
             case State::Inside:
             {
                 // if currently inside a clump, the segment ends at the sphere boundary
