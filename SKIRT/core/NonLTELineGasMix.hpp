@@ -76,7 +76,7 @@
     The current implementation assumes that the ratio of ortho to para is 3 to 1.
 
     <b>Atoms</b>
-    Atomic line emission from C, O, N, S, Ne, Na, Mg, Fe, and Ar in ionization states ranging from
+    Atomic line emission from C, O, N, S, Si, Ne, Na, Mg, Fe, and Ar in ionization states ranging from
     neutral up to ten times ionized is included. The atomic data required for calculating level 
     populations and electron collisional transition rates are adopted from the CHIANTI database
     (https://www.chiantidatabase.org/chianti_direct_access.html; Dere et al. 1997; Del Zanna et al. 2021).
