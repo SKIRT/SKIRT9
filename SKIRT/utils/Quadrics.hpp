@@ -237,6 +237,18 @@ public:
         return smallestPositiveSolution(Vec::dot(r0, k), r0.norm2() - square(radius));
     }
 
+    /** This function determines the solutions of the intersection of the ray \f$({\bf{r}}_0,
+        \hat{\bf{k}})\f$ with the sphere described in firstIntersectionSphere(), i.e. the two-root
+        counterpart of that function: it solves the same defining equation and quadratic, but
+        through distinctSolutions() rather than smallestPositiveSolution(), so that both roots are
+        returned rather than only the smallest positive one. The return value has the same meaning
+        as for distinctSolutions(): 2 for two distinct solutions (stored in x1 and x2), or 0 if
+        there are none. */
+    static int distinctIntersectionsSphere(Vec r0, Vec k, double radius, double& x1, double& x2)
+    {
+        return distinctSolutions(Vec::dot(r0, k), r0.norm2() - square(radius), x1, x2);
+    }
+
     /** This function returns the distance to the first intersection of the ray \f$({\bf{r}}_0,
         \hat{\bf{k}})\f$ with the sphere of given center and radius, or zero if there is no
         intersection ahead along the ray. This is the arbitrary-center counterpart of the other
@@ -268,6 +280,29 @@ public:
         return c ? smallestPositiveSolution(c * c - k.z() * k.z(), c * c * Vec::dot(r0, k) - r0.z() * k.z(),
                                             c * c * r0.norm2() - r0.z() * r0.z())
                  : -r0.z() / k.z();  // degenerate cone identical to xy-plane
+    }
+
+    /** This function determines the solutions of the intersection of the ray \f$({\bf{r}}_0,
+        \hat{\bf{k}})\f$ with the double cone described in firstIntersectionCone(), i.e. the
+        two-root counterpart of that function: it solves the same defining equation and quadratic,
+        but through distinctSolutions() rather than smallestPositiveSolution(), so that both roots
+        (or the single root of a linearly-degenerate case) are returned rather than only the
+        smallest positive one. The degenerate cone with zero cosine (i.e. the xy-plane) is handled
+        as a special case, with at most one solution, obtained only if the ray is not parallel to
+        it. The return value has the same meaning as for distinctSolutions(): 2 for two distinct
+        solutions (stored in x1 and x2), 1 for a single solution (stored in x1), or 0 for none. */
+    static int distinctIntersectionsCone(Vec r0, Vec k, double cosTheta, double& x1, double& x2)
+    {
+        double c2 = square(cosTheta);
+        if (!c2)
+        {
+            // degenerate cone identical to xy-plane; at most one solution, and only if not parallel
+            if (std::abs(k.z()) < EPS) return 0;
+            x1 = -r0.z() / k.z();
+            return 1;
+        }
+        return distinctSolutions(c2 - square(k.z()), c2 * Vec::dot(r0, k) - r0.z() * k.z(),
+                                 c2 * r0.norm2() - square(r0.z()), x1, x2);
     }
 
     /** This function returns the distance to the intersection of the ray \f$({\bf{r}}_0,
@@ -307,6 +342,22 @@ public:
         double b = r0.x() * k.x() + r0.y() * k.y();
         double c = square(r0.x()) + square(r0.y()) - square(radius);
         return smallestPositiveSolution(b / kq2, c / kq2);
+    }
+
+    /** This function determines the solutions of the intersection of the ray \f$({\bf{r}}_0,
+        \hat{\bf{k}})\f$ with the infinite cylinder described in firstIntersectionCylinder(), i.e.
+        the two-root counterpart of that function: it solves the same defining equation and
+        quadratic, but through distinctSolutions() rather than smallestPositiveSolution(), so that
+        both roots are returned rather than only the smallest positive one; kq2 has the same
+        meaning as there. The return value has the same meaning as for distinctSolutions(): 2 for
+        two distinct solutions (stored in x1 and x2), or 0 if there are none, which includes the
+        case where the ray is parallel to the z-axis (kq2 is zero). */
+    static int distinctIntersectionsCylinder(Vec r0, Vec k, double kq2, double radius, double& x1, double& x2)
+    {
+        if (std::abs(kq2) < EPS) return 0;
+        double b = r0.x() * k.x() + r0.y() * k.y();
+        double c = square(r0.x()) + square(r0.y()) - square(radius);
+        return distinctSolutions(b / kq2, c / kq2, x1, x2);
     }
 
     /** This function returns the distance to the intersection of the ray \f$({\bf{r}}_0,
