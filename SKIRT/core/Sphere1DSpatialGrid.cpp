@@ -4,9 +4,9 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Sphere1DSpatialGrid.hpp"
-#include "Cubic.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
+#include "Quadrics.hpp"
 #include "Random.hpp"
 #include "SpatialGridPlotFile.hpp"
 
@@ -43,7 +43,7 @@ double Sphere1DSpatialGrid::volume(int m) const
     if (i < 0 || i >= _Nr)
         return 0.;
     else
-        return 4. / 3. * M_PI * Cubic::pow3(_rv[i], _rv[i + 1]);
+        return 4. / 3. * M_PI * Quadrics::cube(_rv[i], _rv[i + 1]);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -85,7 +85,7 @@ Position Sphere1DSpatialGrid::randomPositionInCell(int m) const
     else
     {
         Direction bfk = random()->direction();
-        double r = cbrt(Cubic::pow3(_rv[i]) + Cubic::pow3(_rv[i], _rv[i + 1]) * random()->uniform());
+        double r = cbrt(Quadrics::cube(_rv[i]) + Quadrics::cube(_rv[i], _rv[i + 1]) * random()->uniform());
         return Position(r, bfk);
     }
 }
@@ -114,7 +114,7 @@ public:
                 double rmin = _grid->minRadius();
                 double r = sqrt(rx() * rx() + ry() * ry() + rz() * rz());
                 _q = rx() * kx() + ry() * ky() + rz() * kz();
-                _p = sqrt((r - _q) * (r + _q));
+                _p = Quadrics::sqrtDiffSquares(r, _q);
                 if (r > rmax)
                 {
                     if (_q > 0. || _p > rmax)
@@ -126,7 +126,7 @@ public:
                     else
                     {
                         // path intersects rmax boundary going inward, qmax is negative; return the first empty segment
-                        double qmax = -sqrt((rmax - _p) * (rmax + _p));
+                        double qmax = -Quadrics::sqrtDiffSquares(rmax, _p);
                         setEmptySegment(qmax - _q);
                         _i = _grid->_Nr - 1;
                         _q = qmax;
@@ -141,7 +141,7 @@ public:
                 else if (r < rmin)
                 {
                     // path intersects rmin boundary going outward, qmin is positive; return the first empty segment
-                    double qmin = sqrt((rmin - _p) * (rmin + _p));
+                    double qmin = Quadrics::sqrtDiffSquares(rmin, _p);
                     setEmptySegment(qmin - _q);
                     _i = 0;
                     _q = qmin;
@@ -175,7 +175,7 @@ public:
                     case Phase::Inwards:
                     {
                         double rN = _grid->_rv[_i];  // i >= 0 here
-                        double qN = -sqrt((rN - _p) * (rN + _p));
+                        double qN = -Quadrics::sqrtDiffSquares(rN, _p);
                         setSegment(_i, qN - _q);
                         _i--;  // i can become -1 here
                         _q = qN;
@@ -185,7 +185,7 @@ public:
                     case Phase::Outwards:
                     {
                         double rN = _grid->_rv[_i + 1];
-                        double qN = sqrt((rN - _p) * (rN + _p));
+                        double qN = Quadrics::sqrtDiffSquares(rN, _p);
                         setSegment(_i, qN - _q);  // i can be -1 here, as intended
                         _i++;
                         _q = qN;

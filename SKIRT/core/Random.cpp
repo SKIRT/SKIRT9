@@ -175,6 +175,17 @@ Position Random::position(const Box& box)
     return Position(box.fracPos(x, y, z));
 }
 
+//////////////////////////////////////////////////////////////////////
+
+Position Random::positionInSphere(Position center, double radius)
+{
+    double r = std::cbrt(uniform());
+    Direction k = direction();
+    return Position(center + k * r * radius);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 Vec Random::maxwell()
 {
     // generate the random numbers in separate statements to guarantee evaluation order

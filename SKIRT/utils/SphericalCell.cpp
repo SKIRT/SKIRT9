@@ -5,9 +5,8 @@
 
 #include "SphericalCell.hpp"
 #include "Box.hpp"
-#include "Cubic.hpp"
 #include "Position.hpp"
-#include "Quadratic.hpp"
+#include "Quadrics.hpp"
 #include <array>
 
 //////////////////////////////////////////////////////////////////////
@@ -38,7 +37,7 @@ SphericalCell::SphericalCell(double rmin, double thetamin, double phimin, double
 
 double SphericalCell::volume() const
 {
-    return (1. / 3.) * Cubic::pow3(_rmin, _rmax) * (_costhetamin - _costhetamax) * (_phimax - _phimin);
+    return (1. / 3.) * Quadrics::cube(_rmin, _rmax) * (_costhetamin - _costhetamax) * (_phimax - _phimin);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -152,9 +151,6 @@ Box SphericalCell::boundingBox() const
 
 double SphericalCell::intersection(Vec r, const Vec k) const
 {
-    // small value used to check for parallel directions
-    constexpr double eps = 1e-12;
-
     // allocate room for the 10 possible intersections (2 per sphere, 2 per cone, and 1 per plane)
     // plus the starting position (which starts the first segment).
     // initialize the array to zeroes:
@@ -163,86 +159,17 @@ double SphericalCell::intersection(Vec r, const Vec k) const
     enum { START, RMIN1, RMIN2, RMAX1, RMAX2, THETAMIN1, THETAMIN2, THETAMAX1, THETAMAX2, PHIMIN, PHIMAX, LEN };
     std::array<double, LEN> sv = {};
 
-    // precalculate some properties of the ray
-    double rk = Vec::dot(r, k);
-    double r2 = r.norm2();
-    double rz2 = r.z() * r.z();
-    double kz2 = k.z() * k.z();
-    double rkz = r.z() * k.z();
+    // intersections with boundary spheres
+    Quadrics::distinctIntersectionsSphere(r, k, _rmin, sv[RMIN1], sv[RMIN2]);
+    Quadrics::distinctIntersectionsSphere(r, k, _rmax, sv[RMAX1], sv[RMAX2]);
 
-    // intersections with the rmin and rmax boundary spheres
-    Quadratic::distinctSolutions(rk, r2 - _rmin * _rmin, sv[RMIN1], sv[RMIN2]);
-    Quadratic::distinctSolutions(rk, r2 - _rmax * _rmax, sv[RMAX1], sv[RMAX2]);
+    // intersections with boundary cones
+    Quadrics::distinctIntersectionsCone(r, k, _costhetamin, sv[THETAMIN1], sv[THETAMIN2]);
+    Quadrics::distinctIntersectionsCone(r, k, _costhetamax, sv[THETAMAX1], sv[THETAMAX2]);
 
-    // intersections with the thetamin boundary cone
-    {
-        double cos2 = _costhetamin * _costhetamin;
-        if (abs(cos2) >= eps)
-        {
-            double a = cos2 - kz2;
-            double b = cos2 * rk - rkz;
-            double c = cos2 * r2 - rz2;
-            if (abs(a) >= eps)
-            {
-                // general case
-                Quadratic::distinctSolutions(b / a, c / a, sv[THETAMIN1], sv[THETAMIN2]);
-            }
-            else
-            {
-                // ray parallel to cone
-                if (abs(b) >= eps) sv[THETAMIN1] = -0.5 * c / b;
-            }
-        }
-        else
-        {
-            // degenerate cone identical to xy-plane
-            if (abs(k.z()) >= eps) sv[THETAMIN1] = -r.z() / k.z();
-        }
-    }
-
-    // intersections with the thetamax boundary cone
-    {
-        double cos2 = _costhetamax * _costhetamax;
-        if (abs(cos2) >= eps)
-        {
-            double a = cos2 - kz2;
-            double b = cos2 * rk - rkz;
-            double c = cos2 * r2 - rz2;
-            if (abs(a) >= eps)
-            {
-                // general case
-                Quadratic::distinctSolutions(b / a, c / a, sv[THETAMAX1], sv[THETAMAX2]);
-            }
-            else
-            {
-                // ray parallel to cone
-                if (abs(b) >= eps) sv[THETAMAX1] = -0.5 * c / b;
-            }
-        }
-        else
-        {
-            // degenerate cone identical to xy-plane
-            if (abs(k.z()) >= eps) sv[THETAMAX1] = -r.z() / k.z();
-        }
-    }
-
-    // intersection with meridional phimin plane
-    {
-        double q = k.x() * _sinphimin - k.y() * _cosphimin;
-        if (abs(q) >= eps)
-        {
-            sv[PHIMIN] = -(r.x() * _sinphimin - r.y() * _cosphimin) / q;
-        }
-    }
-
-    // intersection with meridional phimax plane
-    {
-        double q = k.x() * _sinphimax - k.y() * _cosphimax;
-        if (abs(q) >= eps)
-        {
-            sv[PHIMAX] = -(r.x() * _sinphimax - r.y() * _cosphimax) / q;
-        }
-    }
+    // intersections with meridional planes
+    sv[PHIMIN] = Quadrics::intersectionMeridionalPlane(r, k, _sinphimin, _cosphimin);
+    sv[PHIMAX] = Quadrics::intersectionMeridionalPlane(r, k, _sinphimax, _cosphimax);
 
     // sort the intersection points
     std::sort(sv.begin(), sv.end());

@@ -39,6 +39,7 @@
 #include "CellSource.hpp"
 #include "ClearDensityRecipe.hpp"
 #include "ClumpyGeometryDecorator.hpp"
+#include "ClumpySphericalSpatialGrid.hpp"
 #include "CombineGeometryDecorator.hpp"
 #include "CompositeWavelengthGrid.hpp"
 #include "ConfigurableBandWavelengthGrid.hpp"
@@ -270,6 +271,7 @@
 #include "Starburst99SEDFamily.hpp"
 #include "StellarSurfaceSource.hpp"
 #include "StellarUnits.hpp"
+#include "StructuredSphereSpatialGrid.hpp"
 #include "SunSED.hpp"
 #include "SymCosMesh.hpp"
 #include "SymLogMesh.hpp"
@@ -511,6 +513,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     // spatial grids
     ItemRegistry::add<SpatialGrid>();
     ItemRegistry::add<SphereSpatialGrid>();
+    ItemRegistry::add<StructuredSphereSpatialGrid>();
     ItemRegistry::add<CylinderSpatialGrid>();
     ItemRegistry::add<Sphere1DSpatialGrid>();
     ItemRegistry::add<Sphere2DSpatialGrid>();
@@ -525,6 +528,7 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<AdaptiveMeshSpatialGrid>();
     ItemRegistry::add<VoronoiMeshSpatialGrid>();
     ItemRegistry::add<TetraMeshSpatialGrid>();
+    ItemRegistry::add<ClumpySphericalSpatialGrid>();
 
     // spatial grid policies
     ItemRegistry::add<TreePolicy>();

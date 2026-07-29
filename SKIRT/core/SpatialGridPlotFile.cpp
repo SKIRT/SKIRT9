@@ -52,6 +52,24 @@ void SpatialGridPlotFile::writeRectangle(double min1, double min2, double max1, 
 
 ////////////////////////////////////////////////////////////////////
 
+void SpatialGridPlotFile::writeCircle(double x, double y, double radius)
+{
+    if (!_out.is_open()) return;
+
+    x = _units->olength(x);
+    y = _units->olength(y);
+    radius = _units->olength(radius);
+
+    for (int l = 0; l <= 360; l++)
+    {
+        double phi = l * M_PI / 180;
+        _out << x + radius * cos(phi) << '\t' << y + radius * sin(phi) << '\n';
+    }
+    _out << '\n';
+}
+
+////////////////////////////////////////////////////////////////////
+
 void SpatialGridPlotFile::writeCircle(double radius)
 {
     if (!_out.is_open()) return;
@@ -63,6 +81,24 @@ void SpatialGridPlotFile::writeCircle(double radius)
         double phi = l * M_PI / 180;
         _out << radius * cos(phi) << '\t' << radius * sin(phi) << '\n';
     }
+    _out << '\n';
+}
+
+////////////////////////////////////////////////////////////////////
+
+void SpatialGridPlotFile::writeArc(double radius, double begAngle, double endAngle)
+{
+    if (!_out.is_open()) return;
+
+    radius = _units->olength(radius);
+
+    constexpr double dphi = M_PI / 180.;
+    for (double phi = begAngle; phi < endAngle; phi += dphi)
+    {
+        _out << radius * cos(phi) << '\t' << radius * sin(phi) << '\n';
+    }
+    _out << radius * cos(endAngle) << '\t' << radius * sin(endAngle) << '\n';
+
     _out << '\n';
 }
 
@@ -143,6 +179,44 @@ void SpatialGridPlotFile::writeMeridionalHalfCircle(double radius, double phi)
         double y = radius * sin(phi) * sin(theta);
         double z = radius * cos(theta);
         _out << x << '\t' << y << '\t' << z << '\n';
+    }
+    _out << '\n';
+}
+
+////////////////////////////////////////////////////////////////////
+
+void SpatialGridPlotFile::writeSphere(double x, double y, double z, double radius)
+{
+    if (!_out.is_open()) return;
+
+    x = _units->olength(x);
+    y = _units->olength(y);
+    z = _units->olength(z);
+    radius = _units->olength(radius);
+
+    constexpr int N = 24;  // segments per circle; coarse, since there may be many spheres to plot
+
+    // circle in the plane parallel to the xy plane
+    for (int l = 0; l <= N; l++)
+    {
+        double phi = l * 2. * M_PI / N;
+        _out << x + radius * cos(phi) << '\t' << y + radius * sin(phi) << '\t' << z << '\n';
+    }
+    _out << '\n';
+
+    // circle in the plane parallel to the xz plane
+    for (int l = 0; l <= N; l++)
+    {
+        double phi = l * 2. * M_PI / N;
+        _out << x + radius * cos(phi) << '\t' << y << '\t' << z + radius * sin(phi) << '\n';
+    }
+    _out << '\n';
+
+    // circle in the plane parallel to the yz plane
+    for (int l = 0; l <= N; l++)
+    {
+        double phi = l * 2. * M_PI / N;
+        _out << x << '\t' << y + radius * cos(phi) << '\t' << z + radius * sin(phi) << '\n';
     }
     _out << '\n';
 }

@@ -134,6 +134,15 @@ public:
         \f[ z=\tfrac12 (x_\text{min}+z_\text{max}) \f] */
     inline Vec center() const { return Vec(0.5 * (_xmin + _xmax), 0.5 * (_ymin + _ymax), 0.5 * (_zmin + _zmax)); }
 
+    /** This function returns the surface area of the box. */
+    inline double surfaceArea()
+    {
+        double dx = xwidth();
+        double dy = ywidth();
+        double dz = zwidth();
+        return 2. * (dx * dy + dy * dz + dz * dx);
+    }
+
     /** This function returns a position in the box determined by a given fraction in each spatial direction
         \f[ x=x_\text{min}+x_\text{frac}\times(x_\text{max}-x_\text{min}) \f]
         \f[ y=y_\text{min}+y_\text{frac}\times(y_\text{max}-y_\text{min}) \f]
@@ -167,7 +176,7 @@ public:
     }
 
     /** This function returns true if the given box and this box have a non-zero intersection,
-        false otherwise. */
+        false otherwise. Touching counts as intersection. */
     inline bool intersects(const Box& box) const
     {
         if (xmax() < box.xmin() || box.xmax() < xmin()) return false;
