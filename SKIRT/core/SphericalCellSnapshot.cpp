@@ -4,11 +4,11 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "SphericalCellSnapshot.hpp"
-#include "Cubic.hpp"
 #include "EntityCollection.hpp"
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "NR.hpp"
+#include "Quadrics.hpp"
 #include "Random.hpp"
 #include "StringUtils.hpp"
 #include "TextInFile.hpp"
@@ -263,7 +263,7 @@ Position SphericalCellSnapshot::generatePosition(int m) const
     double rmin, thetamin, phimin, rmax, thetamax, phimax;
     _cellv[m].extent(rmin, thetamin, phimin, rmax, thetamax, phimax);
 
-    double r = cbrt(Cubic::pow3(rmin) + Cubic::pow3(rmin, rmax) * random()->uniform());
+    double r = cbrt(Quadrics::cube(rmin) + Quadrics::cube(rmin, rmax) * random()->uniform());
     double theta = acos(cos(thetamin) + (cos(thetamax) - cos(thetamin)) * random()->uniform());
     double phi = phimin + (phimax - phimin) * random()->uniform();
     return Position(r, theta, phi, Position::CoordinateSystem::SPHERICAL);

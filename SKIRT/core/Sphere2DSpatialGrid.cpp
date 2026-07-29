@@ -4,10 +4,9 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "Sphere2DSpatialGrid.hpp"
-#include "Cubic.hpp"
 #include "NR.hpp"
 #include "PathSegmentGenerator.hpp"
-#include "Quadratic.hpp"
+#include "Quadrics.hpp"
 #include "Random.hpp"
 #include "SpatialGridPlotFile.hpp"
 
@@ -49,7 +48,7 @@ double Sphere2DSpatialGrid::volume(int m) const
     double rmin, thetamin, rmax, thetamax;
     if (getCoords(m, rmin, thetamin, rmax, thetamax))
     {
-        return (2. / 3.) * M_PI * Cubic::pow3(rmin, rmax) * (cos(thetamin) - cos(thetamax));
+        return (2. / 3.) * M_PI * Quadrics::cube(rmin, rmax) * (cos(thetamin) - cos(thetamax));
     }
     return 0.;
 }
@@ -104,42 +103,12 @@ Position Sphere2DSpatialGrid::randomPositionInCell(int m) const
     double rmin, thetamin, rmax, thetamax;
     if (getCoords(m, rmin, thetamin, rmax, thetamax))
     {
-        double r = cbrt(Cubic::pow3(rmin) + Cubic::pow3(rmin, rmax) * random()->uniform());
+        double r = cbrt(Quadrics::cube(rmin) + Quadrics::cube(rmin, rmax) * random()->uniform());
         double theta = acos(cos(thetamin) + (cos(thetamax) - cos(thetamin)) * random()->uniform());
         double phi = 2.0 * M_PI * random()->uniform();
         return Position(r, theta, phi, Position::CoordinateSystem::SPHERICAL);
     }
     return Position();
-}
-
-//////////////////////////////////////////////////////////////////////
-
-namespace
-{
-    // returns the smallest positive solution of a*x^2 + 2*b*x + c = 0, or 0 if there is no positive solution
-    double smallestPositiveSolution(double a, double b, double c)
-    {
-        if (fabs(a) > 1e-9) return Quadratic::smallestPositiveSolution(b / a, c / a);
-        double x = -0.5 * c / b;
-        if (x > 0.) return x;
-        return 0.;
-    }
-
-    // returns the distance to the first intersection between the ray (bfr,bfk) and the sphere with given radius,
-    // or 0 if there is no intersection
-    double firstIntersectionSphere(Vec bfr, Vec bfk, double r)
-    {
-        return Quadratic::smallestPositiveSolution(Vec::dot(bfr, bfk), bfr.norm2() - r * r);
-    }
-
-    // returns the distance to the first intersection between the ray (bfr,bfk) and the cone with given cos(theta),
-    // or 0 if there is no intersection (the degenarate cone with zero cosine is treated separately)
-    double firstIntersectionCone(Vec bfr, Vec bfk, double c)
-    {
-        return c ? smallestPositiveSolution(c * c - bfk.z() * bfk.z(), c * c * Vec::dot(bfr, bfk) - bfr.z() * bfk.z(),
-                                            c * c * bfr.norm2() - bfr.z() * bfr.z())
-                 : -bfr.z() / bfk.z();  // degenerate cone identical to xy-plane
-    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -183,7 +152,7 @@ public:
                 if (r().norm() > _grid->maxRadius())
                 {
                     // find intersection; abort if there is none
-                    double ds = firstIntersectionSphere(r(), k(), _grid->maxRadius());
+                    double ds = Quadrics::firstIntersectionSphere(r(), k(), _grid->maxRadius());
                     if (ds <= 0.) return abortPath();
 
                     // propagate the path to the intersection; abort in case of numerical inaccuracies
@@ -222,7 +191,7 @@ public:
                     // inner radial boundary (not applicable to innermost cell if its radius is zero)
                     if (icur > 0 || (icur == 0 && _grid->_rv[0] > 0.))
                     {
-                        double s = firstIntersectionSphere(r(), k(), _grid->_rv[icur]);
+                        double s = Quadrics::firstIntersectionSphere(r(), k(), _grid->_rv[icur]);
                         if (s > 0 && s < ds)
                         {
                             ds = s;
@@ -233,7 +202,7 @@ public:
 
                     // outer radial boundary
                     {
-                        double s = firstIntersectionSphere(r(), k(), _grid->_rv[icur + 1]);
+                        double s = Quadrics::firstIntersectionSphere(r(), k(), _grid->_rv[icur + 1]);
                         if (s > 0 && s < ds)
                         {
                             ds = s;
@@ -245,7 +214,7 @@ public:
                     // upper angular boundary (not applicable to uppermost cell)
                     if (jcur > 0)
                     {
-                        double s = firstIntersectionCone(r(), k(), _grid->_cv[jcur]);
+                        double s = Quadrics::firstIntersectionCone(r(), k(), _grid->_cv[jcur]);
                         if (s > 0 && s < ds)
                         {
                             ds = s;
@@ -257,7 +226,7 @@ public:
                     // lower angular boundary (not applicable to lowest cell)
                     if (jcur < _grid->_Ntheta - 1)
                     {
-                        double s = firstIntersectionCone(r(), k(), _grid->_cv[jcur + 1]);
+                        double s = Quadrics::firstIntersectionCone(r(), k(), _grid->_cv[jcur + 1]);
                         if (s > 0 && s < ds)
                         {
                             ds = s;

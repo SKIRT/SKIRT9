@@ -6,7 +6,7 @@
 #include "CylindricalCell.hpp"
 #include "Box.hpp"
 #include "Position.hpp"
-#include "Quadratic.hpp"
+#include "Quadrics.hpp"
 #include <array>
 
 //////////////////////////////////////////////////////////////////////
@@ -99,9 +99,6 @@ Box CylindricalCell::boundingBox() const
 
 double CylindricalCell::intersection(Vec r, const Vec k) const
 {
-    // small value used to check for parallel directions
-    constexpr double eps = 1e-12;
-
     // allocate room for the 8 possible intersections (1 per plane and 2 per cylinder)
     // plus the starting position (which starts the first segment).
     // initialize the array to zeroes:
@@ -111,46 +108,17 @@ double CylindricalCell::intersection(Vec r, const Vec k) const
     std::array<double, LEN> sv = {};
 
     // intersections with horizontal planes
-    if (abs(k.z()) > eps)
-    {
-        sv[ZMIN] = (zmin() - r.z()) / k.z();
-        sv[ZMAX] = (zmax() - r.z()) / k.z();
-    }
+    sv[ZMIN] = Quadrics::intersectionHorizontalPlane(r, k, zmin());
+    sv[ZMAX] = Quadrics::intersectionHorizontalPlane(r, k, zmax());
 
-    // intersection with meridional phimin plane
-    {
-        double q = k.x() * _sinphimin - k.y() * _cosphimin;
-        if (abs(q) >= eps)
-        {
-            sv[PHIMIN] = -(r.x() * _sinphimin - r.y() * _cosphimin) / q;
-        }
-    }
+    // intersections with meridional planes
+    sv[PHIMIN] = Quadrics::intersectionMeridionalPlane(r, k, _sinphimin, _cosphimin);
+    sv[PHIMAX] = Quadrics::intersectionMeridionalPlane(r, k, _sinphimax, _cosphimax);
 
-    // intersection with meridional phimax plane
-    {
-        double q = k.x() * _sinphimax - k.y() * _cosphimax;
-        if (abs(q) >= eps)
-        {
-            sv[PHIMAX] = -(r.x() * _sinphimax - r.y() * _cosphimax) / q;
-        }
-    }
-
-    // intersections with cylinders
-    {
-        double a = k.x() * k.x() + k.y() * k.y();
-        if (abs(a) >= eps)
-        {
-            double b = (r.x() * k.x() + r.y() * k.y()) / a;
-            {
-                double c = (r.x() * r.x() + r.y() * r.y() - _Rmin * _Rmin) / a;
-                Quadratic::distinctSolutions(b, c, sv[RMIN1], sv[RMIN2]);
-            }
-            {
-                double c = (r.x() * r.x() + r.y() * r.y() - _Rmax * _Rmax) / a;
-                Quadratic::distinctSolutions(b, c, sv[RMAX1], sv[RMAX2]);
-            }
-        }
-    }
+    // intersections with boundary cylinders
+    double kq2 = k.x() * k.x() + k.y() * k.y();
+    Quadrics::distinctIntersectionsCylinder(r, k, kq2, _Rmin, sv[RMIN1], sv[RMIN2]);
+    Quadrics::distinctIntersectionsCylinder(r, k, kq2, _Rmax, sv[RMAX1], sv[RMAX2]);
 
     // sort the intersection points
     std::sort(sv.begin(), sv.end());
