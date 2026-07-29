@@ -949,7 +949,7 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
                                                + " Now, vturb = " + StringUtils::toString(units->ovelocity(sigma)) + " "
                                                + units->uvelocity() + "."};
 
-                    if (abs(gsum - 1.) > MAX_GAUSS_ERROR_FAIL and warningForGaussianIntegral())
+                    if (abs(gsum - 1.) > MAX_GAUSS_ERROR_FAIL && warningForGaussianIntegral())
                     {
                         log->info(std::string("Gausss(") + StringUtils::toString(_lambdav[ellmin])
                                   + ")=" + StringUtils::toString(gaussian(_lambdav[ellmin], center, sigma)) + "Gausss("
