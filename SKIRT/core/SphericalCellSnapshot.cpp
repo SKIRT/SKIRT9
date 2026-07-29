@@ -263,7 +263,7 @@ Position SphericalCellSnapshot::generatePosition(int m) const
     double rmin, thetamin, phimin, rmax, thetamax, phimax;
     _cellv[m].extent(rmin, thetamin, phimin, rmax, thetamax, phimax);
 
-    double r = cbrt(Quadrics::pow3(rmin) + Quadrics::pow3(rmin, rmax) * random()->uniform());
+    double r = cbrt(Quadrics::cube(rmin) + Quadrics::cube(rmin, rmax) * random()->uniform());
     double theta = acos(cos(thetamin) + (cos(thetamax) - cos(thetamin)) * random()->uniform());
     double phi = phimin + (phimax - phimin) * random()->uniform();
     return Position(r, theta, phi, Position::CoordinateSystem::SPHERICAL);

@@ -43,7 +43,7 @@ double Sphere1DSpatialGrid::volume(int m) const
     if (i < 0 || i >= _Nr)
         return 0.;
     else
-        return 4. / 3. * M_PI * Quadrics::pow3(_rv[i], _rv[i + 1]);
+        return 4. / 3. * M_PI * Quadrics::cube(_rv[i], _rv[i + 1]);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -85,7 +85,7 @@ Position Sphere1DSpatialGrid::randomPositionInCell(int m) const
     else
     {
         Direction bfk = random()->direction();
-        double r = cbrt(Quadrics::pow3(_rv[i]) + Quadrics::pow3(_rv[i], _rv[i + 1]) * random()->uniform());
+        double r = cbrt(Quadrics::cube(_rv[i]) + Quadrics::cube(_rv[i], _rv[i + 1]) * random()->uniform());
         return Position(r, bfk);
     }
 }

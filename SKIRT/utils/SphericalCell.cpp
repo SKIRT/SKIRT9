@@ -37,7 +37,7 @@ SphericalCell::SphericalCell(double rmin, double thetamin, double phimin, double
 
 double SphericalCell::volume() const
 {
-    return (1. / 3.) * Quadrics::pow3(_rmin, _rmax) * (_costhetamin - _costhetamax) * (_phimax - _phimin);
+    return (1. / 3.) * Quadrics::cube(_rmin, _rmax) * (_costhetamin - _costhetamax) * (_phimax - _phimin);
 }
 
 //////////////////////////////////////////////////////////////////////

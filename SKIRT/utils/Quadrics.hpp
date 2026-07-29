@@ -27,11 +27,11 @@ public:
     static double square(double x) { return x * x; }
 
     /** This function returns \f$x^3\f$. */
-    static double pow3(double x) { return x * x * x; }
+    static double cube(double x) { return x * x * x; }
 
     /** This function returns \f$x_1^3 - x_0^3 = (x_1-x_0)(x_1^2 + x_1 x_0 + x_0^2)\f$. The second
         form is used because it is more numerically stable. */
-    static double pow3(double x0, double x1) { return (x1 - x0) * (x1 * x1 + x1 * x0 + x0 * x0); }
+    static double cube(double x0, double x1) { return (x1 - x0) * (x1 * x1 + x1 * x0 + x0 * x0); }
 
     //======================== Quadratic equations =======================
 
@@ -39,7 +39,14 @@ public:
     /** This function determines the solutions of \f$x^2 + 2bx + c = 0\f$. If there are two
         distinct real solutions, they are stored in the arguments x1 and x2, and the function
         returns 2. Otherwise, i.e. if there are no real solutions or there is just one real
-        solution, x1 and x2 remain unchanged, and the function returns 0. */
+        solution, x1 and x2 remain unchanged, and the function returns 0.
+
+        Evaluating \f$-b \pm \sqrt{b^2-c}\f$ directly for both roots would lose precision through
+        catastrophic cancellation whenever the two terms nearly cancel for one of the roots. To
+        avoid this, only the root for which \f$-b\f$ and the square root have the same sign --
+        so that they add rather than cancel -- is evaluated directly: \f$-b-\sqrt{b^2-c}\f$ if
+        \f$b>0\f$ (since \f$-b\f$ is then negative), or \f$-b+\sqrt{b^2-c}\f$ otherwise. The other
+        root is then obtained from Vieta's formula \f$x_1 x_2 = c\f$. */
     static int distinctSolutions(double b, double c, double& x1, double& x2)
     {
         if (b * b > c)  // if discriminant is strictly positive, there are two distinct real solutions
@@ -79,7 +86,14 @@ public:
     }
 
     /** This function returns the smallest positive solution of \f$x^2 + 2bx + c = 0\f$, or zero if
-        there is no positive solution. */
+        there is no positive solution.
+
+        As in distinctSolutions(), only the root for which \f$-b\f$ and \f$\sqrt{b^2-c}\f$ have
+        the same sign is evaluated directly -- \f$-b-\sqrt{b^2-c}\f$ if \f$b>0\f$, or
+        \f$-b+\sqrt{b^2-c}\f$ if \f$b<0\f$ -- avoiding the catastrophic cancellation that
+        evaluating both roots directly would incur; the other root, when it is needed, is
+        obtained from it through Vieta's formula \f$x_1 x_2 = c\f$ rather than by evaluating the
+        numerically unsafe combination directly. */
     static double smallestPositiveSolution(double b, double c)
     {
         if (b * b > c)  // if discriminant is negative, there are no real solutions
@@ -120,8 +134,9 @@ public:
     //======================== Spheres =======================
 
 public:
-    /** This function returns the volume of a sphere with given radius. */
-    static double volumeSphere(double radius) { return (4. / 3.) * M_PI * pow3(radius); }
+    /** This function returns the volume of a sphere with given radius, \f$V = \frac{4}{3}\pi
+        r^3\f$. */
+    static double volumeSphere(double radius) { return (4. / 3.) * M_PI * cube(radius); }
 
     /** This function returns true if the given position is inside the sphere with given center and
         radius, and false otherwise (a position exactly on the sphere's surface counts as inside).
@@ -195,7 +210,11 @@ public:
         through the origin. It returns true and sets circleRadius if the sphere reaches the plane;
         it returns false (leaving circleRadius unchanged) if it doesn't. The circle's center in the
         plane is simply the sphere center's own two in-plane coordinates, so the caller already has
-        those and doesn't need them returned here. */
+        those and doesn't need them returned here.
+
+        By the Pythagorean relation between the sphere's radius \f$R\f$, its center's
+        out-of-plane offset \f$d\f$, and the radius \f$\rho\f$ of the circle cut out of the plane,
+        \f[ \rho = \sqrt{R^2 - d^2}, \f] which is real, and thus returned, only if \f$|d|<R\f$. */
     static bool sphereIntersectsPlane(double sphereRadius, double outOfPlaneCenterCoord, double& circleRadius)
     {
         double r2 = square(sphereRadius) - square(outOfPlaneCenterCoord);
@@ -205,19 +224,25 @@ public:
     }
 
     /** This function returns the distance to the first intersection of the ray \f$({\bf{r}}_0,
-        {\bf{k}})\f$ -- with \f${\bf{k}}\f$ assumed to be a unit vector -- with the sphere of given
-        radius centered at the origin, or zero if there is no intersection ahead along the ray
-        (either no real intersection, or both intersections lie behind the ray's origin). */
+        \hat{\bf{k}})\f$ with the sphere of given radius centered at the origin, or zero if there is no
+        intersection ahead along the ray (either no real intersection, or both intersections lie
+        behind the ray's origin).
+
+        Substituting \f${\bf{p}}(s) = {\bf{r}}_0 + s\hat{\bf{k}}\f$ into the sphere's defining
+        equation \f$|{\bf{p}}|^2 = \text{radius}^2\f$ gives the quadratic \f[ s^2 + 2s\,
+        ({\bf{r}}_0\cdot\hat{\bf{k}}) + (r_0^2 - \text{radius}^2) = 0, \f] whose smallest positive
+        solution, if any, is the returned distance. */
     static double firstIntersectionSphere(Vec r0, Vec k, double radius)
     {
         return smallestPositiveSolution(Vec::dot(r0, k), r0.norm2() - square(radius));
     }
 
     /** This function returns the distance to the first intersection of the ray \f$({\bf{r}}_0,
-        {\bf{k}})\f$ with the sphere of given center and radius, or zero if there is no
+        \hat{\bf{k}})\f$ with the sphere of given center and radius, or zero if there is no
         intersection ahead along the ray. This is the arbitrary-center counterpart of the other
         firstIntersectionSphere() overload, obtained by translating the ray so that the sphere's
-        center coincides with the origin. */
+        center coincides with the origin -- i.e. by substituting \f${\bf{r}}_0 - \text{center}\f$
+        for \f${\bf{r}}_0\f$ in that overload's defining equation. */
     static double firstIntersectionSphere(Vec r0, Vec k, Vec center, double radius)
     {
         return firstIntersectionSphere(r0 - center, k, radius);
@@ -227,10 +252,16 @@ public:
 
 public:
     /** This function returns the distance to the first intersection of the ray \f$({\bf{r}}_0,
-        {\bf{k}})\f$ with the double cone, centered on the origin and aligned with the z-axis, that
+        \hat{\bf{k}})\f$ with the double cone, centered on the origin and aligned with the z-axis, that
         has the given cosine of its opening angle, or zero if there is no intersection ahead along
         the ray. The degenerate cone with zero cosine (i.e. the xy-plane) is handled as a special
-        case. */
+        case.
+
+        Substituting \f${\bf{p}}(s) = {\bf{r}}_0 + s\hat{\bf{k}}\f$ into the cone's defining
+        equation \f$\cos^2\theta\,|{\bf{p}}|^2 = p_z^2\f$ gives the quadratic \f[ (\cos^2\theta -
+        k_z^2)\,s^2 + 2s\,(\cos^2\theta\,({\bf{r}}_0\cdot\hat{\bf{k}}) - r_{0,z}\,k_z) +
+        (\cos^2\theta\,r_0^2 - r_{0,z}^2) = 0, \f] whose smallest positive solution, if any, is the
+        returned distance. */
     static double firstIntersectionCone(Vec r0, Vec k, double cosTheta)
     {
         double c = cosTheta;
@@ -240,9 +271,12 @@ public:
     }
 
     /** This function returns the distance to the intersection of the ray \f$({\bf{r}}_0,
-        {\bf{k}})\f$ with the meridional half-plane, through the origin and the z-axis, at the
+        \hat{\bf{k}})\f$ with the meridional half-plane, through the origin and the z-axis, at the
         azimuth with given sine and cosine, or zero if the ray direction is parallel to the plane.
-        */
+
+        Substituting \f${\bf{p}}(s) = {\bf{r}}_0 + s\hat{\bf{k}}\f$ into the plane's defining
+        equation \f$p_x\sin\varphi - p_y\cos\varphi = 0\f$ and solving for \f$s\f$ gives \f[ s =
+        -\frac{r_{0,x}\sin\varphi - r_{0,y}\cos\varphi}{k_x\sin\varphi - k_y\cos\varphi}. \f] */
     static double intersectionMeridionalPlane(Vec r0, Vec k, double sinPhi, double cosPhi)
     {
         double q = k.x() * sinPhi - k.y() * cosPhi;
@@ -254,13 +288,19 @@ public:
 
 public:
     /** This function returns the distance to the first intersection of the ray \f$({\bf{r}}_0,
-        {\bf{k}})\f$ with the infinite cylinder of given radius, centered on and aligned with the
+        \hat{\bf{k}})\f$ with the infinite cylinder of given radius, centered on and aligned with the
         z-axis, or zero if there is no intersection ahead along the ray (either no real
         intersection, both intersections lie behind the ray's origin, or the ray direction is
         parallel to the z-axis). The squared length \f$k_x^2+k_y^2\f$ of the projection of
-        \f${\bf{k}}\f$ onto the xy-plane is passed in as kq2 rather than recomputed, because the
+        \f$\hat{\bf{k}}\f$ onto the xy-plane is passed in as kq2 rather than recomputed, because the
         caller typically needs the first intersection with several cylinders of different radii for
-        the same ray, all sharing the same kq2. */
+        the same ray, all sharing the same kq2.
+
+        Substituting \f${\bf{p}}(s) = {\bf{r}}_0 + s\hat{\bf{k}}\f$ into the cylinder's defining
+        equation \f$p_x^2+p_y^2 = \text{radius}^2\f$ gives the quadratic \f[ (k_x^2+k_y^2)\,s^2 +
+        2s\,(r_{0,x}k_x + r_{0,y}k_y) + (r_{0,x}^2 + r_{0,y}^2 - \text{radius}^2) = 0, \f] whose
+        smallest positive solution, if any, is the returned distance; kq2 is the leading
+        coefficient \f$k_x^2+k_y^2\f$. */
     static double firstIntersectionCylinder(Vec r0, Vec k, double kq2, double radius)
     {
         if (std::abs(kq2) < EPS) return 0.;
@@ -270,8 +310,12 @@ public:
     }
 
     /** This function returns the distance to the intersection of the ray \f$({\bf{r}}_0,
-        {\bf{k}})\f$ with the horizontal plane, perpendicular to the z-axis, at the given z
-        coordinate, or zero if the ray direction is parallel to the plane. */
+        \hat{\bf{k}})\f$ with the horizontal plane, perpendicular to the z-axis, at the given z
+        coordinate, or zero if the ray direction is parallel to the plane.
+
+        Substituting \f${\bf{p}}(s) = {\bf{r}}_0 + s\hat{\bf{k}}\f$ into the plane's defining
+        equation \f$p_z = z_\text{plane}\f$ and solving for \f$s\f$ gives \f[ s =
+        \frac{z_\text{plane} - r_{0,z}}{k_z}. \f] */
     static double intersectionHorizontalPlane(Vec r0, Vec k, double zPlane)
     {
         if (std::abs(k.z()) < EPS) return 0.;
