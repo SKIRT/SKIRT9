@@ -39,7 +39,7 @@
 class RadialVectorField : public VectorField
 {
     ITEM_CONCRETE(RadialVectorField, VectorField, "a vector field pointing away from the origin")
-        ATTRIBUTE_TYPE_INSERT(RadialVectorField, "Dimension3")
+        ATTRIBUTE_TYPE_INSERT(RadialVectorField, "InMedia:MediaDimension3,Dimension3;SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(unityRadius, "the radius where the magnitude of the vectors is unity")
         ATTRIBUTE_QUANTITY(unityRadius, "length")

@@ -19,15 +19,15 @@ class UnidirectionalVectorField : public VectorField
 
         PROPERTY_DOUBLE(fieldX, "the field direction, x component")
         ATTRIBUTE_DEFAULT_VALUE(fieldX, "0")
-        ATTRIBUTE_INSERT(fieldX, "fieldX:Dimension3")
+        ATTRIBUTE_INSERT(fieldX, "InMedia&fieldX:MediaDimension3,Dimension3;fieldX:SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(fieldY, "the field direction, y component")
         ATTRIBUTE_DEFAULT_VALUE(fieldY, "0")
-        ATTRIBUTE_INSERT(fieldY, "fieldY:Dimension3")
+        ATTRIBUTE_INSERT(fieldY, "InMedia&fieldY:MediaDimension3,Dimension3;fieldY:SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(fieldZ, "the field direction, z component")
         ATTRIBUTE_DEFAULT_VALUE(fieldZ, "1")
-        ATTRIBUTE_INSERT(fieldZ, "fieldZ:Dimension2")
+        ATTRIBUTE_INSERT(fieldZ, "InMedia&fieldZ:MediaDimension2,Dimension2;fieldZ:SourceDimension2,Dimension2")
 
     ITEM_END()
 
