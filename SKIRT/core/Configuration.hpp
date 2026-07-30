@@ -68,15 +68,33 @@ public:
 
     // ----> symmetry
 
-    /** Returns the symmetry dimension of the input model, including sources and media, if present.
-        A value of 1 means spherical symmetry, 2 means axial symmetry and 3 means none of these
+    /** Returns the symmetry dimension of the primary sources configured in the source system. A
+        value of 1 means spherical symmetry, 2 means axial symmetry and 3 means none of these
         symmetries. */
-    int modelDimension() const { return _modelDimension; }
+    int sourceDimension() const { return _sourceDimension; }
 
-    /** Returns the symmetry dimension of the spatial grid, if present, or 0 if there is no spatial
-        grid (which can only happen if the simulation does not include any media). A value of 1
-        means spherical symmetry, 2 means axial symmetry and 3 means none of these symmetries. */
+    /** Returns the symmetry dimension of the transfer media configured in the medium system, or 0
+        if the simulation does not include any media. A value of 1 means spherical symmetry, 2 means
+        axial symmetry and 3 means none of these symmetries. */
+    int mediaDimension() const { return _mediaDimension; }
+
+    /** Returns the symmetry dimension of the spatial grid, or 0 if there is no spatial grid (which
+        can only happen if the simulation does not include any media). A value of 1 means spherical
+        symmetry, 2 means axial symmetry and 3 means none of these symmetries. */
     int gridDimension() const { return _gridDimension; }
+
+    /** Returns the minimum symmetry dimension required of the spatial grid for the model to be
+        simulated correctly, or, if the simulation does not include any media (so that there is no
+        spatial grid), the symmetry dimension of the primary sources.
+
+        Because primary sources are not discretized onto the spatial grid, the grid needs to support
+        their symmetry only if the radiation field is being stored (see hasRadiationField()), for
+        example because the simulation iterates over primary emission or includes secondary
+        emission. In that case, this function returns the maximum of the source and media dimension.
+        Otherwise, the grid merely needs to support the symmetry of the media, and this function
+        returns the media dimension. A value of 1 means spherical symmetry, 2 means axial symmetry
+        and 3 means none of these symmetries. */
+    int modelDimension() const { return _modelDimension; }
 
     // ----> cosmology
 
@@ -448,8 +466,10 @@ private:
     bool _emulationMode{false};
 
     // symmetry
-    int _modelDimension{0};
+    int _sourceDimension{0};
+    int _mediaDimension{0};
     int _gridDimension{0};
+    int _modelDimension{0};
 
     // cosmology
     double _redshift{0.};
