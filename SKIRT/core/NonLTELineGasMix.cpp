@@ -720,13 +720,17 @@ void NonLTELineGasMix::initializeSpecificState(MaterialState* state, double /*me
         }
 
         // initialize level population using boltzmann distribution (i.e., start with LTE)
-        if (initialLevelPopsCase() == InitialLevelPopsCase::LTE)
-        {
+        auto initLTE = [this, Tkin, state]() {
             Array levelPops(_numLevels);
             for (int p = 0; p != _numLevels; ++p) levelPops[p] = _weight[p] * exp(-_energy[p] / Constants::k() / Tkin);
             // normalize and store
             levelPops *= state->numberDensity() / levelPops.sum();
             for (int p = 0; p != _numLevels; ++p) state->setLevelPopulation(p, levelPops[p]);
+        };
+
+        if (initialLevelPopsCase() == InitialLevelPopsCase::LTE)
+        {
+            initLTE();
         }
         else if (initialLevelPopsCase() == InitialLevelPopsCase::CollisionallyExcited)
         {
@@ -738,7 +742,8 @@ void NonLTELineGasMix::initializeSpecificState(MaterialState* state, double /*me
         }
         else if (initialLevelPopsCase() == InitialLevelPopsCase::Custom)
         {
-            // if the user configured a file with initial level populations, use those data instead
+            // if the user configured a file with initial level populations, use those data instead;
+            // fall back to LTE for any cell whose index is not present in that file
             size_t m = state->cellIndex();
             if (m < _initLevelPops.size())
             {
@@ -747,6 +752,10 @@ void NonLTELineGasMix::initializeSpecificState(MaterialState* state, double /*me
                 // normalize and store
                 levelPops *= state->numberDensity() / levelPops.sum();
                 for (int p = 0; p != _numLevels; ++p) state->setLevelPopulation(p, levelPops[p]);
+            }
+            else
+            {
+                initLTE();
             }
         }
     }
