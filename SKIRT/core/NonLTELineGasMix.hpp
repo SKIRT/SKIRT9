@@ -13,7 +13,7 @@
 /** The NonLTELineGasMix class describes the material properties related to selected transitions in
     selected molecules and atoms. For each supported species, the current implementation includes a
     number of rotational energy levels (quantum number \f$J\f$) at the base vibrational level
-    (quantum number \f$v=0\f$) for molecules and electronic energy levels and hyperfine split
+    (quantum number \f$v=0\f$) for molecules and electronic energy levels and hyperfine-split
     levels for atoms, and supports the allowed transitions between these levels. Vibrational energy
     levels and the corresponding rovibrational transitions may be added later. The class properties
     allow configuring the species and the number of transitions to be considered.
@@ -26,9 +26,17 @@
     emission). This allows establishing the energy level distribution (population) for a wide range
     of material densities and radiation fields.
 
+
     <b>Supported species and transitions</b>
 
     The current implementation supports the following molecular or atomic species:
+
+    <b>Molecules</b>
+    The properties relevant to the calculation of the level populations and collision partners 
+    of the following molecules are based on the LAMDA database (
+    https://home.strw.leidenuniv.nl/~moldata/; Schöier et al. 2005; van der Tak et al. 2020).
+    According to the user's choice, the number of energy levels can be set by the 
+    \em maxEnergyLevels property within the range of supported energy levels for each species.
 
     - \c Two-level \c test molecule (TT): a fictive test molecule (called TT for our purposes)
     that has just two rotational energy levels with a corresponding transition line at 1666.67
@@ -36,44 +44,70 @@
     properties of this molecule are defined by van Zadelhoff et al. 2002 for use with the first
     benchmark problem described there.
 
-    - \c Hydroxyl radical (OH): includes rotational energy levels up to \f$J=7/2\f$ without
-    hyperfine splitted levels. The corresponding transition lines are at wavelengths from 24.6
-    \f$\mu\mathrm{m}\f$ to 2 \f$\mathrm{m}\f$. The single collisional interaction partner is
-    molecular hydrogen.
+    - \c Hydroxyl radical (OH): includes rotational energy levels up to \f$J=25/2\f$ without
+    hyperfine-split levels. The corresponding transition lines are at wavelengths from 10
+    \f$\mu\mathrm{m}\f$ to 2 \f$\mathrm{m}\f$. The collisional interaction partners include
+    molecular and neutral atomic hydrogen and neutral atomic Helium.
 
-    - \c Hydroxyl radical (OHhfs): includes rotational energy levels up to \f$J=3/2\f$ including
-    hyperfine splitted levels. The corresponding transition lines are at wavelengths from 34.6
+    - \c Hydroxyl radical (OHhfs): includes rotational energy levels up to \f$J=5/2\f$ including
+    hyperfine-split levels. The corresponding transition lines are at wavelengths from 34.6
     \f$\mu\mathrm{m}\f$ to 186 \f$\mathrm{mm}\f$. The single collisional interaction partner is
     molecular hydrogen.
 
-    - \c Formyl cation (HCO+): includes rotational energy levels up to \f$J=29\f$. The
-    corresponding transition lines are at wavelengths from 112.4 to 3361 \f$\mu\mathrm{m}\f$. The
+    - \c Formyl cation (HCO+): includes rotational energy levels up to \f$J=21\f$. The
+    corresponding transition lines are at wavelengths from 160.3 to 3361 \f$\mu\mathrm{m}\f$. The
     single collisional interaction partner is molecular hydrogen.
+
+    - \c HydrogenCyanide cation (HCN): includes rotational energy levels up to \f$J=25\f$. The
+    corresponding transition lines are at wavelengths from 135.6 to 3382 \f$\mu\mathrm{m}\f$. The
+    collisional interaction partners include molecular hydrogen and electrons.
 
     - \c Carbon \c monoxide (CO): includes rotational energy levels up to \f$J=40\f$. The
     corresponding transition lines are at wavelengths from 65.7 to 2601 \f$\mu\mathrm{m}\f$. The
     single collisional interaction partner is molecular hydrogen.
 
-    - \c Atomic \c carbon (C): includes three hyperfine split levels at the electronic ground level
-    of 3P. The corresponding transition lines are at wavelengths 230.3, 370.4 and 609.1
-    \f$\mu\mathrm{m}\f$. The collisional interaction partners include molecular hydrogen, neutral
-    atomic hydrogen, ionized atomic hydrogen, electrons, and helium.
-
-    - \c Ionized \c carbon (C+): includes four electronic levels (2p, 4p, 2D, and 2S) and the
-    hyperfine split levels in the electronic levels of 2p and 4p. The corresponding fine-structure
-    transition lines for levels 2p and 4p are at wavelengths 157.74, 198.9, 353.57, 454.67
-    \f$\mu\mathrm{m}\f$. The electronic transition lines are at wavelengths from 0.1 to 0.23
-    \f$\mu\mathrm{m}\f$. The collisional interaction partners include molecular hydrogen, neutral
-    atomic hydrogen, and electrons.
-
     - \c Molecular \c hydrogen (H2): includes rotational energy levels up to \f$J=31\f$. The
     corresponding transition lines are at wavelengths from 28.2 to 3.3 \f$\mu\mathrm{m}\f$. The
     collisional interaction partners include molecular hydrogen, neutral atomic hydrogen, ionized
-    atomic hydrogen, and helium. \em Note: Molecular hydrogen exists in ortho (J is odd) and para
-    (J is even) flavors, and these flavors have different collisional coefficients. The current
-    implementation assumes that the ratio of ortho to para is 3 to 1. While this is a reasonable
-    assumption in many cases, a correct approach would be to determine the relative number density
-    on the fly and use the appropriate collisional rates for each flavor.
+    atomic hydrogen, and helium. 
+    
+    <b> An assumption of molecular hydrogen:</b> Molecular hydrogen exists in ortho (J is odd) and
+    para (J is even) flavors, and these flavors have different collisional coefficients.
+    The current implementation assumes that the ratio of ortho to para is 3 to 1.
+
+    <b>Atoms</b>
+    Atomic line emission from C, O, N, S, Si, Ne, Na, Mg, Fe, and Ar in ionization states ranging from
+    neutral up to ten times ionized is included. The atomic data required for calculating level 
+    populations and electron collisional transition rates are adopted from the CHIANTI database
+    (https://www.chiantidatabase.org/chianti_direct_access.html; Dere et al. 1997; Del Zanna et al. 2021).
+
+    In addition, collisional transition rates with other collision partners are available for CI, CII, 
+    OI, OIII, NII, SiI, and SI, based on the LAMDA database. The available collision partners are neutral, 
+    ionized, and molecular hydrogen, as well as neutral helium for CI and OI; atomic and molecular 
+    hydrogen for CII; and atomic hydrogen for OIII, NII, SiI, and SI.
+
+    Level populations can be calculated from the ground state up to the 20th excited level, including all
+    hyperfine-split sublevels within each electronic state. The corresponding radiative transitions span
+    wavelengths from the ultraviolet to the submillimeter regime. The maximum number of energy levels
+    included in the calculation can be specified by the user through the \em maxEnergyLevels property,
+    up to this limit. For example, users may be interested in only a famous following far-infrared line
+    emission rather than UV and optical lines: CII (158 \f$\mu\mathrm{m}\f$), 
+    OI (63 and 145 \f$\mu\mathrm{m}\f$), NII (122 and 205 \f$\mu\mathrm{m}\f$),
+    CI (370 and 609 \f$\mu\mathrm{m}\f$), OIII (52 and 88 \f$\mu\mathrm{m}\f$). 
+    \em maxEnergyLevels should be set to 2 for CII, 3 for OI, NII, CI, and OIII.
+
+    <b> Note on highly ionized species: </b> The current implementation does not include photoionization
+    and recombination processes. Consequently, the level populations of highly ionized species may not be
+    accurately determined in environments with strong ionizing radiation fields.
+
+    <b> Neglecting irrelevant transitions:</b> Transitions that have negligible impact on the level
+    populations can be safely ignored to improve computational efficiency by setting the 
+    \em lowestBranchingRatio property to a value greater than zero. The default value of 0.0 
+    includes all transitions, while a value of 0.001, for example, would exclude the calculation
+    of emissivity and opacity of the transitions that have a branching ratio below 0.1% of the
+    total decay rate from the upper level. This can reduce the number of transitions considered in
+    the calculations and avoide unnecessary computations for transitions that have a negligible
+    effect on the level populations.
 
     <b>Configuring the simulation</b>
 
@@ -132,6 +166,11 @@
     spatial domain. In this case, the number densities of the collisional partners are defined by a
     constant multiplier relative to \f$n_\mathrm{mol}\f$.
 
+    Although the NonLTELineGasMix couples the level populations to the radiation field, in some cases
+    the radiation field does not significantly affect the level populations (e.g., UV and optical 
+    lines from atomic species). In such cases, the user can disable updating the level populations by
+    setting the \em updateDynamicStatesFlag property to 'false'.
+
     <b>Thermal motion and turbulence</b>
 
     The thermal velocity in a medium of particles with mass \f$m\f$ at temperature
@@ -145,6 +184,10 @@
     through \f[ \sqrt{2}\,v_\mathrm{s} = \sqrt{v_\mathrm{th}^2 + v_\mathrm{turb}^2}. \f] We can
     artificially combine the effect of both thermal motion and turbulence into an effective
     temperature, \f[ T_\mathrm{eff} = T_\mathrm{kin} + \frac{m v_\mathrm{turb}^2}{2k}. \f]
+    If the Gaussian profile is not expressed when convolving the radiation field with the Gaussian
+    profile, the simulation may fail and output an error. Sometimes, the emission is not critical 
+    for estimating the level populations. In this case, the user can choose to take a warning instead
+    of an error by setting the \em errorForGaussianIntegral property to 'false'.
 
     <b>Numerical convergence</b>
 
@@ -255,17 +298,24 @@
     each cell, so that the information can be probed using the CustomStateProbe class.
 
     <b>Providing initial level populations</b>
-
-    By default, the level populations are initialized in each cell using a Boltzmann distribution
-    as a function of temperature (i.e., assuming LTE conditions). This may be far from the correct
-    non-LTE levels, possibly requiring many iterations to obtain a properly converged solution. It
-    might therefore be meaningful to provide customized initial conditions. If the \em
-    initialLevelPopsFilename string is nonempty, it specifies the name of a text column file with a
-    column for each energy level and a row for each spatial cell in the simulation. Specifically,
-    the first column lists a cell index that is ignored, and remaining columns list the relative
-    population for each energy level in units of number density (the values are scaled to the total
-    number density in the cell, so the specific units don't really matter). The rows must exactly
-    match the number and ordering of the cells in the simulation's spatial grid (see below).
+    The \em initialLevelPopsCase property specifies how the initial level populations are assigned.
+    By default, the populations in each cell are initialized assuming a Boltzmann distribution at
+    the local gas temperature (i.e., LTE conditions; \em initialLevelPopsCase="LTE"). This
+    assumption may significantly differ from the final non-LTE solution, although it often provides
+    a convenient starting point that accelerates convergence. For example, many optical and UV 
+    emission lines from the ionized gas originate from excited levels whose populations are 
+    determined by the balance between collisional transitions and spontaneous radiative decay. In 
+    such cases, the user can initialize the populations using the collisionally excited solution
+    by specifying \em initialLevelPopsCase="CollisionallyExcited". Alternatively, the users can 
+    set custom initial level populations using a text file by specifying 
+    \em initialLevelPopsCase="Custom". This option is particularly useful when restarting a SKIRT
+    simulation from a previously converged solution.  If the \em initialLevelPopsFilename string is
+    nonempty, it specifies the name of a text column file with a column for each energy level and
+    a row for each spatial cell in the simulation. Specifically, the first column lists a cell 
+    index that is ignored, and remaining columns list the relative population for each energy level
+    in units of number density (the values are scaled to the total number density in the cell, so
+    the specific units don't really matter). The rows must exactly match the number and ordering
+    of the cells in the simulation's spatial grid (see below).
 
     This input format is designed such that the text file can easily be produced by a
     CustomStateProbe instance in a previous simulation. For example, assuming 9 energy levels, one
@@ -290,16 +340,146 @@ class NonLTELineGasMix : public EmittingGasMix
 {
     /** The enumeration type indicating the molecular or atomic species represented by a given
         NonLTELineGasMix instance. See the class header for more information. */
-    ENUM_DEF(Species, Test, Hydroxyl, HydroxylHFS, Formyl, CarbonMonoxide, AtomicCarbon, IonizedCarbon,
-             MolecularHydrogen)
+    ENUM_DEF(Species, Test, Hydroxyl, HydroxylHFS, Formyl, HydrogenCyanide, CarbonMonoxide, MolecularHydrogen,
+             AtomicCarbon, IonizedCarbon, DoublyIonizedCarbon, TriplyIonizedCarbon, FourTimesIonizedCarbon,
+             FiveTimesIonizedCarbon, AtomicNitrogen, IonizedNitrogen, DoublyIonizedNitrogen, TriplyIonizedNitrogen,
+             FourTimesIonizedNitrogen, FiveTimesIonizedNitrogen, SixTimesIonizedNitrogen, AtomicOxygen, IonizedOxygen,
+             DoublyIonizedOxygen, TriplyIonizedOxygen, FourTimesIonizedOxygen, FiveTimesIonizedOxygen,
+             SixTimesIonizedOxygen, SevenTimesIonizedOxygen, AtomicNeon, IonizedNeon, DoublyIonizedNeon,
+             TriplyIonizedNeon, FourTimesIonizedNeon, FiveTimesIonizedNeon, SixTimesIonizedNeon, SevenTimesIonizedNeon,
+             EightTimesIonizedNeon, NineTimesIonizedNeon, IonizedSodium, DoublyIonizedSodium, TriplyIonizedSodium,
+             FourTimesIonizedSodium, FiveTimesIonizedSodium, SixTimesIonizedSodium, SevenTimesIonizedSodium,
+             EightTimesIonizedSodium, NineTimesIonizedSodium, TenTimesIonizedSodium, IonizedMagnesium,
+             DoublyIonizedMagnesium, TriplyIonizedMagnesium, FourTimesIonizedMagnesium, FiveTimesIonizedMagnesium,
+             SixTimesIonizedMagnesium, SevenTimesIonizedMagnesium, EightTimesIonizedMagnesium,
+             NineTimesIonizedMagnesium, TenTimesIonizedMagnesium, AtomicSilicon, IonizedSilicon, DoublyIonizedSilicon,
+             TriplyIonizedSilicon, FourTimesIonizedSilicon, FiveTimesIonizedSilicon, SixTimesIonizedSilicon,
+             SevenTimesIonizedSilicon, EightTimesIonizedSilicon, NineTimesIonizedSilicon, TenTimesIonizedSilicon,
+             AtomicSulfur, IonizedSulfur, DoublyIonizedSulfur, TriplyIonizedSulfur, FourTimesIonizedSulfur,
+             FiveTimesIonizedSulfur, SixTimesIonizedSulfur, SevenTimesIonizedSulfur, EightTimesIonizedSulfur,
+             NineTimesIonizedSulfur, TenTimesIonizedSulfur, DoublyIonizedArgon, TriplyIonizedArgon,
+             FourTimesIonizedArgon, FiveTimesIonizedArgon, SixTimesIonizedArgon, SevenTimesIonizedArgon,
+             EightTimesIonizedArgon, NineTimesIonizedArgon, TenTimesIonizedArgon, IonizedIron, DoublyIonizedIron,
+             TriplyIonizedIron, FourTimesIonizedIron, FiveTimesIonizedIron, SixTimesIonizedIron, SevenTimesIonizedIron,
+             EightTimesIonizedIron, NineTimesIonizedIron, TenTimesIonizedIron)
         ENUM_VAL(Species, Test, "Fictive two-level test molecule (TT)")
         ENUM_VAL(Species, Hydroxyl, "Hydroxyl radical (OH)")
         ENUM_VAL(Species, HydroxylHFS, "Hydroxyl radical (OH) with hyperfine structure")
         ENUM_VAL(Species, Formyl, "Formyl cation (HCO+)")
+        ENUM_VAL(Species, HydrogenCyanide, "Hydrogen cyanide (HCN)")
         ENUM_VAL(Species, CarbonMonoxide, "Carbon monoxide (CO)")
-        ENUM_VAL(Species, AtomicCarbon, "Atomic carbon (C)")
-        ENUM_VAL(Species, IonizedCarbon, "Ionized carbon (C+)")
         ENUM_VAL(Species, MolecularHydrogen, "Molecular hydrogen (H2)")
+
+        ENUM_VAL(Species, AtomicCarbon, "Atomic carbon (CI)")
+        ENUM_VAL(Species, IonizedCarbon, "Ionized carbon (CII)")
+        ENUM_VAL(Species, DoublyIonizedCarbon, "Doubly Ionized Carbon (CIII)")
+        ENUM_VAL(Species, TriplyIonizedCarbon, "Triply Ionized Carbon (CIV)")
+        ENUM_VAL(Species, FourTimesIonizedCarbon, "Four times Ionized Carbon (CV)")
+        ENUM_VAL(Species, FiveTimesIonizedCarbon, "Five times Ionized Carbon (CVI)")
+
+        ENUM_VAL(Species, AtomicNitrogen, "Atomic nitrogen (NI)")
+        ENUM_VAL(Species, IonizedNitrogen, "Ionized nitrogen (NII)")
+        ENUM_VAL(Species, DoublyIonizedNitrogen, "Doubly Ionized Nitrogen (NIII)")
+        ENUM_VAL(Species, TriplyIonizedNitrogen, "Triply Ionized Nitrogen (NIV)")
+        ENUM_VAL(Species, FourTimesIonizedNitrogen, "Four times Ionized Nitrogen (NV)")
+        ENUM_VAL(Species, FiveTimesIonizedNitrogen, "Five times Ionized Nitrogen (NVI)")
+        ENUM_VAL(Species, SixTimesIonizedNitrogen, "Six times Ionized Nitrogen (NVII)")
+
+        ENUM_VAL(Species, AtomicOxygen, "Atomic oxygen (OI)")
+        ENUM_VAL(Species, IonizedOxygen, "Ionized oxygen (OII)")
+        ENUM_VAL(Species, DoublyIonizedOxygen, "Doubly Ionized Oxygen (OIII)")
+        ENUM_VAL(Species, TriplyIonizedOxygen, "Triply Ionized Oxygen (OIV)")
+        ENUM_VAL(Species, FourTimesIonizedOxygen, "Four times Ionized Oxygen (OV)")
+        ENUM_VAL(Species, FiveTimesIonizedOxygen, "Five times Ionized Oxygen (OVI)")
+        ENUM_VAL(Species, SixTimesIonizedOxygen, "Six times Ionized Oxygen (OVII)")
+        ENUM_VAL(Species, SevenTimesIonizedOxygen, "Seven times Ionized Oxygen (OVIII)")
+
+        ENUM_VAL(Species, AtomicNeon, "Atomic Neon (NeI)")
+        ENUM_VAL(Species, IonizedNeon, "Ionized Neon (NeII)")
+        ENUM_VAL(Species, DoublyIonizedNeon, "Doubly Ionized Neon (NeIII)")
+        ENUM_VAL(Species, TriplyIonizedNeon, "Triply Ionized Neon (NeIV)")
+        ENUM_VAL(Species, FourTimesIonizedNeon, "Four times Ionized Neon (NeV)")
+        ENUM_VAL(Species, FiveTimesIonizedNeon, "Five times Ionized Neon (NeVI)")
+        ENUM_VAL(Species, SixTimesIonizedNeon, "Six times Ionized Neon (NeVII)")
+        ENUM_VAL(Species, SevenTimesIonizedNeon, "Seven times Ionized Neon (NeVIII)")
+        ENUM_VAL(Species, EightTimesIonizedNeon, "Eight times Ionized Neon (NeIX)")
+        ENUM_VAL(Species, NineTimesIonizedNeon, "Nine times Ionized Neon (NeX)")
+
+        ENUM_VAL(Species, IonizedSodium, "Ionized Sodium (NaII)")
+        ENUM_VAL(Species, DoublyIonizedSodium, "Doubly Ionized Sodium (NaIII)")
+        ENUM_VAL(Species, TriplyIonizedSodium, "Triply Ionized Sodium (NaIV)")
+        ENUM_VAL(Species, FourTimesIonizedSodium, "Four times Ionized Sodium (NaV)")
+        ENUM_VAL(Species, FiveTimesIonizedSodium, "Five times Ionized Sodium (NaVI)")
+        ENUM_VAL(Species, SixTimesIonizedSodium, "Six times Ionized Sodium (NaVII)")
+        ENUM_VAL(Species, SevenTimesIonizedSodium, "Seven times Ionized Sodium (NaVIII)")
+        ENUM_VAL(Species, EightTimesIonizedSodium, "Eight times Ionized Sodium (NaIX)")
+        ENUM_VAL(Species, NineTimesIonizedSodium, "Nine times Ionized Sodium (NaX)")
+        ENUM_VAL(Species, TenTimesIonizedSodium, "Ten times Ionized Sodium (NaXI)")
+
+        ENUM_VAL(Species, IonizedMagnesium, "Ionized Magnesium (MgII)")
+        ENUM_VAL(Species, DoublyIonizedMagnesium, "Doubly Ionized Magnesium (MgIII)")
+        ENUM_VAL(Species, TriplyIonizedMagnesium, "Triply Ionized Magnesium (MgIV)")
+        ENUM_VAL(Species, FourTimesIonizedMagnesium, "Four times Ionized Magnesium (MgV)")
+        ENUM_VAL(Species, FiveTimesIonizedMagnesium, "Five times Ionized Magnesium (MgVI)")
+        ENUM_VAL(Species, SixTimesIonizedMagnesium, "Six times Ionized Magnesium (MgVII)")
+        ENUM_VAL(Species, SevenTimesIonizedMagnesium, "Seven times Ionized Magnesium (MgVIII)")
+        ENUM_VAL(Species, EightTimesIonizedMagnesium, "Eight times Ionized Magnesium (MgIX)")
+        ENUM_VAL(Species, NineTimesIonizedMagnesium, "Nine times Ionized Magnesium (MgX)")
+        ENUM_VAL(Species, TenTimesIonizedMagnesium, "Ten times Ionized Magnesium (MgXI)")
+
+        ENUM_VAL(Species, AtomicSilicon, "Atomic Silicon (SiI)")
+        ENUM_VAL(Species, IonizedSilicon, "Ionized Silicon (SiII)")
+        ENUM_VAL(Species, DoublyIonizedSilicon, "Doubly Ionized Silicon (SiIII)")
+        ENUM_VAL(Species, TriplyIonizedSilicon, "Triply Ionized Silicon (SiIV)")
+        ENUM_VAL(Species, FourTimesIonizedSilicon, "Four times Ionized Silicon (SiV)")
+        ENUM_VAL(Species, FiveTimesIonizedSilicon, "Five times Ionized Silicon (SiVI)")
+        ENUM_VAL(Species, SixTimesIonizedSilicon, "Six times Ionized Silicon (SiVII)")
+        ENUM_VAL(Species, SevenTimesIonizedSilicon, "Seven times Ionized Silicon (SiVIII)")
+        ENUM_VAL(Species, EightTimesIonizedSilicon, "Eight times Ionized Silicon (SiIX)")
+        ENUM_VAL(Species, NineTimesIonizedSilicon, "Nine times Ionized Silicon (SiX)")
+        ENUM_VAL(Species, TenTimesIonizedSilicon, "Ten times Ionized Silicon (SiXI)")
+
+        ENUM_VAL(Species, AtomicSulfur, "Atomic Sulfur (SI)")
+        ENUM_VAL(Species, IonizedSulfur, "Ionized Sulfur (SII)")
+        ENUM_VAL(Species, DoublyIonizedSulfur, "Doubly Ionized Sulfur (SIII)")
+        ENUM_VAL(Species, TriplyIonizedSulfur, "Triply Ionized Sulfur (SIV)")
+        ENUM_VAL(Species, FourTimesIonizedSulfur, "Four times Ionized Sulfur (SV)")
+        ENUM_VAL(Species, FiveTimesIonizedSulfur, "Five times Ionized Sulfur (SVI)")
+        ENUM_VAL(Species, SixTimesIonizedSulfur, "Six times Ionized Sulfur (SVII)")
+        ENUM_VAL(Species, SevenTimesIonizedSulfur, "Seven times Ionized Sulfur (SVIII)")
+        ENUM_VAL(Species, EightTimesIonizedSulfur, "Eight times Ionized Sulfur (SIX)")
+        ENUM_VAL(Species, NineTimesIonizedSulfur, "Nine times Ionized Sulfur (SIX)")
+        ENUM_VAL(Species, TenTimesIonizedSulfur, "Ten times Ionized Sulfur (SXI)")
+
+        ENUM_VAL(Species, DoublyIonizedArgon, "Doubly Ionized Argon (ArIII)")
+        ENUM_VAL(Species, TriplyIonizedArgon, "Triply Ionized Argon (ArIV)")
+        ENUM_VAL(Species, FourTimesIonizedArgon, "Four times Ionized Argon (ArV)")
+        ENUM_VAL(Species, FiveTimesIonizedArgon, "Five times Ionized Argon (ArVI)")
+        ENUM_VAL(Species, SixTimesIonizedArgon, "Six times Ionized Argon (ArVII)")
+        ENUM_VAL(Species, SevenTimesIonizedArgon, "Seven times Ionized Argon (ArVIII)")
+        ENUM_VAL(Species, EightTimesIonizedArgon, "Eight times Ionized Argon (ArIX)")
+        ENUM_VAL(Species, NineTimesIonizedArgon, "Nine times Ionized Argon (ArX)")
+        ENUM_VAL(Species, TenTimesIonizedArgon, "Ten times Ionized Argon (ArXI)")
+
+        ENUM_VAL(Species, IonizedIron, "Ionized Iron (FeII)")
+        ENUM_VAL(Species, DoublyIonizedIron, "Doubly Ionized Iron (FeIII)")
+        ENUM_VAL(Species, TriplyIonizedIron, "Triply Ionized Iron (FeIV)")
+        ENUM_VAL(Species, FourTimesIonizedIron, "Four times Ionized Iron (FeV)")
+        ENUM_VAL(Species, FiveTimesIonizedIron, "Five times Ionized Iron (FeVI)")
+        ENUM_VAL(Species, SixTimesIonizedIron, "Six times Ionized Iron (FeVII)")
+        ENUM_VAL(Species, SevenTimesIonizedIron, "Seven times Ionized Iron (FeVIII)")
+        ENUM_VAL(Species, EightTimesIonizedIron, "Eight times Ionized Iron (FeIX)")
+        ENUM_VAL(Species, NineTimesIonizedIron, "Nine times Ionized Iron (FeX)")
+        ENUM_VAL(Species, TenTimesIonizedIron, "Ten times Ionized Iron (FeXI)")
+
+    ENUM_END()
+
+    /** The enumeration type indicating the assumed initial level population. */
+    ENUM_DEF(InitialLevelPopsCase, LTE, CollisionallyExcited, Custom)
+        ENUM_VAL(InitialLevelPopsCase, LTE, "LTE (the detailed balance condition between collisional transitions)")
+        ENUM_VAL(InitialLevelPopsCase, CollisionallyExcited,
+                 "the detailed balance condition between collisional transitions and spontaneous emission")
+        ENUM_VAL(InitialLevelPopsCase, Custom, "custom level populations provided in a file")
     ENUM_END()
 
     ITEM_CONCRETE(NonLTELineGasMix, EmittingGasMix,
@@ -357,6 +537,10 @@ class NonLTELineGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(maxChangeInGlobalLevelPopulations, "0.05")
         ATTRIBUTE_DISPLAYED_IF(maxChangeInGlobalLevelPopulations, "Level2")
 
+        PROPERTY_ENUM(initialLevelPopsCase, InitialLevelPopsCase, "the assumed initial level population")
+        ATTRIBUTE_DEFAULT_VALUE(initialLevelPopsCase, "LTE")
+        ATTRIBUTE_DISPLAYED_IF(initialLevelPopsCase, "Level2")
+
         PROPERTY_DOUBLE(lowestOpticalDepth, "Lower limit of (negative) optical depth along a cell diagonal")
         ATTRIBUTE_MIN_VALUE(lowestOpticalDepth, "[-10")
         ATTRIBUTE_MAX_VALUE(lowestOpticalDepth, "0]")
@@ -370,6 +554,20 @@ class NonLTELineGasMix : public EmittingGasMix
         PROPERTY_STRING(initialLevelPopsFilename, "the name of the file with initial level populations")
         ATTRIBUTE_REQUIRED_IF(initialLevelPopsFilename, "false")
         ATTRIBUTE_DISPLAYED_IF(initialLevelPopsFilename, "Level3")
+
+        PROPERTY_BOOL(updateDynamicStatesFlag, "update level populations from the initial one")
+        ATTRIBUTE_DEFAULT_VALUE(updateDynamicStatesFlag, "true")
+        ATTRIBUTE_DISPLAYED_IF(updateDynamicStatesFlag, "Level3")
+
+        PROPERTY_BOOL(errorForGaussianIntegral,
+                      "treat insufficient Gaussian-integral accuracy as a fatal error (otherwise issue a warning)")
+        ATTRIBUTE_DEFAULT_VALUE(errorForGaussianIntegral, "true")
+        ATTRIBUTE_DISPLAYED_IF(errorForGaussianIntegral, "Level3")
+
+        PROPERTY_DOUBLE(lowestBranchingRatio, "the minimum branching ratio for a transition to be considered")
+        ATTRIBUTE_MIN_VALUE(lowestBranchingRatio, "[0")
+        ATTRIBUTE_MAX_VALUE(lowestBranchingRatio, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(lowestBranchingRatio, "0")
 
     ITEM_END()
 
@@ -490,6 +688,13 @@ public:
         opacity is zero. The photon packet properties are not used. */
     double opacityExt(double lambda, const MaterialState* state, const PhotonPacket* pp) const override;
 
+    /** This function does nothing because the lines under consideration do not scatter. */
+    bool peeloffScattering(double& I, double& Q, double& U, double& V, double& lambda, Direction bfkobs, Direction bfky,
+                           const MaterialState* state, const PhotonPacket* pp) const override;
+
+    /** This function does nothing because the lines under consideration do not scatter. */
+    void performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const override;
+
     //======== Secondary emission =======
 
     /** This function returns a list with the line centers of the supported transitions. */
@@ -519,6 +724,8 @@ private:
     // Data members loaded from text resource files and/or precalculated in setupSelfBefore()
     // (only the energy levels and transitions actually used are stored in the data members)
 
+    string _name;  // human readable species name
+
     // mass
     double _mass{0.};  // particle mass for the species under consideration
 
@@ -534,6 +741,7 @@ private:
     vector<double> _einsteinA;    // the Einstein A coefficient for each radiative transition
     vector<double> _einsteinBul;  // the Einstein Bul coefficient for each radiative transition
     vector<double> _einsteinBlu;  // the Einstein Blu coefficient for each radiative transition
+    vector<double> _branchRatio;  // the branching ratio for each radiative transition from the same upper energy level
     Array _center;                // the central emission wavelength for each radiative transition
 
     // collisional transitions
