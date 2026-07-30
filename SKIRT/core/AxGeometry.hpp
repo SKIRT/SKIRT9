@@ -16,7 +16,7 @@
 class AxGeometry : public Geometry
 {
     ITEM_ABSTRACT(AxGeometry, Geometry, "an axisymmetric geometry")
-        ATTRIBUTE_TYPE_INSERT(AxGeometry, "Dimension2")
+        ATTRIBUTE_TYPE_INSERT(AxGeometry, "InMedia:MediaDimension2,Dimension2;SourceDimension2,Dimension2")
     ITEM_END()
 
     //======================== Other Functions =======================

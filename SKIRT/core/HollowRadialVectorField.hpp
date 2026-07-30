@@ -34,7 +34,7 @@ class HollowRadialVectorField : public VectorField
 {
     ITEM_CONCRETE(HollowRadialVectorField, VectorField,
                   "a vector field pointing away from the origin with a central cavity")
-        ATTRIBUTE_TYPE_INSERT(HollowRadialVectorField, "Dimension3")
+        ATTRIBUTE_TYPE_INSERT(HollowRadialVectorField, "InMedia:MediaDimension3,Dimension3;SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(zeroRadius, "the radius within which the magnitude of the vectors is zero")
         ATTRIBUTE_QUANTITY(zeroRadius, "length")

@@ -31,7 +31,7 @@ class SpecialtySource : public NormalizedSource, public VelocityInterface
         ATTRIBUTE_DEFAULT_VALUE(velocityX, "0")
         ATTRIBUTE_RELEVANT_IF(velocityX, "Panchromatic")
         ATTRIBUTE_DISPLAYED_IF(velocityX, "Level2")
-        ATTRIBUTE_INSERT(velocityX, "Panchromatic&velocityX:Dimension3")
+        ATTRIBUTE_INSERT(velocityX, "Panchromatic&velocityX:SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(velocityY, "the bulk velocity of the source, y component")
         ATTRIBUTE_QUANTITY(velocityY, "velocity")
@@ -40,7 +40,7 @@ class SpecialtySource : public NormalizedSource, public VelocityInterface
         ATTRIBUTE_DEFAULT_VALUE(velocityY, "0")
         ATTRIBUTE_RELEVANT_IF(velocityY, "Panchromatic")
         ATTRIBUTE_DISPLAYED_IF(velocityY, "Level2")
-        ATTRIBUTE_INSERT(velocityY, "Panchromatic&velocityY:Dimension3")
+        ATTRIBUTE_INSERT(velocityY, "Panchromatic&velocityY:SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(velocityZ, "the bulk velocity of the source, z component")
         ATTRIBUTE_QUANTITY(velocityZ, "velocity")
@@ -49,7 +49,7 @@ class SpecialtySource : public NormalizedSource, public VelocityInterface
         ATTRIBUTE_DEFAULT_VALUE(velocityZ, "0")
         ATTRIBUTE_RELEVANT_IF(velocityZ, "Panchromatic")
         ATTRIBUTE_DISPLAYED_IF(velocityZ, "Level2")
-        ATTRIBUTE_INSERT(velocityZ, "Panchromatic&velocityZ:Dimension2")
+        ATTRIBUTE_INSERT(velocityZ, "Panchromatic&velocityZ:SourceDimension2,Dimension2")
 
     ITEM_END()
 

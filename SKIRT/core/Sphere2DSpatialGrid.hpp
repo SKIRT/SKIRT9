@@ -32,7 +32,7 @@ class Random;
 class Sphere2DSpatialGrid : public SphereSpatialGrid
 {
     ITEM_CONCRETE(Sphere2DSpatialGrid, SphereSpatialGrid, "a 2D axisymmetric spatial grid in spherical coordinates")
-        ATTRIBUTE_TYPE_ALLOWED_IF(Sphere2DSpatialGrid, "!Dimension3")
+        ATTRIBUTE_TYPE_ALLOWED_IF(Sphere2DSpatialGrid, "!RequiredDimension3")
         ATTRIBUTE_TYPE_DISPLAYED_IF(Sphere2DSpatialGrid, "Level2")
 
         PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")

@@ -44,7 +44,7 @@
 class CylindricalVectorField : public VectorField
 {
     ITEM_CONCRETE(CylindricalVectorField, VectorField, "a vector field rotating clockwise around the z-axis")
-        ATTRIBUTE_TYPE_INSERT(CylindricalVectorField, "Dimension3")
+        ATTRIBUTE_TYPE_INSERT(CylindricalVectorField, "InMedia:MediaDimension3,Dimension3;SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(unityRadius, "the radius where the magnitude of the vectors is unity")
         ATTRIBUTE_QUANTITY(unityRadius, "length")
