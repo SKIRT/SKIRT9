@@ -21,7 +21,7 @@ class Random;
 class Sphere1DSpatialGrid : public SphereSpatialGrid
 {
     ITEM_CONCRETE(Sphere1DSpatialGrid, SphereSpatialGrid, "a 1D spherically symmetric spatial grid")
-        ATTRIBUTE_TYPE_ALLOWED_IF(Sphere1DSpatialGrid, "!Dimension2&!Dimension3")
+        ATTRIBUTE_TYPE_ALLOWED_IF(Sphere1DSpatialGrid, "!RequiredDimension2&!RequiredDimension3")
 
         PROPERTY_ITEM(meshRadial, Mesh, "the bin distribution in the radial direction")
         ATTRIBUTE_DEFAULT_VALUE(meshRadial, "LinMesh")

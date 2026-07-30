@@ -58,7 +58,8 @@
 class RotateVectorFieldDecorator : public VectorField
 {
     ITEM_CONCRETE(RotateVectorFieldDecorator, VectorField, "a decorator that adds a rotation to any vector field")
-        ATTRIBUTE_TYPE_INSERT(RotateVectorFieldDecorator, "Dimension3")
+        ATTRIBUTE_TYPE_INSERT(RotateVectorFieldDecorator,
+                              "InMedia:MediaDimension3,Dimension3;SourceDimension3,Dimension3")
 
         PROPERTY_ITEM(vectorField, VectorField, "the vector field to be rotated")
 

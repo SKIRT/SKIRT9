@@ -29,17 +29,17 @@ class OffsetVectorFieldDecorator : public VectorField
         PROPERTY_DOUBLE(offsetX, "the offset in the x direction")
         ATTRIBUTE_QUANTITY(offsetX, "length")
         ATTRIBUTE_DEFAULT_VALUE(offsetX, "0")
-        ATTRIBUTE_INSERT(offsetX, "offsetX:Dimension3")
+        ATTRIBUTE_INSERT(offsetX, "InMedia&offsetX:MediaDimension3,Dimension3;offsetX:SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(offsetY, "the offset in the y direction")
         ATTRIBUTE_QUANTITY(offsetY, "length")
         ATTRIBUTE_DEFAULT_VALUE(offsetY, "0")
-        ATTRIBUTE_INSERT(offsetY, "offsetY:Dimension3")
+        ATTRIBUTE_INSERT(offsetY, "InMedia&offsetY:MediaDimension3,Dimension3;offsetY:SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(offsetZ, "the offset in the z direction")
         ATTRIBUTE_QUANTITY(offsetZ, "length")
         ATTRIBUTE_DEFAULT_VALUE(offsetZ, "0")
-        ATTRIBUTE_INSERT(offsetZ, "offsetZ:Dimension2")
+        ATTRIBUTE_INSERT(offsetZ, "InMedia&offsetZ:MediaDimension2,Dimension2;offsetZ:SourceDimension2,Dimension2")
 
     ITEM_END()
 

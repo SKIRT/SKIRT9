@@ -17,7 +17,8 @@ class CylindricalClipGeometryDecorator : public ClipGeometryDecorator
 {
     ITEM_CONCRETE(CylindricalClipGeometryDecorator, ClipGeometryDecorator,
                   "a decorator that clips another geometry using a cylinder")
-        ATTRIBUTE_TYPE_INSERT(CylindricalClipGeometryDecorator, "Dimension2")
+        ATTRIBUTE_TYPE_INSERT(CylindricalClipGeometryDecorator,
+                              "InMedia:MediaDimension2,Dimension2;SourceDimension2,Dimension2")
 
         PROPERTY_DOUBLE(clipRadius, "the radius of the clipping cylinder")
         ATTRIBUTE_QUANTITY(clipRadius, "length")

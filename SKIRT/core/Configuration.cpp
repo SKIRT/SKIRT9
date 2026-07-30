@@ -71,8 +71,10 @@ void Configuration::setupSelfBefore()
         if (is) _defaultWavelengthGrid = is->defaultWavelengthGrid();
     }
 
-    // determine model dimension based on sources only (we'll redo this later if there are media)
-    _modelDimension = ss->dimension();
+    // determine source and (provisional) model dimension based on sources only
+    // (we'll redo the model dimension later if there are media)
+    _sourceDimension = ss->dimension();
+    _modelDimension = _sourceDimension;
 
     // check for velocities in sources
     for (auto source : ss->sources())
@@ -279,8 +281,12 @@ void Configuration::setupSelfBefore()
     _numPropertySamples = ms->samplingOptions()->numPropertySamples();
 
     // retrieve symmetry dimensions
-    _modelDimension = max(ss->dimension(), ms->dimension());
+    _mediaDimension = ms->dimension();
     _gridDimension = ms->gridDimension();
+
+    // primary sources are not discretized onto the spatial grid, so the grid needs to support their
+    // symmetry only if the radiation field is being stored; otherwise the media symmetry suffices
+    _modelDimension = _hasRadiationField ? max(_sourceDimension, _mediaDimension) : _mediaDimension;
     if (_modelDimension > _gridDimension)
         throw FATALERROR("The grid symmetry (" + std::to_string(_gridDimension)
                          + "D) does not support the model symmetry (" + std::to_string(_modelDimension) + "D)");
@@ -437,22 +443,24 @@ void Configuration::setupSelfAfter()
 
     // --- log model symmetries ---
 
-    // if there are no media, simply log the source model symmetry
-    // if there are media, compare the model symmetry to the grid symmetry
-    // (the case where the grid has insufficient dimension causes a fatal error in setupSelfBefore)
-    if (!_hasMedium)
+    log->info("  Source symmetry: " + std::to_string(_sourceDimension) + "D");
+    if (_hasMedium)
     {
-        log->info("  Model symmetry: " + std::to_string(_modelDimension) + "D");
-    }
-    else if (_modelDimension == _gridDimension)
-    {
-        log->info("  Model and grid symmetry: " + std::to_string(_modelDimension) + "D");
-    }
-    else
-    {
-        log->info("  Model symmetry: " + std::to_string(_modelDimension)
-                  + "D; Spatial grid symmetry: " + std::to_string(_gridDimension) + "D");
-        log->warning("  Selecting a grid with the model symmetry might be more efficient");
+        log->info("  Medium symmetry: " + std::to_string(_mediaDimension) + "D");
+        log->info("  Grid   symmetry: " + std::to_string(_gridDimension) + "D");
+
+        // the model symmetry required of the grid depends on whether the radiation field is stored
+        // (the case where the grid has insufficient dimension causes a fatal error in setupSelfBefore)
+        if (_sourceDimension > _modelDimension)
+        {
+            log->info("  Because the radiation field is not stored,"
+                      " the grid does not need to support the source symmetry");
+        }
+        if (_gridDimension > _modelDimension)
+        {
+            log->warning("  Selecting a grid with " + std::to_string(_modelDimension)
+                         + "D symmetry might be more efficient");
+        }
     }
 
     // --- log (and possibly adjust) photon cycle options ---

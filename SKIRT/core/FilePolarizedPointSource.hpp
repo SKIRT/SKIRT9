@@ -156,7 +156,7 @@ class FilePolarizedPointSource : public Source, public VelocityInterface
 {
     ITEM_CONCRETE(FilePolarizedPointSource, Source, "a primary point source with a polarized spectrum read from file")
         ATTRIBUTE_TYPE_DISPLAYED_IF(FilePolarizedPointSource, "Level2")
-        ATTRIBUTE_TYPE_INSERT(FilePolarizedPointSource, "Dimension2,ContSED")
+        ATTRIBUTE_TYPE_INSERT(FilePolarizedPointSource, "SourceDimension2,Dimension2,ContSED")
 
         PROPERTY_STRING(filename, "the name of the stored table file listing the Stokes vector components")
 
@@ -166,12 +166,12 @@ class FilePolarizedPointSource : public Source, public VelocityInterface
         PROPERTY_DOUBLE(positionX, "the position of the point source, x component")
         ATTRIBUTE_QUANTITY(positionX, "length")
         ATTRIBUTE_DEFAULT_VALUE(positionX, "0")
-        ATTRIBUTE_INSERT(positionX, "positionX:Dimension3")
+        ATTRIBUTE_INSERT(positionX, "positionX:SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(positionY, "the position of the point source, y component")
         ATTRIBUTE_QUANTITY(positionY, "length")
         ATTRIBUTE_DEFAULT_VALUE(positionY, "0")
-        ATTRIBUTE_INSERT(positionY, "positionY:Dimension3")
+        ATTRIBUTE_INSERT(positionY, "positionY:SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(positionZ, "the position of the point source, z component")
         ATTRIBUTE_QUANTITY(positionZ, "length")
@@ -180,12 +180,12 @@ class FilePolarizedPointSource : public Source, public VelocityInterface
         PROPERTY_DOUBLE(symmetryX, "the direction of the positive symmetry axis, x component")
         ATTRIBUTE_QUANTITY(symmetryX, "length")
         ATTRIBUTE_DEFAULT_VALUE(symmetryX, "0")
-        ATTRIBUTE_INSERT(symmetryX, "symmetryX:Dimension3")
+        ATTRIBUTE_INSERT(symmetryX, "symmetryX:SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(symmetryY, "the direction of the positive symmetry axis, y component")
         ATTRIBUTE_QUANTITY(symmetryY, "length")
         ATTRIBUTE_DEFAULT_VALUE(symmetryY, "0")
-        ATTRIBUTE_INSERT(symmetryY, "symmetryY:Dimension3")
+        ATTRIBUTE_INSERT(symmetryY, "symmetryY:SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(symmetryZ, "the direction of the positive symmetry axis, z component")
         ATTRIBUTE_QUANTITY(symmetryZ, "length")
@@ -197,7 +197,7 @@ class FilePolarizedPointSource : public Source, public VelocityInterface
         ATTRIBUTE_MAX_VALUE(velocityX, "100000 km/s]")
         ATTRIBUTE_DEFAULT_VALUE(velocityX, "0")
         ATTRIBUTE_RELEVANT_IF(velocityX, "Panchromatic")
-        ATTRIBUTE_INSERT(velocityX, "Panchromatic&velocityX:Dimension3")
+        ATTRIBUTE_INSERT(velocityX, "Panchromatic&velocityX:SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(velocityY, "the bulk velocity of the point source, y component")
         ATTRIBUTE_QUANTITY(velocityY, "velocity")
@@ -205,7 +205,7 @@ class FilePolarizedPointSource : public Source, public VelocityInterface
         ATTRIBUTE_MAX_VALUE(velocityY, "100000 km/s]")
         ATTRIBUTE_DEFAULT_VALUE(velocityY, "0")
         ATTRIBUTE_RELEVANT_IF(velocityY, "Panchromatic")
-        ATTRIBUTE_INSERT(velocityY, "Panchromatic&velocityY:Dimension3")
+        ATTRIBUTE_INSERT(velocityY, "Panchromatic&velocityY:SourceDimension3,Dimension3")
 
         PROPERTY_DOUBLE(velocityZ, "the bulk velocity of the point source, z component")
         ATTRIBUTE_QUANTITY(velocityZ, "velocity")

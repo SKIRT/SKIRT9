@@ -22,7 +22,8 @@ class AxPowerLawRedistributeGeometryDecorator : public RedistributeGeometryDecor
 {
     ITEM_CONCRETE(AxPowerLawRedistributeGeometryDecorator, RedistributeGeometryDecorator,
                   "a decorator that redistributes another geometry with an axial power law")
-        ATTRIBUTE_TYPE_INSERT(AxPowerLawRedistributeGeometryDecorator, "Dimension2")
+        ATTRIBUTE_TYPE_INSERT(AxPowerLawRedistributeGeometryDecorator,
+                              "InMedia:MediaDimension2,Dimension2;SourceDimension2,Dimension2")
 
         PROPERTY_DOUBLE(RExponent, "the negative power of the radial part of the weight function")
         ATTRIBUTE_MIN_VALUE(RExponent, "[0")

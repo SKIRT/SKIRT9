@@ -100,6 +100,7 @@ class MediumSystem : public SimulationItem
 {
     ITEM_CONCRETE(MediumSystem, SimulationItem, "a medium system")
         ATTRIBUTE_TYPE_ALLOWED_IF(MediumSystem, "!NoMedium")
+        ATTRIBUTE_TYPE_INSERT(MediumSystem, "InMedia")
 
         PROPERTY_ITEM(photonPacketOptions, PhotonPacketOptions, "the photon packet options")
         ATTRIBUTE_DEFAULT_VALUE(photonPacketOptions, "PhotonPacketOptions")
@@ -136,9 +137,27 @@ class MediumSystem : public SimulationItem
         PROPERTY_ITEM(samplingOptions, SamplingOptions, "the spatial grid sampling options")
         ATTRIBUTE_DEFAULT_VALUE(samplingOptions, "SamplingOptions")
 
+        // Primary sources are not discretized onto the spatial grid, so the grid is required to support
+        // their symmetry only if the radiation field is actually being stored (see RadiationFieldOptions
+        // and the "RadiationField" name inserted from simulationMode/iteratePrimaryEmission/
+        // storeRadiationField); otherwise the grid only needs to support the media symmetry. To express
+        // this, sources and media insert their "DimensionN" contributions as before (for consumers that
+        // care about the true combined model symmetry, e.g. instrument/cut-plane forms), but ALSO,
+        // depending on whether the current item is being configured before or after this MediumSystem
+        // has inserted "InMedia" (sources are always configured first; see MonteCarloSimulation), as
+        // either "SourceDimensionN" or "MediaDimensionN". By the time we get here, both are complete, so
+        // we can derive "RequiredDimensionN" -- the dimension actually required of the grid -- as the
+        // media dimension, or the combined dimension when the radiation field is stored. The spatial
+        // grid classes and this class' own "grid" default value below are keyed off "RequiredDimensionN"
+        // rather than "DimensionN" so that the schema mirrors the more liberal rule enforced at runtime
+        // by Configuration::setupSelfBefore().
+        ATTRIBUTE_INSERT(samplingOptions, "MediaDimension3|(RadiationField&SourceDimension3):RequiredDimension3;"
+                                          "MediaDimension2|(RadiationField&SourceDimension2):RequiredDimension2")
+
         PROPERTY_ITEM(grid, SpatialGrid, "the spatial grid")
-        ATTRIBUTE_DEFAULT_VALUE(grid,
-                                "Dimension3:PolicyTreeSpatialGrid;Dimension2:Cylinder2DSpatialGrid;Sphere1DSpatialGrid")
+        ATTRIBUTE_DEFAULT_VALUE(
+            grid,
+            "RequiredDimension3:PolicyTreeSpatialGrid;RequiredDimension2:Cylinder2DSpatialGrid;Sphere1DSpatialGrid")
 
     ITEM_END()
 
