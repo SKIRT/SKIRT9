@@ -187,7 +187,7 @@
     If the Gaussian profile is not expressed when convolving the radiation field with the Gaussian
     profile, the simulation may fail and output an error. Sometimes, the emission is not critical 
     for estimating the level populations. In this case, the user can choose to take a warning instead
-    of an error by setting the \em warningForGaussianIntegral property to 'false'.
+    of an error by setting the \em errorForGaussianIntegral property to 'false'.
 
     <b>Numerical convergence</b>
 
@@ -559,9 +559,10 @@ class NonLTELineGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(updateDynamicStatesFlag, "true")
         ATTRIBUTE_DISPLAYED_IF(updateDynamicStatesFlag, "Level3")
 
-        PROPERTY_BOOL(warningForGaussianIntegral, "take an error if the Gaussian integral is not accurate enough")
-        ATTRIBUTE_DEFAULT_VALUE(warningForGaussianIntegral, "true")
-        ATTRIBUTE_DISPLAYED_IF(warningForGaussianIntegral, "Level3")
+        PROPERTY_BOOL(errorForGaussianIntegral,
+                  "treat insufficient Gaussian-integral accuracy as a fatal error (otherwise issue a warning)")
+        ATTRIBUTE_DEFAULT_VALUE(errorForGaussianIntegral, "true")
+        ATTRIBUTE_DISPLAYED_IF(errorForGaussianIntegral, "Level3")
 
         PROPERTY_DOUBLE(lowestBranchingRatio, "the minimum branching ratio for a transition to be considered")
         ATTRIBUTE_MIN_VALUE(lowestBranchingRatio, "[0")

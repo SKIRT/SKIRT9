@@ -422,8 +422,6 @@ void NonLTELineGasMix::setupSelfBefore()
             name = "Ar_XI";
             colNames = {"e-"};
             break;
-
-            // user give any optical properties
     }
     _name = name;
 
@@ -702,19 +700,6 @@ void NonLTELineGasMix::initializeSpecificState(MaterialState* state, double /*me
         double Tkin = temperature >= 0. ? temperature : defaultTemperature();
         state->setKineticTemperature(Tkin);
 
-        // check that the kinetic temperature is within the range of the collisional data
-        double Tmin_all_col = 1.0e10;
-        double Tmax_all_col = 0.0;
-
-        for (int c = 0; c != _numColPartners; ++c)
-        {
-            const auto& Tgrid = _colPartner[c].T;
-            double Tmin_col = Tgrid.min();
-            double Tmax_col = Tgrid.max();
-            Tmin_all_col = std::min(Tmin_all_col, Tmin_col);
-            Tmax_all_col = std::max(Tmax_all_col, Tmax_col);
-        }
-
         // set effective temperature, including imported or default turbulence
         double vturb = params.size() ? params[_numColPartners] : defaultTurbulenceVelocity();
         double Teff = Tkin + 0.5 * vturb * vturb * _mass / Constants::k();
@@ -735,10 +720,13 @@ void NonLTELineGasMix::initializeSpecificState(MaterialState* state, double /*me
         }
 
         // initialize level population using boltzmann distribution (i.e., start with LTE)
-        Array levelPops(_numLevels);
         if (initialLevelPopsCase() == InitialLevelPopsCase::LTE)
         {
+            Array levelPops(_numLevels);
             for (int p = 0; p != _numLevels; ++p) levelPops[p] = _weight[p] * exp(-_energy[p] / Constants::k() / Tkin);
+            // normalize and store
+            levelPops *= state->numberDensity() / levelPops.sum();
+            for (int p = 0; p != _numLevels; ++p) state->setLevelPopulation(p, levelPops[p]);
         }
         else if (initialLevelPopsCase() == InitialLevelPopsCase::CollisionallyExcited)
         {
@@ -753,11 +741,14 @@ void NonLTELineGasMix::initializeSpecificState(MaterialState* state, double /*me
             // if the user configured a file with initial level populations, use those data instead
             size_t m = state->cellIndex();
             if (m < _initLevelPops.size())
+            {
+                Array levelPops(_numLevels);
                 for (int p = 0; p != _numLevels; ++p) levelPops[p] = _initLevelPops[m][p + 1];
+                // normalize and store
+                levelPops *= state->numberDensity() / levelPops.sum();
+                for (int p = 0; p != _numLevels; ++p) state->setLevelPopulation(p, levelPops[p]);
+            }
         }
-        // normalize and store
-        levelPops *= state->numberDensity() / levelPops.sum();
-        for (int p = 0; p != _numLevels; ++p) state->setLevelPopulation(p, levelPops[p]);
     }
 }
 
@@ -785,15 +776,14 @@ namespace
             {
                 // Find the row with the maximum absolute value in column k (partial pivoting)
                 size_t maxRow = k;
-                double maxVal = matrix[k][k];
+                double maxAbsVal = std::abs(matrix[k][k]);
                 for (size_t i = k + 1; i < size; ++i)
                 {
-                    double Val = matrix[i][k];
-                    if (Val != maxVal && std::abs(Val) > 0.0)
+                    double absVal = std::abs(matrix[i][k]);
+                    if (absVal > maxAbsVal)
                     {
-                        maxVal = Val;
+                        maxAbsVal = absVal;
                         maxRow = i;
-                        break;  // Exit early on first difference
                     }
                 }
                 if (maxRow != k)
@@ -911,7 +901,7 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
                 auto log = find<Log>();
 
                 // calculate the mean intensity of the radiation field convolved over the normalized line profile g:
-                //   J_convolved = \int J_lambda(lambda) g(lambda) d lambda  /  \int g(lambda) d lambda
+                // J_convolved = \int J_lambda(lambda) g(lambda) d lambda 
                 // we use all wavelength points within a given range around the line center and verify that the
                 // grid is sufficiently resolved to reproduce the normalizaton value of 1 = \int g(lambda) d lambda
                 double center = _center[k];
@@ -933,7 +923,7 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
                     auto units = find<Units>();
                     vector<string> message1 = {
                         "Integral of Gaussian line profile over radiation field is inaccurate for ",
-                        +" " + _name + " for transition (" + StringUtils::toString(up) + "-"
+                        " " + _name + " for transition (" + StringUtils::toString(up) + "-"
                             + StringUtils::toString(low) + ")",
                         std::string("  integral equals ") + StringUtils::toString(gsum) + " rather than unity",
                         std::string("  over wavelengths from ") + StringUtils::toString(units->owavelength(lambdamin))
@@ -949,7 +939,7 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
                                                + " Now, vturb = " + StringUtils::toString(units->ovelocity(sigma)) + " "
                                                + units->uvelocity() + "."};
 
-                    if (abs(gsum - 1.) > MAX_GAUSS_ERROR_FAIL && warningForGaussianIntegral())
+                    if (abs(gsum - 1.) > MAX_GAUSS_ERROR_FAIL && errorForGaussianIntegral())
                     {
                         log->info(std::string("Gausss(") + StringUtils::toString(_lambdav[ellmin])
                                   + ")=" + StringUtils::toString(gaussian(_lambdav[ellmin], center, sigma)) + "Gausss("
@@ -1016,13 +1006,15 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
                     }
                     if (Klu <= 0.)
                     {
-                        log->warning("collisional transition rate Klu is " + StringUtils::toString(Klu)
+                        double replacementKlu = 1.0e-20 * Kul;
+                        log->warning("collisional transition rate Klu is negative (" + StringUtils::toString(Klu) + ")"
                                      + " for collisional partner " + partner.name
                                      + " at T = " + StringUtils::toString(T) + " of " + _name + " K for transition ("
                                      + StringUtils::toString(up) + "-" + StringUtils::toString(low)
-                                     + "). the excitation energy is "
-                                     + StringUtils::toString(energyDiff / Constants::k()) + " K. Setting it to 1e-20.");
-                        Klu = 1.0e-20 * Kul;
+                                     + "). The excitation energy is "
+                                     + StringUtils::toString(energyDiff / Constants::k()) + " K. Setting it to "
+                                     + StringUtils::toString(replacementKlu) + ".");
+                        Klu = replacementKlu;
                     }
 
                     // add the coefficients after multiplication by the partner number density
