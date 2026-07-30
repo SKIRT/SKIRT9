@@ -901,7 +901,7 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
                 auto log = find<Log>();
 
                 // calculate the mean intensity of the radiation field convolved over the normalized line profile g:
-                // J_convolved = \int J_lambda(lambda) g(lambda) d lambda
+                //   J_convolved = \int J_lambda(lambda) g(lambda) d lambda  /  \int g(lambda) d lambda
                 // we use all wavelength points within a given range around the line center and verify that the
                 // grid is sufficiently resolved to reproduce the normalizaton value of 1 = \int g(lambda) d lambda
                 double center = _center[k];
@@ -953,7 +953,11 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
                     log->info(message2[0]);
                     for (size_t i = 1; i != message1.size(); ++i) find<Log>()->info(message1[i]);
                 }
-                double J = Jsum;
+                // divide by gsum to correct for the fact that, on the discrete wavelength grid, the integral of
+                // g over the profile range is only approximately 1 (this is what the check above verifies); if
+                // there happen to be no grid points in range at all, gsum and Jsum are both zero and we skip the
+                // division to avoid turning that (harmless, J=0) case into a NaN
+                double J = gsum > 0. ? Jsum / gsum : Jsum;
                 if (storeMeanIntensities()) state->setMeanIntensity(k, J);
                 if (!std::isfinite(J))
                 {
