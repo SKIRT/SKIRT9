@@ -901,7 +901,7 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
                 auto log = find<Log>();
 
                 // calculate the mean intensity of the radiation field convolved over the normalized line profile g:
-                // J_convolved = \int J_lambda(lambda) g(lambda) d lambda 
+                // J_convolved = \int J_lambda(lambda) g(lambda) d lambda
                 // we use all wavelength points within a given range around the line center and verify that the
                 // grid is sufficiently resolved to reproduce the normalizaton value of 1 = \int g(lambda) d lambda
                 double center = _center[k];
@@ -923,8 +923,8 @@ UpdateStatus NonLTELineGasMix::updateSpecificState(MaterialState* state, const A
                     auto units = find<Units>();
                     vector<string> message1 = {
                         "Integral of Gaussian line profile over radiation field is inaccurate for ",
-                        " " + _name + " for transition (" + StringUtils::toString(up) + "-"
-                            + StringUtils::toString(low) + ")",
+                        " " + _name + " for transition (" + StringUtils::toString(up) + "-" + StringUtils::toString(low)
+                            + ")",
                         std::string("  integral equals ") + StringUtils::toString(gsum) + " rather than unity",
                         std::string("  over wavelengths from ") + StringUtils::toString(units->owavelength(lambdamin))
                             + " " + units->uwavelength() + " to " + StringUtils::toString(units->owavelength(lambdamax))

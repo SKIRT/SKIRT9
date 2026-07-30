@@ -560,7 +560,7 @@ class NonLTELineGasMix : public EmittingGasMix
         ATTRIBUTE_DISPLAYED_IF(updateDynamicStatesFlag, "Level3")
 
         PROPERTY_BOOL(errorForGaussianIntegral,
-                  "treat insufficient Gaussian-integral accuracy as a fatal error (otherwise issue a warning)")
+                      "treat insufficient Gaussian-integral accuracy as a fatal error (otherwise issue a warning)")
         ATTRIBUTE_DEFAULT_VALUE(errorForGaussianIntegral, "true")
         ATTRIBUTE_DISPLAYED_IF(errorForGaussianIntegral, "Level3")
 
