@@ -3,7 +3,7 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "Configuration.hpp"
+#include "ConfigurationSetup.hpp"
 #include "AllCellsLibrary.hpp"
 #include "Constants.hpp"
 #include "FatalError.hpp"
@@ -20,14 +20,11 @@
 
 ////////////////////////////////////////////////////////////////////
 
-Configuration::Configuration(SimulationItem* parent)
-{
-    parent->addChild(this);
-}
+ConfigurationSetup::ConfigurationSetup(SimulationItem* parent) : Configuration(parent) {}
 
 ////////////////////////////////////////////////////////////////////
 
-void Configuration::setupSelfBefore()
+void ConfigurationSetup::setupSelfBefore()
 {
     SimulationItem::setupSelfBefore();
 
@@ -378,7 +375,7 @@ void Configuration::setupSelfBefore()
 
 ////////////////////////////////////////////////////////////////////
 
-void Configuration::setupSelfAfter()
+void ConfigurationSetup::setupSelfAfter()
 {
     SimulationItem::setupSelfAfter();
 
@@ -512,29 +509,6 @@ void Configuration::setupSelfAfter()
 
 ////////////////////////////////////////////////////////////////////
 
-void Configuration::setEmulationMode()
-{
-    _emulationMode = true;
-    _hasPrimaryIterations = false;
-    _hasSecondaryIterations = false;
-    _hasMergedIterations = false;
-    _minPrimaryIterations = 0;
-    _maxPrimaryIterations = 0;
-    _minSecondaryIterations = 0;
-    _maxSecondaryIterations = 0;
-    _numPrimaryPackets = 0;
-    _numPrimaryIterationPackets = 0;
-    _numSecondaryPackets = 0;
-    _numSecondaryIterationPackets = 0;
-    _hasDynamicStateRecipes = false;
-    _hasPrimaryDynamicStateMedia = false;
-    _hasSecondaryDynamicStateMedia = false;
-    _hasPrimaryDynamicState = false;
-    _hasSecondaryDynamicState = false;
-}
-
-////////////////////////////////////////////////////////////////////
-
 namespace
 {
     // This function extends the specified wavelength range with the range of the specified wavelength grid
@@ -563,7 +537,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-Range Configuration::simulationWavelengthRange() const
+Range ConfigurationSetup::simulationWavelengthRange() const
 {
     // include primary and secondary source ranges
     Range range = _sourceWavelengthRange;
@@ -636,7 +610,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-vector<double> Configuration::simulationWavelengths() const
+vector<double> ConfigurationSetup::simulationWavelengths() const
 {
     std::set<double> wavelengths;
 
@@ -659,15 +633,6 @@ vector<double> Configuration::simulationWavelengths() const
     addForMaterialWavelengthRange(wavelengths, sim);
 
     return vector<double>(wavelengths.begin(), wavelengths.end());
-}
-
-////////////////////////////////////////////////////////////////////
-
-WavelengthGrid* Configuration::wavelengthGrid(WavelengthGrid* localWavelengthGrid) const
-{
-    auto result = localWavelengthGrid && !_oligochromatic ? localWavelengthGrid : _defaultWavelengthGrid;
-    if (!result) throw FATALERROR("Cannot find a wavelength grid for instrument or probe");
-    return result;
 }
 
 ////////////////////////////////////////////////////////////////////

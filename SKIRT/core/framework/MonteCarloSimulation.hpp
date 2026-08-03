@@ -7,6 +7,7 @@
 #define MONTECARLOSIMULATION_HPP
 
 #include "Configuration.hpp"
+#include "ConfigurationSetup.hpp"
 #include "Cosmology.hpp"
 #include "InstrumentSystem.hpp"
 #include "MediumSystem.hpp"
@@ -679,7 +680,7 @@ private:
 
 private:
     // non-discoverable simulation items
-    Configuration* _config{new Configuration(this)};
+    Configuration* _config{new ConfigurationSetup(this)};
     SecondarySourceSystem* _secondarySourceSystem{nullptr};  // constructed only when there is secondary emission
 
     // data members used by the XXXprogress() functions in this class

@@ -15,16 +15,20 @@ class WavelengthGrid;
 
 ////////////////////////////////////////////////////////////////////
 
-/** Configuration is a helper class that serves as a central clearing house for overall simulation
-    configuration options including the simulation mode.
+/** Configuration is an abstract class that serves as a central clearing house for overall
+    simulation configuration options including the simulation mode. It declares the getters for
+    these options. Getters that are trivial to compute are implemented right here as non-virtual
+    inline functions, so that querying them costs no more than reading a data member and the
+    compiler can optimize the call away entirely. The handful of getters that must be computed from
+    live simulation state (rather than a value cached during setup) are declared as pure virtual
+    functions instead.
 
-    Each MonteCarloSimulation holds a single Configuration object. During setup, it retrieves many
-    properties and options from the simulation hierarchy, verifying consistency of the
-    configuration and flagging any conflicts while doing so. Once this process has completed, the
-    Configuration object offers getters for these retrieved properties to any of the other
-    simulation items in the hierarchy. The setup() function of the Configuration object is invoked
-    at the very early stages of simulation setup, so that it is safe for other simulation items to
-    retrieve information from the Configuration object during setup.
+    The concrete subclass ConfigurationSetup performs the actual retrieval: during setup, it
+    retrieves many properties and options from the simulation hierarchy, verifying consistency of
+    the configuration and flagging any conflicts while doing so, and stores the results in the
+    (protected) data members declared here. Once this process has completed, any simulation item
+    can call the getters declared in this class to retrieve the information, without needing to
+    know about ConfigurationSetup or link against the (many) other classes it depends on.
 
     The Configuration class is based on SimulationItem so that it can be part of a simulation item
     hierarchy, however it is not discoverable because it is not intended to be selected or
@@ -38,17 +42,6 @@ public:
         specified parent in the simulation hierarchy, so that it will automatically be deleted. The
         setup() function is \em not called by this constructor. */
     explicit Configuration(SimulationItem* parent);
-
-protected:
-    /** This function retrieves properties and options from the simulation hierarchy and stores the
-        resulting values internally so that they can be returned by any of the getters with minimal
-        overhead. During this process, the function also verifies the consistency of the simulation
-        configuration, for example checking the configuration against the requirements of the
-        selected simulation mode. If any conflicts are found, the function throws a fatal error. */
-    void setupSelfBefore() override;
-
-    /** This function logs some aspects of the configuration as information to the user. */
-    void setupSelfAfter() override;
 
     //======== Setters that override the user configuration =======
 
@@ -128,14 +121,22 @@ public:
         range includes the primary and secondary source wavelength ranges extended on both sides to
         accommodate a redshift or blueshift caused by kinematics corresponding to \f$v/c=1/3\f$. It
         also includes the range of the instrument wavelength grids and the wavelengths used for
-        material normalization and material property probes. */
-    Range simulationWavelengthRange() const;
+        material normalization and material property probes.
+
+        This function must query the live simulation hierarchy (e.g. the instrument system and any
+        items implementing MaterialWavelengthRangeInterface) rather than a value cached during
+        setup, so it is implemented by the ConfigurationSetup subclass. */
+    virtual Range simulationWavelengthRange() const = 0;
 
     /** Returns a list of wavelengths that are explicitly or indirectly mentioned by the simulation
         configuration. This includes the characteristic wavelengths of all configured wavelength
         grids (for instruments, probes, radiation field or dust emission) and specific wavelengths
-        used for normalization or probing. */
-    vector<double> simulationWavelengths() const;
+        used for normalization or probing.
+
+        This function must query the live simulation hierarchy (e.g. the instrument system and any
+        items implementing MaterialWavelengthRangeInterface) rather than a value cached during
+        setup, so it is implemented by the ConfigurationSetup subclass. */
+    virtual vector<double> simulationWavelengths() const = 0;
 
     /** Returns the wavelength grid to be used for an instrument or probe, given the wavelength
         grid configured locally for the calling instrument or probe (which may the null pointer to
@@ -461,7 +462,7 @@ public:
 
     //======================== Data Members ========================
 
-private:
+protected:
     // emulation mode
     bool _emulationMode{false};
 
