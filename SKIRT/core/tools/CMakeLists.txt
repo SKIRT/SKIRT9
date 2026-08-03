@@ -4,11 +4,15 @@
 # //////////////////////////////////////////////////////////////////
 
 # ------------------------------------------------------------------
-# Builds a library for the SKIRT core framework layer
+# Builds a library with foundational SimulationItem-tree classes:
+# SimulationItem itself, logging, random numbers, unit systems,
+# the parallel execution engine, stored-table/text/FITS I/O, and
+# the mutual-dependency-breaking *Interface types (excluding their
+# MixIn implementers, which may depend on higher-level classes)
 # ------------------------------------------------------------------
 
 # set the target name
-set(TARGET framework)
+set(TARGET tools)
 
 # list the source files in this directory
 file(GLOB SOURCES "*.cpp")
@@ -22,9 +26,8 @@ target_link_libraries(${TARGET} schema fundamentals)
 include_directories(../../../SMILE/schema ../../../SMILE/fundamentals)
 
 # add SKIRT library dependencies
-target_link_libraries(${TARGET} fitsio voro mpi utils tetgen tools)
-include_directories(../../fitsio ../../voro ../mpi ../utils ../tools)
-include_directories(SYSTEM ../../tetgen)  # suppress warnings in tetgen header
+target_link_libraries(${TARGET} fitsio mpi utils)
+include_directories(../../fitsio ../mpi ../utils)
 
 # adjust C++ compiler flags to our needs
 include("../../../SMILE/build/CompilerFlags.cmake")

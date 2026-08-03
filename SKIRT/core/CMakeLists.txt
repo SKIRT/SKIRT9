@@ -11,4 +11,5 @@
 # add all relevant subdirectories; each subdirectory defines a single target
 add_subdirectory(utils)
 add_subdirectory(mpi)
+add_subdirectory(tools)
 add_subdirectory(framework)
