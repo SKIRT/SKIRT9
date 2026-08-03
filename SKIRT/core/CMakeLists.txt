@@ -12,4 +12,5 @@
 add_subdirectory(utils)
 add_subdirectory(mpi)
 add_subdirectory(tools)
+add_subdirectory(geometry)
 add_subdirectory(framework)

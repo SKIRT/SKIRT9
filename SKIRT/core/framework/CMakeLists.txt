@@ -22,8 +22,8 @@ target_link_libraries(${TARGET} schema fundamentals)
 include_directories(../../../SMILE/schema ../../../SMILE/fundamentals)
 
 # add SKIRT library dependencies
-target_link_libraries(${TARGET} fitsio voro mpi utils tetgen tools)
-include_directories(../../fitsio ../../voro ../mpi ../utils ../tools)
+target_link_libraries(${TARGET} fitsio voro mpi utils tetgen tools geometry)
+include_directories(../../fitsio ../../voro ../mpi ../utils ../tools ../geometry)
 include_directories(SYSTEM ../../tetgen)  # suppress warnings in tetgen header
 
 # adjust C++ compiler flags to our needs
