@@ -35,7 +35,7 @@ file(MAKE_DIRECTORY ${SMILE_SCHEMA_DIR})
 if (BUILD_SKIRT)
     add_custom_command(OUTPUT ${SMILE_SCHEMA_DIR}/skirt.smile
                        COMMAND skirt -x
-                       DEPENDS skirtcore
+                       DEPENDS framework
                        WORKING_DIRECTORY ${SMILE_SCHEMA_DIR})
     set(SOURCES ${SOURCES} ${SMILE_SCHEMA_DIR}/skirt.smile)
 endif()

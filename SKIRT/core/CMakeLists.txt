@@ -4,27 +4,11 @@
 # //////////////////////////////////////////////////////////////////
 
 # ------------------------------------------------------------------
-# Builds a library for the SKIRT core layer
+# Groups the targets that make up the SKIRT core layer; this
+# directory itself does not define a target
 # ------------------------------------------------------------------
 
-# set the target name
-set(TARGET skirtcore)
-
-# list the source files in this directory
-file(GLOB SOURCES "*.cpp")
-file(GLOB HEADERS "*.hpp")
-
-# create the library target
-add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
-
-# add SMILE library dependencies
-target_link_libraries(${TARGET} schema fundamentals)
-include_directories(../../SMILE/schema ../../SMILE/fundamentals)
-
-# add SKIRT library dependencies
-target_link_libraries(${TARGET} fitsio voro mpi utils tetgen)
-include_directories(../fitsio ../voro ../mpi ../utils)
-include_directories(SYSTEM ../tetgen)  # suppress warnings in tetgen header
-
-# adjust C++ compiler flags to our needs
-include("../../SMILE/build/CompilerFlags.cmake")
+# add all relevant subdirectories; each subdirectory defines a single target
+add_subdirectory(utils)
+add_subdirectory(mpi)
+add_subdirectory(framework)

@@ -15,7 +15,7 @@ The build lives in a sibling directory `../release` (i.e. next to `git/`, not in
 ./makeSKIRT.sh <threads>      # build, e.g. ./makeSKIRT.sh 8
 ```
 
-`makeSKIRT.sh` builds `skirtcore`, the `skirt` CLI (`release/SKIRT/main/skirt`), and, if enabled, `MakeUp.app`. It also regenerates the SMILE schema file (`release/schemas/skirt.smile`) as part of the build — a malformed SMILE conditional-value-expression (e.g. in an `ATTRIBUTE_TYPE_INSERT`/`ATTRIBUTE_INSERT`/`ATTRIBUTE_TYPE_ALLOWED_IF` string) surfaces as a build failure at that step, so a clean build is a reasonable sanity check for schema-metadata edits, not just C++ changes.
+`makeSKIRT.sh` builds `framework`, the `skirt` CLI (`release/SKIRT/main/skirt`), and, if enabled, `MakeUp.app`. It also regenerates the SMILE schema file (`release/schemas/skirt.smile`) as part of the build — a malformed SMILE conditional-value-expression (e.g. in an `ATTRIBUTE_TYPE_INSERT`/`ATTRIBUTE_INSERT`/`ATTRIBUTE_TYPE_ALLOWED_IF` string) surfaces as a build failure at that step, so a clean build is a reasonable sanity check for schema-metadata edits, not just C++ changes.
 
 To adjust a build option: `./configSKIRT.sh <OPTION_NAME>=<value>`. Relevant options (see top-level `CMakeLists.txt`, `SKIRT/mpi/CMakeLists.txt`): `BUILD_MAKE_UP` (requires Qt5/Qt6), `BUILD_WITH_MPI`, `WARNINGS_AS_ERRORS` (CI builds with this on), `BUILD_DOX_STYLE`. SMILE-only options `BUILD_SMILE_TOOL`/`BUILD_SMILE_SHAPES` build small standalone SMILE example/console tools.
 
@@ -62,7 +62,7 @@ On a full administrator checkout, this repo (`SKIRT9/git`) is one of several sib
 
 ### Repository layout
 
-- `SKIRT/core` — the `skirtcore` library: several hundred `SimulationItem` subclasses implementing the actual physics (sources, media, spatial grids, material mixes, SEDs, instruments, probes, ...).
+- `SKIRT/core` — groups `utils`, `mpi`, and `framework`; `framework` is the library with several hundred `SimulationItem` subclasses implementing the actual physics (sources, media, spatial grids, material mixes, SEDs, instruments, probes, ...).
 - `SKIRT/utils` — the `utils` library: plain (non-`SimulationItem`) math/geometry helper classes used throughout `core` (`Box`, `Direction`, `Position`, `PhotonPacket`, `Quadrics`, `PathSegmentGenerator`, ...).
 - `SKIRT/main` — the `skirt` CLI entry point and command-line handling.
 - `SKIRT/mpi`, `SKIRT/fitsio`, `SKIRT/tetgen`, `SKIRT/voro` — MPI support and vendored third-party libraries (CFITSIO, TetGen, Voro++).

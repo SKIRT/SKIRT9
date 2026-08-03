@@ -22,7 +22,7 @@ add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
 
 # add SMILE library dependencies
 target_link_libraries(${TARGET} fundamentals)
-include_directories(../../SMILE/fundamentals)
+include_directories(../../../SMILE/fundamentals)
 
 # define a user-configurable option to build with MPI support,
 # which requires some MPI implementation to be installed on the system
@@ -43,4 +43,4 @@ endif()
 
 # adjust C++ compiler flags to our needs
 set(NO_EXTRA_WARNINGS true)  # to avoid warnings in the MPI headers
-include("../../SMILE/build/CompilerFlags.cmake")
+include("../../../SMILE/build/CompilerFlags.cmake")

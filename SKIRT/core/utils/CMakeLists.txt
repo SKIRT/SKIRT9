@@ -19,7 +19,7 @@ add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
 
 # add SMILE library dependencies
 target_link_libraries(${TARGET} fundamentals)
-include_directories(../../SMILE/fundamentals)
+include_directories(../../../SMILE/fundamentals)
 
 # adjust C++ compiler flags to our needs
-include("../../SMILE/build/CompilerFlags.cmake")
+include("../../../SMILE/build/CompilerFlags.cmake")

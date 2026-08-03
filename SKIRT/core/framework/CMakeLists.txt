@@ -4,30 +4,27 @@
 # //////////////////////////////////////////////////////////////////
 
 # ------------------------------------------------------------------
-# Builds the SKIRT executable
+# Builds a library for the SKIRT core framework layer
 # ------------------------------------------------------------------
 
 # set the target name
-set(TARGET skirt)
+set(TARGET framework)
 
 # list the source files in this directory
 file(GLOB SOURCES "*.cpp")
 file(GLOB HEADERS "*.hpp")
 
-# create the executable target
-add_executable(${TARGET} ${SOURCES} ${HEADERS})
-
-# enable multi-threading
-find_package(Threads REQUIRED)
-target_link_libraries(${TARGET} Threads::Threads)
+# create the library target
+add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
 
 # add SMILE library dependencies
-target_link_libraries(${TARGET} serialize schema fundamentals build)
-include_directories(../../SMILE/serialize ../../SMILE/schema ../../SMILE/fundamentals ../../SMILE/build)
+target_link_libraries(${TARGET} schema fundamentals)
+include_directories(../../../SMILE/schema ../../../SMILE/fundamentals)
 
 # add SKIRT library dependencies
-target_link_libraries(${TARGET} framework)
-include_directories(../core/framework ../core/mpi ../core/utils)
+target_link_libraries(${TARGET} fitsio voro mpi utils tetgen)
+include_directories(../../fitsio ../../voro ../mpi ../utils)
+include_directories(SYSTEM ../../tetgen)  # suppress warnings in tetgen header
 
 # adjust C++ compiler flags to our needs
-include("../../SMILE/build/CompilerFlags.cmake")
+include("../../../SMILE/build/CompilerFlags.cmake")
