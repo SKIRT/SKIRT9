@@ -4,11 +4,14 @@
 # //////////////////////////////////////////////////////////////////
 
 # ------------------------------------------------------------------
-# Builds a library for the SKIRT core framework layer
+# Builds a library with the MaterialMix hierarchy (dust, electron and
+# gas mixes), MaterialMixFamily, and the shared medium-state types
+# (MaterialState, StateVariable, MediumState) and calculation helpers
+# used only by these classes
 # ------------------------------------------------------------------
 
 # set the target name
-set(TARGET framework)
+set(TARGET material)
 
 # list the source files in this directory
 file(GLOB SOURCES "*.cpp")
@@ -22,9 +25,8 @@ target_link_libraries(${TARGET} schema fundamentals)
 include_directories(../../../SMILE/schema ../../../SMILE/fundamentals)
 
 # add SKIRT library dependencies
-target_link_libraries(${TARGET} fitsio voro mpi utils tetgen tools geometry sed wavelength field source grain material)
-include_directories(../../fitsio ../../voro ../mpi ../utils ../tools ../geometry ../sed ../wavelength ../field ../source ../grain ../material)
-include_directories(SYSTEM ../../tetgen)  # suppress warnings in tetgen header
+target_link_libraries(${TARGET} mpi utils tools wavelength grain)
+include_directories(../mpi ../utils ../tools ../wavelength ../grain)
 
 # adjust C++ compiler flags to our needs
 include("../../../SMILE/build/CompilerFlags.cmake")
