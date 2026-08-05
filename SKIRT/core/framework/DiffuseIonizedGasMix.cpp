@@ -10,7 +10,6 @@
 #include "FatalError.hpp"
 #include "Log.hpp"
 #include "MaterialState.hpp"
-#include "MediumSystem.hpp"
 #include "NebularContinuumEmission.hpp"
 #include "NebularLineEmission.hpp"
 #include "PhotonPacket.hpp"
