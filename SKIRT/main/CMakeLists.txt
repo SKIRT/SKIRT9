@@ -27,7 +27,7 @@ include_directories(../../SMILE/serialize ../../SMILE/schema ../../SMILE/fundame
 
 # add SKIRT library dependencies
 target_link_libraries(${TARGET} framework)
-include_directories(../core/framework ../core/mpi ../core/utils ../core/tools ../core/geometry ../core/sed ../core/wavelength ../core/field ../core/source ../core/grain ../core/material ../core/medium ../core/instrument)
+include_directories(../core/framework ../core/mpi ../core/utils ../core/tools ../core/geometry ../core/sed ../core/wavelength ../core/field ../core/source ../core/grain ../core/material ../core/medium ../core/instrument ../core/probe)
 
 # adjust C++ compiler flags to our needs
 include("../../SMILE/build/CompilerFlags.cmake")
