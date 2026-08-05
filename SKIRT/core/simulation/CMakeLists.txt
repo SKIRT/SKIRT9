@@ -4,11 +4,13 @@
 # //////////////////////////////////////////////////////////////////
 
 # ------------------------------------------------------------------
-# Builds a library for the SKIRT core framework layer
+# Builds a library with the top-level simulation orchestration classes:
+# Simulation, MonteCarloSimulation, ConfigurationSetup, and
+# SimulationItemRegistry
 # ------------------------------------------------------------------
 
 # set the target name
-set(TARGET framework)
+set(TARGET simulation)
 
 # list the source files in this directory
 file(GLOB SOURCES "*.cpp")

@@ -8,7 +8,7 @@
 # ------------------------------------------------------------------
 
 # add all relevant subdirectories; each subdirectory defines a single target,
-# except for core, which just groups the utils/mpi/framework targets
+# except for core, which just groups the SKIRT core-layer targets
 add_subdirectory(fitsio)
 add_subdirectory(voro)
 add_subdirectory(tetgen)

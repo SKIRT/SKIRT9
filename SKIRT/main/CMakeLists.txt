@@ -26,8 +26,8 @@ target_link_libraries(${TARGET} serialize schema fundamentals build)
 include_directories(../../SMILE/serialize ../../SMILE/schema ../../SMILE/fundamentals ../../SMILE/build)
 
 # add SKIRT library dependencies
-target_link_libraries(${TARGET} framework)
-include_directories(../core/framework ../core/mpi ../core/utils ../core/tools ../core/geometry ../core/sed ../core/wavelength ../core/field ../core/source ../core/grain ../core/material ../core/medium ../core/instrument ../core/probe)
+target_link_libraries(${TARGET} simulation)
+include_directories(../core/simulation ../core/mpi ../core/utils ../core/tools ../core/geometry ../core/sed ../core/wavelength ../core/field ../core/source ../core/grain ../core/material ../core/medium ../core/instrument ../core/probe)
 
 # adjust C++ compiler flags to our needs
 include("../../SMILE/build/CompilerFlags.cmake")
