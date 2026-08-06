@@ -39,7 +39,9 @@ public:
         to be in range. If the number of parameters in the specified list is not equal to one, the
         behavior is undefined. The material mix family retains ownership of the returned dust mix,
         and guarantees that it will not be destroyed until the family itself is destroyed. */
-    const MaterialMix* mix(const Array& parameters) const override;
+    const MaterialMix* mix(double Z, double T, const Array& parameters) override;
+
+    const MaterialMix* mix() override;
 };
 
 ////////////////////////////////////////////////////////////////////

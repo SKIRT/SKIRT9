@@ -8,6 +8,7 @@
 # ------------------------------------------------------------------
 
 # add all relevant subdirectories; each subdirectory defines a single target
+add_subdirectory(faddeeva)
 add_subdirectory(fitsio)
 add_subdirectory(voro)
 add_subdirectory(tetgen)

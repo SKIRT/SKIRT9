@@ -88,9 +88,9 @@
     implementation accurately reflects the physical processes, apart from approximations caused by
     discretization, tabulation, and interpolation.
 
-    Finally, \em H2fraction sets the fraction of hydrogen atoms locked up in molecular H2, for which
-    the Rayleigh scattering cross section is enhanced due to coherent scattering on the H2 molecule,
-    following the exact same implementation as the MONACO code (Odaka+11).
+    Finally, \em H2fraction sets the fraction of hydrogen atoms locked up in molecular H2, for
+    which the Rayleigh scattering cross section is enhanced due to coherent scattering on the H2
+    molecule, following the exact same implementation as the MONACO code (Odaka+11).
 
     <b>Configuring the simulation</b>
 
@@ -102,13 +102,15 @@
     with a high-resolution wavelength grid, or separate instruments can be configured with
     wavelength grids to resolve specific features of interest.
 
-    To study fluorescence lines seperated from the background continuum, configure the instrument
-    to record flux components seperately and consider the scattered flux component, which includes
-    the fluorescence lines in addition to any flux scattered from other media components. To ensure
-    that low-intensity lines are properly included in this flux, set the advanced property \em
-    minWeightReduction in the \c PhotonPacketOptions section to a value of \c 1e10 or so. With the
-    default value of \c 1e4, low-intensity fluorescence photon packets are killed before having a
-    chance to register in the instruments.
+    Although there is no secondary emission phase, fluorescent emission, which is modelled as
+    scattering, does contribute to the secondary emission spectrum. To study this process
+    seperately from the background continuum, configure the instrument to record flux components
+    seperately and consider the secondary emission component, which includes the fluorescence lines
+    in addition to any flux scattered from these lines. To ensure that low-intensity lines are
+    properly included in this flux, set the advanced property \em minWeightReduction in the \c
+    PhotonPacketOptions section to a value of \c 1e10 or so. With the default value of \c 1e4,
+    low-intensity fluorescence photon packets are killed before having a chance to register in the
+    instruments.
 
     The input model must define the spatial distribution of the hydrogen number density
     \f$n_\mathrm{H} = n_\mathrm{HI} + n_\mathrm{HII} + 2\,n_\mathrm{H2}\f$, i.e. including atomic,
@@ -131,9 +133,10 @@
     of Anders & Grevesse (1989), the default abundance table in Xspec. In the default list, the
     abundance of hydrogen is set to unity. However, it is acceptable to specify a hydrogen
     abundance lower than one, for example to model an ionized hydrogen fraction. The first element
-    in the abundance list represents all hydrogen atoms, both atomic and those in H2 (i.e. 2 per H2).
-    The \em H2fraction (configured in the ski file) then sets the fraction of these hydrogen atoms
-    that are locked up in molecular H2 (for which the Rayleigh scattering cross section is enhanced).
+    in the abundance list represents all hydrogen atoms, both atomic and those in H2 (i.e. 2 per
+    H2). The \em H2fraction (configured in the ski file) then sets the fraction of these hydrogen
+    atoms that are locked up in molecular H2 (for which the Rayleigh scattering cross section is
+    enhanced).
 
     <b>Photo-absorption cross section</b>
 
@@ -203,9 +206,9 @@
     available as a table (for each H atom in H2, we have \f$2\times \sigma_{RSA, H}(E)\f$). The
     normalised scattering phase function for element Z is now given by \f[ \Phi_{RSA, Z}(\theta,
     E)= \frac{3}{4}\, \frac{\sigma_T}{\sigma_{RSA, Z}(E)}\Big[ 1 + \cos^2\theta \Big] \cdot \Big[
-    \big(F_Z(q) + F'_Z(E)\big)^2 + {F''_Z}^2(E)\Big], \f] with the same atomic form factors \f$F_Z(q)\f$
-    as before, and tabulated real and imaginary anomalous scattering functions \f$F'_Z(E)\f$ and
-    \f$F''_Z(E)\f$.
+    \big(F_Z(q) + F'_Z(E)\big)^2 + {F''_Z}^2(E)\Big], \f] with the same atomic form factors
+    \f$F_Z(q)\f$ as before, and tabulated real and imaginary anomalous scattering functions
+    \f$F'_Z(E)\f$ and \f$F''_Z(E)\f$.
 
     <b>Electron scattering - photon energy shift</b>
 
@@ -466,7 +469,7 @@ public:
     class ScatteringHelper;
 
 private:
-    // all data members are precalculated in setupSelfAfter()
+    // all data members are precalculated in setupSelfBefore()
 
     // wavelength grid (shifted to the left of the actually sampled points to approximate rounding)
     Array _lambdav;  // indexed on ell

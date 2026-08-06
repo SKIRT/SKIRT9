@@ -4,12 +4,23 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "LyaNeutralHydrogenGasMix.hpp"
-#include "Configuration.hpp"
 #include "Constants.hpp"
-#include "LyaUtils.hpp"
+#include "LyUtils.hpp"
 #include "MaterialState.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
+
+////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    // the combined Lya1 and Lya2 for hydrogen
+    constexpr double lyaA = Constants::EinsteinALya();
+    constexpr double lya = Constants::lambdaLya();
+    constexpr double g = 3.;
+    constexpr double kB = Constants::k();
+    constexpr double mp = Constants::Mproton();
+}
 
 ////////////////////////////////////////////////////////////////////
 
@@ -87,6 +98,15 @@ double LyaNeutralHydrogenGasMix::mass() const
 
 ////////////////////////////////////////////////////////////////////
 
+double LyaNeutralHydrogenGasMix::section(double lambda, double T) const
+{
+    double vth = sqrt(2. * kB / mp * T);
+    double a = lyaA * lya / 4. / M_PI / vth;
+    return LyUtils::section(lambda, lya, vth, lyaA, a, g);
+}
+
+////////////////////////////////////////////////////////////////////
+
 double LyaNeutralHydrogenGasMix::sectionAbs(double /*lambda*/) const
 {
     return 0.;
@@ -96,14 +116,14 @@ double LyaNeutralHydrogenGasMix::sectionAbs(double /*lambda*/) const
 
 double LyaNeutralHydrogenGasMix::sectionSca(double lambda) const
 {
-    return LyaUtils::section(lambda, defaultTemperature());
+    return section(lambda, defaultTemperature());
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double LyaNeutralHydrogenGasMix::sectionExt(double lambda) const
 {
-    return LyaUtils::section(lambda, defaultTemperature());
+    return section(lambda, defaultTemperature());
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -119,7 +139,7 @@ double LyaNeutralHydrogenGasMix::opacityAbs(double /*lambda*/, const MaterialSta
 double LyaNeutralHydrogenGasMix::opacitySca(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
 {
     double n = state->numberDensity();
-    return n > 0. ? n * LyaUtils::section(lambda, state->temperature()) : 0.;
+    return n > 0. ? n * section(lambda, state->temperature()) : 0.;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -127,7 +147,34 @@ double LyaNeutralHydrogenGasMix::opacitySca(double lambda, const MaterialState* 
 double LyaNeutralHydrogenGasMix::opacityExt(double lambda, const MaterialState* state, const PhotonPacket* /*pp*/) const
 {
     double n = state->numberDensity();
-    return n > 0. ? n * LyaUtils::section(lambda, state->temperature()) : 0.;
+    return n > 0. ? n * section(lambda, state->temperature()) : 0.;
+}
+
+////////////////////////////////////////////////////////////////////
+
+void LyaNeutralHydrogenGasMix::setScatteringInfoIfNeeded(PhotonPacket* pp, const MaterialState* state,
+                                                         const double lambda) const
+{
+    auto scatinfo = pp->getScatteringInfo();
+    if (!scatinfo->valid)
+    {
+        scatinfo->valid = true;
+
+        double T = state->temperature();
+        double nH = state->numberDensity();
+
+        double vth = sqrt(2. * kB / mp * T);
+        double a = lyaA * lya / 4. / M_PI / vth;
+        double x = (lya - lambda) / lambda * Constants::c() / vth;
+
+        // select the isotropic or the dipole phase function:
+        // all wing events and 1/3 of core events are dipole, and the remaining 2/3 core events are isotropic,
+        // where x=0.2 (in the atom frame) defines the transition between core and wings
+        scatinfo->dipole = abs(x) > 0.2 || random()->uniform() < 1. / 3.;
+
+        scatinfo->velocity =
+            LyUtils::sampleAtomVelocity(lambda, lya, vth, a, T, nH, pp->direction(), config(), random());
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -136,14 +183,8 @@ bool LyaNeutralHydrogenGasMix::peeloffScattering(double& I, double& Q, double& U
                                                  Direction bfkobs, Direction bfky, const MaterialState* state,
                                                  const PhotonPacket* pp) const
 {
-    // draw a random atom velocity & phase function, unless a previous peel-off stored this already
+    setScatteringInfoIfNeeded(const_cast<PhotonPacket*>(pp), state, lambda);
     auto scatinfo = const_cast<PhotonPacket*>(pp)->getScatteringInfo();
-    if (!scatinfo->valid)
-    {
-        scatinfo->valid = true;
-        std::tie(scatinfo->velocity, scatinfo->dipole) = LyaUtils::sampleAtomVelocity(
-            lambda, state->temperature(), state->numberDensity(), pp->direction(), config(), random());
-    }
 
     // add the contribution to the Stokes vector components depending on scattering type
     if (scatinfo->dipole)
@@ -158,7 +199,7 @@ bool LyaNeutralHydrogenGasMix::peeloffScattering(double& I, double& Q, double& U
     }
 
     // Doppler-shift the photon packet wavelength into and out of the atom frame
-    lambda = LyaUtils::shiftWavelength(lambda, scatinfo->velocity, pp->direction(), bfkobs);
+    lambda = LyUtils::shiftWavelength(lambda, scatinfo->velocity, pp->direction(), bfkobs);
 
     return false;
 }
@@ -167,14 +208,8 @@ bool LyaNeutralHydrogenGasMix::peeloffScattering(double& I, double& Q, double& U
 
 void LyaNeutralHydrogenGasMix::performScattering(double lambda, const MaterialState* state, PhotonPacket* pp) const
 {
-    // draw a random atom velocity & phase function, unless a peel-off stored this already
-    auto scatinfo = pp->getScatteringInfo();
-    if (!scatinfo->valid)
-    {
-        scatinfo->valid = true;
-        std::tie(scatinfo->velocity, scatinfo->dipole) = LyaUtils::sampleAtomVelocity(
-            lambda, state->temperature(), state->numberDensity(), pp->direction(), config(), random());
-    }
+    setScatteringInfoIfNeeded(const_cast<PhotonPacket*>(pp), state, lambda);
+    auto scatinfo = const_cast<PhotonPacket*>(pp)->getScatteringInfo();
 
     // draw the outgoing direction from the dipole or the isotropic phase function
     // and, if required, update the polarization state of the photon packet
@@ -190,7 +225,7 @@ void LyaNeutralHydrogenGasMix::performScattering(double lambda, const MaterialSt
     }
 
     // Doppler-shift the photon packet wavelength into and out of the atom frame
-    lambda = LyaUtils::shiftWavelength(lambda, scatinfo->velocity, pp->direction(), bfknew);
+    lambda = LyUtils::shiftWavelength(lambda, scatinfo->velocity, pp->direction(), bfknew);
 
     // execute the scattering event in the photon packet
     pp->scatter(bfknew, state->bulkVelocity(), lambda);

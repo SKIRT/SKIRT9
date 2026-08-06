@@ -3,11 +3,11 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef LYAUTILS_HPP
-#define LYAUTILS_HPP
+#ifndef LYUTILS_HPP
+#define LYUTILS_HPP
 
 #include "Direction.hpp"
-#include "Range.hpp"
+
 class Configuration;
 class Random;
 
@@ -102,12 +102,12 @@ class Random;
     purpose of this recipe, the scattering event is considered to occur in the core if the incoming
     dimensionless photon frequency in the rest frame of the interacting atom is smaller than a
     critical value, \f$|x|<0.2\f$. */
-namespace LyaUtils
+namespace LyUtils
 {
     /** This function returns the Lyman-alpha scattering cross section per hydrogen atom
         \f$\sigma_\alpha(\lambda, T)\f$ at the given photon wavelength and gas temperature, using
         the definition given in the class header. */
-    double section(double lambda, double T);
+    double section(double lambda, double center, double vth, double A, double a, double g);
 
     /** This function draws a random hydrogen atom velocity as seen by an incoming photon from the
         appropriate probability distributions, reflecting the preference for photons to be
@@ -141,8 +141,8 @@ namespace LyaUtils
         - Return the atom velocity and a flag indicating the selected phase function.
 
         */
-    std::pair<Vec, bool> sampleAtomVelocity(double lambda, double T, double nH, Direction kin, Configuration* config,
-                                            Random* random);
+    Vec sampleAtomVelocity(double lambda, double center, double vth, double a, double T, double nH, Direction kin,
+                           Configuration* config, Random* random);
 
     /** This function returns the Doppler-shifted wavelength in the gas bulk rest frame after a
         Lyman-alpha scattering event, given the incoming wavelength in the gas bulk rest frame, the

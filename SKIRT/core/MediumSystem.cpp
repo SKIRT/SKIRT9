@@ -10,7 +10,6 @@
 #include "FatalError.hpp"
 #include "LockFree.hpp"
 #include "Log.hpp"
-#include "LyaUtils.hpp"
 #include "MaterialMix.hpp"
 #include "MaterialState.hpp"
 #include "NR.hpp"
