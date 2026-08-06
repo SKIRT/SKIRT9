@@ -107,7 +107,7 @@ namespace LyUtils
     /** This function returns the Lyman-alpha scattering cross section per hydrogen atom
         \f$\sigma_\alpha(\lambda, T)\f$ at the given photon wavelength and gas temperature, using
         the definition given in the class header. */
-    double section(double lambda, double center, double vth, double a, double g);
+    double section(double lambda, double center, double vth, double A, double a, double g);
 
     /** This function draws a random hydrogen atom velocity as seen by an incoming photon from the
         appropriate probability distributions, reflecting the preference for photons to be

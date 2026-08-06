@@ -102,7 +102,7 @@ double LyaNeutralHydrogenGasMix::section(double lambda, double T) const
 {
     double vth = sqrt(2. * kB / mp * T);
     double a = lyaA * lya / 4. / M_PI / vth;
-    return LyUtils::section(lambda, lya, vth, a, g);
+    return LyUtils::section(lambda, lya, vth, lyaA, a, g);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -53,10 +53,9 @@ namespace
     }
 
     // calculate the Voigt a parameter
-    constexpr double voigtA(double lamA, double vth)
+    constexpr double voigtA(double lamGamma, double vth)
     {
-        double vth2 = vth * M_SQRT2;
-        return lamA / (4. * M_PI * vth2);
+        return lamGamma / (4. * M_PI * vth * M_SQRT2);
     }
 
     // wavelength range over which our cross sections may be nonzero
@@ -178,25 +177,26 @@ namespace
     struct LineResource
     {
         LineResource(const Array& a)
-            : Z(a[0]), N(a[1]), lineIndex(a[2]), lowerJ(a[3]), upperJ(a[4]), lam(a[5]), lamA(a[6])
+            : Z(a[0]), N(a[1]), lineIndex(a[2]), lowerJ(a[3]), upperJ(a[4]), lam(a[5]), A(a[6]), lamGamma(a[7])
         {}
 
         int ionIndex{-1};        // index of the corresponding ion in the user-specified ion list
         double scatterProb{-1};  // total probability that resonant absorption leads to re-emission
 
-        int Z;          // atomic number
-        int N;          // number of electrons
-        int lineIndex;  // line index used to identify this transition
-        double lowerJ;  // total angular momentum of the lower level
-        double upperJ;  // total angular momentum of the upper level
-        double lam;     // transition wavelength (m)
-        double lamA;    // lambda times Einstein A coefficient (m/s)
+        int Z;            // atomic number
+        int N;            // number of electrons
+        int lineIndex;    // line index used to identify this transition
+        double lowerJ;    // total angular momentum of the lower level
+        double upperJ;    // total angular momentum of the upper level
+        double lam;       // transition wavelength (m)
+        double A;         // Einstein A coefficient (1/s)
+        double lamGamma;  // lambda times natural line width (m)
 
         double section(double lambda, double vth) const
         {
-            double a = voigtA(lamA, vth);
+            double a = voigtA(lamGamma, vth);
             double g = 2.0 * upperJ + 1.0;
-            return LyUtils::section(lambda, lam, vth * M_SQRT2, a, g);
+            return LyUtils::section(lambda, lam, vth * M_SQRT2, A, a, g);
         }
     };
 
@@ -484,7 +484,7 @@ void XRayIonicGasMix::setupSelfBefore()
     auto fluoResources = loadPresent<FluorescenceResource, 7>(this, "Ionic_FL.txt", "fluorescence data", ionSet);
 
     // generic line data (recombination and resonant scattering)
-    auto lineResources = loadPresent<LineResource, 7>(this, "Ionic_LN.txt", "resonant line data", ionSet);
+    auto lineResources = loadPresent<LineResource, 8>(this, "Ionic_LN.txt", "resonant line data", ionSet);
 
     // branching probability data
     vector<BranchResource> branchResources;
@@ -653,7 +653,7 @@ void XRayIonicGasMix::setupSelfBefore()
             res.lineIndex = lineRes.lineIndex;
             res.vth = vtherm(lineRes.Z);
             res.lambda = lineRes.lam;
-            res.a = voigtA(lineRes.lamA, res.vth);
+            res.a = voigtA(lineRes.lamGamma, res.vth);
             res.dipoleFraction = dipoleFractionFromJ(lineRes.lowerJ, lineRes.upperJ);
 
             int upper = res.lineIndex;

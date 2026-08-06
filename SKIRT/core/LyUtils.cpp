@@ -18,11 +18,12 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-double LyUtils::section(double lambda, double center, double vth, double a, double g)
+double LyUtils::section(double lambda, double center, double vth, double A, double a, double g)
 {
-    double x = (center - lambda) / lambda * c / vth;            // dimensionless frequency
-    double sigma0 = g * center * center * M_2_SQRTPI / 4. * a;  // cross section at line center
-    return sigma0 * VoigtProfile::value(a, x);                  // cross section at given x
+    double x = (center - lambda) / lambda * c / vth;  // dimensionless frequency
+    double sigma0 =
+        g * center * center * center * M_2_SQRTPI / (16.0 * M_PI * vth) * A;  // cross section at line center
+    return sigma0 * VoigtProfile::value(a, x);                                // cross section at given x
 }
 
 ////////////////////////////////////////////////////////////////////
