@@ -24,12 +24,12 @@ add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
 
 # add SMILE library dependencies
 target_link_libraries(${TARGET} schema fundamentals)
-include_directories(../../../SMILE/schema ../../../SMILE/fundamentals)
+include_directories(../../SMILE/schema ../../SMILE/fundamentals)
 
 # add SKIRT library dependencies
 target_link_libraries(${TARGET} fitsio voro mpi utils tetgen tools geometry wavelength field grain material)
-include_directories(../../fitsio ../../voro ../mpi ../utils ../tools ../geometry ../wavelength ../field ../grain ../material)
-include_directories(SYSTEM ../../tetgen)  # suppress warnings in tetgen header
+include_directories(../fitsio ../voro ../mpi ../utils ../tools ../geometry ../wavelength ../field ../grain ../material)
+include_directories(SYSTEM ../tetgen)  # suppress warnings in tetgen header
 
 # adjust C++ compiler flags to our needs
-include("../../../SMILE/build/CompilerFlags.cmake")
+include("../../SMILE/build/CompilerFlags.cmake")

@@ -4,30 +4,29 @@
 # //////////////////////////////////////////////////////////////////
 
 # ------------------------------------------------------------------
-# Builds the SKIRT executable
+# Builds a library with the MaterialMix hierarchy (dust, electron and
+# gas mixes), MaterialMixFamily, and the shared medium-state types
+# (MaterialState, StateVariable, MediumState) and calculation helpers
+# used only by these classes
 # ------------------------------------------------------------------
 
 # set the target name
-set(TARGET skirt)
+set(TARGET material)
 
 # list the source files in this directory
 file(GLOB SOURCES "*.cpp")
 file(GLOB HEADERS "*.hpp")
 
-# create the executable target
-add_executable(${TARGET} ${SOURCES} ${HEADERS})
-
-# enable multi-threading
-find_package(Threads REQUIRED)
-target_link_libraries(${TARGET} Threads::Threads)
+# create the library target
+add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
 
 # add SMILE library dependencies
-target_link_libraries(${TARGET} serialize schema fundamentals build)
-include_directories(../../SMILE/serialize ../../SMILE/schema ../../SMILE/fundamentals ../../SMILE/build)
+target_link_libraries(${TARGET} schema fundamentals)
+include_directories(../../SMILE/schema ../../SMILE/fundamentals)
 
 # add SKIRT library dependencies
-target_link_libraries(${TARGET} simulation)
-include_directories(../core/simulation ../core/mpi ../core/utils ../core/tools ../core/geometry ../core/sed ../core/wavelength ../core/field ../core/source ../core/grain ../core/material ../core/medium ../core/instrument ../core/probe)
+target_link_libraries(${TARGET} mpi utils tools wavelength grain)
+include_directories(../mpi ../utils ../tools ../wavelength ../grain)
 
 # adjust C++ compiler flags to our needs
 include("../../SMILE/build/CompilerFlags.cmake")
