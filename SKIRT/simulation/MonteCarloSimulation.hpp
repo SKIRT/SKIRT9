@@ -201,6 +201,16 @@ class SecondarySourceSystem;
     both the scattering and absorption optical depths for the photon packet path.
 
     Refer to the performLifeCycle() function for more information on these life cycle variations.
+
+    <b>Number of photon packets</b>
+
+    The property defining the number of photon packets to be launched accepts a double-precision
+    floating point number, which is converted to an integer internally. This way one can use
+    exponential notation to specify a large number of photon packets. Also, note that a double can
+    exactly represent all integers up to 9e15. The maximum number of photon packets allowed is
+    somewhat arbitrarily set to 1e19 because that number is close to the maximum number
+    representable with a 64-bit unsigned integer.
+
     */
 class MonteCarloSimulation : public Simulation
 {
@@ -272,14 +282,6 @@ class MonteCarloSimulation : public Simulation
         ATTRIBUTE_DEFAULT_VALUE(probeSystem, "ProbeSystem")
 
     ITEM_END()
-
-    /** \fn numPackets
-        The number of photon packets is specified as a double-precision floating point number
-        rather than as a 64-bit integer to avoid implementing yet another discoverable property
-        type. As a side benefit, one can use exponential notation to specify a large number of
-        photon packets. Also, note that a double can exactly represent all integers up to 9e15. The
-        maximum number of photon packets is somewhat arbitrarily set to 1e19 because that number is
-        close to the maximum number representable with a 64-bit unsigned integer. */
 
     //============= Construction - Setup - Destruction =============
 
