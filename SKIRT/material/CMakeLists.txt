@@ -24,9 +24,13 @@ add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
 target_link_libraries(${TARGET} schema fundamentals)
 include_directories(../../SMILE/schema ../../SMILE/fundamentals)
 
-# add SKIRT library dependencies
-target_link_libraries(${TARGET} mpi utils tools wavelength grain)
-include_directories(../mpi ../utils ../tools ../wavelength ../grain)
+# add direct SKIRT library dependencies
+target_link_libraries(${TARGET} grain mpi tools utils wavelength)
+include_directories(../grain ../mpi ../tools ../utils ../wavelength)
+
+# add indirect SKIRT library dependencies (needed transitively via the direct ones above)
+target_link_libraries(${TARGET} fitsio)
+include_directories(../fitsio)
 
 # adjust C++ compiler flags to our needs
 include("../../SMILE/build/CompilerFlags.cmake")

@@ -4,7 +4,8 @@
 # //////////////////////////////////////////////////////////////////
 
 # ------------------------------------------------------------------
-# Builds a library with utility classes used in SKIRT
+# Builds a library with utility classes and interfaces used in SKIRT
+# that do not depend on any SKIRT code outside this library itself.
 # ------------------------------------------------------------------
 
 # set the target name

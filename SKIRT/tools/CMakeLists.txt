@@ -4,11 +4,10 @@
 # //////////////////////////////////////////////////////////////////
 
 # ------------------------------------------------------------------
-# Builds a library with foundational SimulationItem-tree classes:
-# SimulationItem itself, logging, random numbers, unit systems,
-# the parallel execution engine, stored-table/text/FITS I/O, and
-# the mutual-dependency-breaking *Interface types (excluding their
-# MixIn implementers, which may depend on higher-level classes)
+# Builds a library with tool classes that depend on SimulationItem:
+# SimulationItem itself, configuration, logging, random numbers,
+# unit systems, cosmology, parallel execution, input output
+# (file paths, stored-table/columns, text, FITS).
 # ------------------------------------------------------------------
 
 # set the target name
@@ -25,7 +24,7 @@ add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
 target_link_libraries(${TARGET} schema fundamentals)
 include_directories(../../SMILE/schema ../../SMILE/fundamentals)
 
-# add SKIRT library dependencies
+# add direct SKIRT library dependencies
 target_link_libraries(${TARGET} fitsio mpi utils)
 include_directories(../fitsio ../mpi ../utils)
 

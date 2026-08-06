@@ -7,7 +7,7 @@
 # Builds a library with the Probe hierarchy, the Form hierarchy, and
 # ProbeFormBridge. Probes read state from nearly every other part of
 # the simulation, so this target depends on essentially all other
-# core targets.
+# targets.
 # ------------------------------------------------------------------
 
 # set the target name
@@ -24,9 +24,13 @@ add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
 target_link_libraries(${TARGET} schema fundamentals)
 include_directories(../../SMILE/schema ../../SMILE/fundamentals)
 
-# add SKIRT library dependencies
-target_link_libraries(${TARGET} fitsio voro mpi utils tetgen tools geometry sed wavelength field source grain material medium instrument)
-include_directories(../fitsio ../voro ../mpi ../utils ../tools ../geometry ../sed ../wavelength ../field ../source ../grain ../material ../medium ../instrument)
+# add direct SKIRT library dependencies
+target_link_libraries(${TARGET} geometry grain instrument material medium mpi source tools utils wavelength)
+include_directories(../geometry ../grain ../instrument ../material ../medium ../mpi ../source ../tools ../utils ../wavelength)
+
+# add indirect SKIRT library dependencies (needed transitively via the direct ones above)
+target_link_libraries(${TARGET} field fitsio sed tetgen voro)
+include_directories(../field ../fitsio ../sed ../voro)
 include_directories(SYSTEM ../tetgen)  # suppress warnings in tetgen header
 
 # adjust C++ compiler flags to our needs

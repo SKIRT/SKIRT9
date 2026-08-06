@@ -7,8 +7,7 @@
 # Builds a library with primary emitting sources (Source), their
 # angular emission patterns (AngularDistribution) and polarization
 # profiles, and the luminosity normalizations used to scale them.
-# Secondary (dust/line re-emission) sources are deliberately excluded
-# for now; they belong elsewhere later.
+# Secondary (re-emission) sources are deliberately excluded.
 # ------------------------------------------------------------------
 
 # set the target name
@@ -25,9 +24,13 @@ add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
 target_link_libraries(${TARGET} schema fundamentals)
 include_directories(../../SMILE/schema ../../SMILE/fundamentals)
 
-# add SKIRT library dependencies
-target_link_libraries(${TARGET} utils mpi tools geometry sed wavelength field)
-include_directories(../utils ../mpi ../tools ../geometry ../sed ../wavelength ../field)
+# add direct SKIRT library dependencies
+target_link_libraries(${TARGET} field geometry mpi sed tools utils wavelength)
+include_directories(../field ../geometry ../mpi ../sed ../tools ../utils ../wavelength)
+
+# add indirect SKIRT library dependencies (needed transitively via the direct ones above)
+target_link_libraries(${TARGET} fitsio voro)
+include_directories(../fitsio ../voro)
 
 # adjust C++ compiler flags to our needs
 include("../../SMILE/build/CompilerFlags.cmake")

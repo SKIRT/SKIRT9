@@ -6,7 +6,7 @@
 #ifndef STOREDTABLEIMPL_HPP
 #define STOREDTABLEIMPL_HPP
 
-#include "Array.hpp"
+#include "Basics.hpp"
 class SimulationItem;
 
 ////////////////////////////////////////////////////////////////////
