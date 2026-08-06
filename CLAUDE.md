@@ -43,6 +43,7 @@ These apply to any change to this repository — including when reviewing a pull
 
 - **No cyclic dependencies between `SKIRT/` targets.** Every `SKIRT/` subdirectory is its own CMake target, organized as a strict dependency tree (see Repository layout below) — nothing lower in the stack may depend on something higher, directly or transitively. If a proposed change would introduce a cycle, refuse it and flag the problem rather than working around it silently (e.g. by re-homing a header to break the cycle without saying so, or leaving a residual cross-target `#include` unaddressed).
 - **Flag any change outside `SKIRT/`** (e.g. in `SMILE/`, `MakeUp/`, or this file) before making or approving it, even when it's a small, obviously-correct fix. Changes inside `SKIRT/` need no special confirmation.
+- **Keep `INCLUDE_PATH` in sync with the `SKIRT/` target list.** Both `Docs/doxygen/html.doxygen` (this repo) and `Web9/git/staging/doxygen_skirt.txt` (the sibling documentation repo) list every `SKIRT/<target>` directory in their (non-recursive) `INCLUDE_PATH`, so Doxygen can resolve cross-target `#include`s while expanding the `ItemInfo.hpp` property macros — see the comment above `INCLUDE_PATH` in either file for the full mechanism. Add, remove, or rename the corresponding entry in *both* files whenever the `SKIRT/` target list changes.
 
 ## Running a simulation
 
