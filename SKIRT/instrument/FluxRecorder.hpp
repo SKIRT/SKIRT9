@@ -9,8 +9,8 @@
 #include "Array.hpp"
 #include "ThreadLocalMember.hpp"
 #include <tuple>
-class MediumSystem;
 class PhotonPacket;
+class ExtinctionInterface;
 class SimulationItem;
 class TimeGrid;
 class WavelengthGrid;
@@ -387,10 +387,10 @@ private:
     string _quantityXY;
 
     // cached info, initialized when configuration is finalized
-    MediumSystem* _ms{nullptr};   // pointer to medium system, if present (used only if hasMedium is true)
-    bool _recordTotalOnly{true};  // becomes false if recordComponents and hasMedium are both true
-    size_t _numPixelsInFrame{0};  // number of pixels in a single IFU frame
-    int _numWavelengths{0};       // number of wavelengths in wavelength grid
+    ExtinctionInterface* _ms{nullptr};  // pointer to medium system, if present (used only if hasMedium is true)
+    bool _recordTotalOnly{true};        // becomes false if recordComponents and hasMedium are both true
+    size_t _numPixelsInFrame{0};        // number of pixels in a single IFU frame
+    int _numWavelengths{0};             // number of wavelengths in wavelength grid
 
     // detector arrays that need to be calibrated, initialized when configuration is finalized
     vector<Array> _sed;

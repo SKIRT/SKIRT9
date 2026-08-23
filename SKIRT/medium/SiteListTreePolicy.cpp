@@ -5,7 +5,6 @@
 
 #include "SiteListTreePolicy.hpp"
 #include "Log.hpp"
-#include "MediumSystem.hpp"
 #include "SiteListInterface.hpp"
 #include "TreeNode.hpp"
 
@@ -59,7 +58,7 @@ namespace
 vector<TreeNode*> SiteListTreePolicy::constructTree(TreeNode* root)
 {
     // locate the medium offering the site list
-    auto sli = find<MediumSystem>()->interface<SiteListInterface>(2);
+    auto sli = interface<SiteListInterface>(2, 2, true);
     auto log = find<Log>();
 
     // initialize the tree node list with the root node as the first item

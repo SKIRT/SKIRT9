@@ -14,7 +14,7 @@ void DefaultWavelengthDistribution::setupSelfBefore()
 {
     WavelengthDistribution::setupSelfBefore();
 
-    _range = interface<SourceWavelengthRangeInterface>()->wavelengthRange();
+    _range = interface<SourceWavelengthRangeInterface>(99, 0, true)->wavelengthRange();
     if (_range.empty()) throw FATALERROR("Source wavelength range is empty");
 
     _logMin = log(_range.min());

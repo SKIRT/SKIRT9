@@ -4,12 +4,11 @@
 # //////////////////////////////////////////////////////////////////
 
 # ------------------------------------------------------------------
-# Builds a library with MediumSystem, the Medium component hierarchy,
-# the spatial cell library classes, the SpatialGrid hierarchy (with
-# its tree-node and tree-policy helpers), the 1D Mesh hierarchy, the
-# secondary source classes and SecondarySourceSystem, and the
-# material normalization and dynamic state recipe classes used only
-# by these
+# Builds a library with MediumSystem and the Medium component hierarchy,
+# the material normalization classes, the spatial cell library classes,
+# the dynamic state recipe classes, the SpatialGrid hierarchy with
+# its tree-node and tree-policy helpers, the 1D Mesh hierarchy, the
+# SecondarySourceSystem, and the secondary source classes.
 # ------------------------------------------------------------------
 
 # set the target name

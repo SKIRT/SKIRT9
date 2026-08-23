@@ -15,7 +15,7 @@ void DiscreteWavelengthDistribution::setupSelfAfter()
     WavelengthDistribution::setupSelfAfter();
 
     // get the source wavelength range
-    Range range = interface<SourceWavelengthRangeInterface>()->wavelengthRange();
+    Range range = interface<SourceWavelengthRangeInterface>(99, 0, true)->wavelengthRange();
 
     // determine the wavelengths that fall inside the source range
     int numBins = wavelengthGrid()->numBins();

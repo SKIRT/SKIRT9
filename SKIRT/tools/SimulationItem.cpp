@@ -84,41 +84,41 @@ Item* SimulationItem::find(bool setup, SimulationItem* castToRequestedType(Item*
 
 ////////////////////////////////////////////////////////////////////
 
-SimulationItem* SimulationItem::interface(int levels, bool setup, bool offersRequestedInterface(SimulationItem*)) const
+SimulationItem* SimulationItem::interface(int upLevels, int downLevels, bool setup,
+                                          bool offersRequestedInterface(SimulationItem*)) const
 {
-    // always test the receiving object
-    SimulationItem* candidate = const_cast<SimulationItem*>(this);  // cast away const
-    if (offersRequestedInterface(candidate))
+    // walk upward from the receiving object, testing each item along the way,
+    // and remembering the uppermost ancestor reached (which may be the receiving
+    // object itself, or the root of the hierarchy if that is reached first)
+    SimulationItem* uppermost = const_cast<SimulationItem*>(this);  // cast away const
+    for (int level = 0;; ++level)
     {
-        if (setup) candidate->setup();
-        return candidate;
-    }
-
-    // test the requested number of ancestors
-    if (levels < 0)
-    {
-        while (levels++)
+        if (offersRequestedInterface(uppermost))
         {
-            candidate = dynamic_cast<SimulationItem*>(candidate->parent());
-            if (!candidate) break;
-            if (offersRequestedInterface(candidate))
-            {
-                if (setup) candidate->setup();
-                return candidate;
-            }
+            if (setup) uppermost->setup();
+            return uppermost;
         }
+        if (level == upLevels) break;
+        SimulationItem* parent = dynamic_cast<SimulationItem*>(uppermost->parent());
+        if (!parent) break;
+        uppermost = parent;
     }
 
-    // test the requested number of child levels, recursively
-    else if (levels > 0)
+    // starting from the uppermost considered ancestor, recursively test its descendants,
+    // depth-first, up to the requested number of additional levels
+    if (downLevels > 0)
     {
-        for (Item* child : candidate->children())
+        for (Item* child : uppermost->children())
         {
-            auto result = dynamic_cast<SimulationItem*>(child)->interface(levels - 1, false, offersRequestedInterface);
-            if (result)
+            auto candidate = dynamic_cast<SimulationItem*>(child);
+            if (candidate)
             {
-                if (setup) result->setup();
-                return result;
+                auto result = candidate->interface(0, downLevels - 1, false, offersRequestedInterface);
+                if (result)
+                {
+                    if (setup) result->setup();
+                    return result;
+                }
             }
         }
     }

@@ -87,20 +87,8 @@ public:
 
     /** This template function looks for a simulation item that offers the interface specified as
         template argument in the hierarchy containing the receiving object and, if found, returns a
-        pointer to that item (or rather, a pointer to the item after it has been dynamically cast
-        to the requested interface type). The function returns the first appropriate item found.
-        The portion of the hierarchy searched by the function for an appropriate item is defined by
-        the value of the \em levels argument as follows.
-
-        For levels=0, only the receiving object is considered. For levels=-N (with N a positive
-        integer), the receiving object plus N of its ancestors are considered in the order from
-        nearest to more distant ancestor. For levels=N (with N a positive integer), the receiving
-        object plus N levels of children are considered. Children at the same level are searched in
-        an undefined order, except that children part of the same item list property are guaranteed
-        to be searched in configuration order. Multiple levels are searched depth-first, i.e. the
-        children of an item are searched before the next item on the same level is considered. The
-        default value of levels is -999999, which has the effect of searching the receiving object
-        plus all of its ancestors.
+        pointer to that item after it has been dynamically cast to the requested interface type.
+        The function returns the first appropriate item found.
 
         For a simulation item to be considered as offering the requested interface, two conditions
         must be fullfilled. First, obviously, the item's class must inherit from and implement the
@@ -110,13 +98,34 @@ public:
         true. Overriding it in a subclass allows the subclass to decide at run time whether the
         conditions for offering a certain interface are fullfilled.
 
-        If the \em setup flag is true (the default value), the function invokes the setup()
-        function on the item before it is returned; if no appropriate item is found, a FatalError
-        is thrown. If the \em setup flag is false, the function does not perform setup on the item,
-        and if no appropriate item is found, the function returns a null pointer. */
-    template<class T> T* interface(int levels = -999999, bool setup = true) const
+        The portion of the hierarchy searched by the function for an appropriate item is defined by
+        the (nonnegative) value of the \em upLevels and \em downLevels arguments. The first
+        argument determines the number of ancestors of the receiving object. The second argument
+        determines the number child levels starting from the uppermost considered ancestor.
+
+        Specifically, the function first considers the receiving object. It then recursively
+        considers \em upLevels ancestors, ending at the root item of the hierachy if applicable.
+        Subsequently, starting at the uppermost considered ancestor (possibly the root of the
+        hierarchy), the function recursively considers all descendents at levels up to the value of
+        \em downLevels. Children at the same level are searched in an undefined order, except that
+        children part of the same item list property are guaranteed to be searched in configuration
+        order. Multiple levels are searched depth-first, i.e. the children of an item are searched
+        before the next item on the same level is considered.
+
+        Examples:
+        - (0, 0) considers just the receiving object.
+        - (2, 0) considers the receiving object, its parent, and its grandparent.
+        - (1, 1) considers the receiving object and its siblings.
+        - (0, 2) considers the receiving object, its children and its grandchildren.
+        - (99, 99) considers all items in the hierarchy.
+
+        If the \em setup flag is true, the function invokes the setup() function on the item before
+        it is returned; if no appropriate item is found, a FatalError is thrown. If the \em setup
+        flag is false, the function does not perform setup on the item, and if no appropriate item
+        is found, the function returns a null pointer. */
+    template<class T> T* interface(int upLevels, int downLevels, bool setup) const
     {
-        return dynamic_cast<T*>(interface(levels, setup, [](SimulationItem* item) {
+        return dynamic_cast<T*>(interface(upLevels, downLevels, setup, [](SimulationItem* item) {
             return dynamic_cast<T*>(item) != nullptr && item->offersInterface(typeid(T));
         }));
     }
@@ -129,11 +138,12 @@ private:
         */
     Item* find(bool setup, SimulationItem* castToRequestedType(Item*)) const;
 
-    /** This is the private implementation used by the interface() template function. The first two
-        arguments have the same semantics as the corresponding arguments of the template function.
-        The last argument accepts a function that returns true if the given simulation item
-        implements the requested interface, and false otherwise. */
-    SimulationItem* interface(int levels, bool setup, bool offersRequestedInterface(SimulationItem*)) const;
+    /** This is the private implementation used by the interface() template function. The first
+        three arguments have the same semantics as the corresponding arguments of the template
+        function. The last argument accepts a function that returns true if the given simulation
+        item implements the requested interface, and false otherwise. */
+    SimulationItem* interface(int upLevels, int downLevels, bool setup,
+                              bool offersRequestedInterface(SimulationItem*)) const;
 
 protected:
     /** This function is for use only by the interface() function. After detecting that the

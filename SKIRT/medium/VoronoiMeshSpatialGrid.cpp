@@ -126,18 +126,19 @@ void VoronoiMeshSpatialGrid::setupSelfBefore()
         }
         case Policy::ImportedSites:
         {
-            auto sli = find<MediumSystem>()->interface<SiteListInterface>(2);
+            auto sli = interface<SiteListInterface>(1, 2, true);
             _mesh = new VoronoiMeshSnapshot(this, extent(), sli, _relaxSites);
             break;
         }
         case Policy::ImportedMesh:
         {
-            auto ms = find<MediumSystem>(false);
-            _mesh = ms->interface<VoronoiMeshInterface>(2)->voronoiMesh();
+            _mesh = interface<VoronoiMeshInterface>(1, 2, true)->voronoiMesh();
 
             // if there is a single medium component, calculate the normalization factor imposed by it;
             // we need this to directly compute cell densities for the DensityInCellInterface
-            if (ms->media().size() == 1) _norm = _mesh->mass() > 0 ? ms->media()[0]->number() / _mesh->mass() : 0.;
+            auto ms = find<MediumSystem>(false);
+            if (ms && ms->media().size() == 1)
+                _norm = _mesh->mass() > 0 ? ms->media()[0]->number() / _mesh->mass() : 0.;
             break;
         }
     }

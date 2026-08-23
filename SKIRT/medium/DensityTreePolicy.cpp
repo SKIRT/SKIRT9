@@ -46,7 +46,7 @@ void DensityTreePolicy::setupSelfBefore()
     auto buildMIBlist = [](vector<MassInBoxInterface*>& mibv, const vector<Medium*>& media) {
         for (auto medium : media)
         {
-            auto mib = medium->interface<MassInBoxInterface>(0, false);
+            auto mib = medium->interface<MassInBoxInterface>(0, 0, false);
             if (!mib)
             {
                 mibv.clear();  // if any medium component lacks support, clear the complete list

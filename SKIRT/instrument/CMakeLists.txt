@@ -25,13 +25,12 @@ target_link_libraries(${TARGET} schema fundamentals)
 include_directories(../../SMILE/schema ../../SMILE/fundamentals)
 
 # add direct SKIRT library dependencies
-target_link_libraries(${TARGET} medium mpi tools utils wavelength)
-include_directories(../medium ../mpi ../tools ../utils ../wavelength)
+target_link_libraries(${TARGET} mpi tools utils wavelength)
+include_directories(../mpi ../tools ../utils ../wavelength)
 
 # add indirect SKIRT library dependencies (needed transitively via the direct ones above)
-target_link_libraries(${TARGET} field fitsio geometry grain material tetgen voro)
-include_directories(../field ../fitsio ../geometry ../grain ../material ../voro)
-include_directories(SYSTEM ../tetgen)  # suppress warnings in tetgen header
+target_link_libraries(${TARGET} fitsio)
+include_directories(../fitsio)
 
 # adjust C++ compiler flags to our needs
 include("../../SMILE/build/CompilerFlags.cmake")

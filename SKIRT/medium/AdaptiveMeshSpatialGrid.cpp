@@ -6,7 +6,6 @@
 #include "AdaptiveMeshSpatialGrid.hpp"
 #include "AdaptiveMeshInterface.hpp"
 #include "AdaptiveMeshSnapshot.hpp"
-#include "FatalError.hpp"
 #include "Log.hpp"
 #include "MediumSystem.hpp"
 #include "PathSegmentGenerator.hpp"
@@ -19,9 +18,7 @@ void AdaptiveMeshSpatialGrid::setupSelfBefore()
     SpatialGrid::setupSelfBefore();
 
     // locate the adaptive mesh, scanning medium components in configuration order
-    auto ms = find<MediumSystem>(false);
-    if (!ms) throw FATALERROR("There is no medium system in which to locate an adaptive mesh");
-    _mesh = ms->interface<AdaptiveMeshInterface>(2)->adaptiveMesh();
+    _mesh = interface<AdaptiveMeshInterface>(1, 2, true)->adaptiveMesh();
 
     // tell it to construct neighbor information for its cells
     find<Log>()->info("Adding neighbor information to adaptive mesh...");
@@ -29,7 +26,8 @@ void AdaptiveMeshSpatialGrid::setupSelfBefore()
 
     // if there is a single medium component, calculate the normalization factor imposed by it;
     // we need this to directly compute cell densities for the DensityInCellInterface
-    if (ms->media().size() == 1) _norm = ms->media()[0]->number() / _mesh->mass();
+    auto ms = find<MediumSystem>(false);
+    if (ms && ms->media().size() == 1) _norm = ms->media()[0]->number() / _mesh->mass();
 }
 
 //////////////////////////////////////////////////////////////////////

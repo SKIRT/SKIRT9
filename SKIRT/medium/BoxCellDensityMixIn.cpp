@@ -21,13 +21,13 @@ void BoxCellDensityMixIn::setup(SimulationItem* item)
     {
         _enabled = true;
         for (auto medium : ms->media())
-            if (!medium->interface<MassInBoxInterface>(0, false)) _enabled = false;
+            if (!medium->interface<MassInBoxInterface>(0, 0, false)) _enabled = false;
     }
 
     // if enabled, cache pointer to the interface for each medium component
     if (_enabled)
     {
-        for (auto medium : ms->media()) _mibv.push_back(medium->interface<MassInBoxInterface>(0, false));
+        for (auto medium : ms->media()) _mibv.push_back(medium->interface<MassInBoxInterface>(0, 0, false));
     }
 }
 

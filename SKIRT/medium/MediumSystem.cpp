@@ -286,7 +286,7 @@ void MediumSystem::setupSelfAfter()
     // ----- calculate medium properties parallelized on spatial cells -----
 
     log->info("Determining medium properties for " + std::to_string(_numCells) + " cells...");
-    auto dic = _grid->interface<DensityInCellInterface>(0, false);  // optional fast-track interface for densities
+    auto dic = _grid->interface<DensityInCellInterface>(0, 0, false);  // optional fast-track interface for densities
     if (dic) log->info("  (obtaining densities through calculation rather than sampling)");
     log->infoSetElapsed(_numCells);
     parfac->parallelDistributed()->call(_numCells, [this, log, dic](size_t firstIndex, size_t numIndices) {

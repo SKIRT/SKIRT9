@@ -159,7 +159,7 @@ bool AbsorptionOnlyMaterialMixDecorator::offersInterface(const std::type_info& i
 {
     if (interfaceTypeInfo == typeid(MultiGrainPopulationInterface))
     {
-        return materialMix()->interface<MultiGrainPopulationInterface>(0, false) != nullptr;
+        return materialMix()->interface<MultiGrainPopulationInterface>(0, 0, false) != nullptr;
     }
     return MaterialMix::offersInterface(interfaceTypeInfo);
 }
@@ -168,7 +168,7 @@ bool AbsorptionOnlyMaterialMixDecorator::offersInterface(const std::type_info& i
 
 int AbsorptionOnlyMaterialMixDecorator::numPopulations() const
 {
-    const auto* mgpi = materialMix()->interface<MultiGrainPopulationInterface>(0, false);
+    const auto* mgpi = materialMix()->interface<MultiGrainPopulationInterface>(0, 0, false);
     if (mgpi) return mgpi->numPopulations();
     throw FATALERROR("This function should only be called for a multi-grain dust mix");
 }
@@ -177,7 +177,7 @@ int AbsorptionOnlyMaterialMixDecorator::numPopulations() const
 
 string AbsorptionOnlyMaterialMixDecorator::populationGrainType(int c) const
 {
-    const auto* mgpi = materialMix()->interface<MultiGrainPopulationInterface>(0, false);
+    const auto* mgpi = materialMix()->interface<MultiGrainPopulationInterface>(0, 0, false);
     if (mgpi) return mgpi->populationGrainType(c);
     throw FATALERROR("This function should only be called for a multi-grain dust mix");
 }
@@ -186,7 +186,7 @@ string AbsorptionOnlyMaterialMixDecorator::populationGrainType(int c) const
 
 double AbsorptionOnlyMaterialMixDecorator::populationBulkDensity(int c) const
 {
-    const auto* mgpi = materialMix()->interface<MultiGrainPopulationInterface>(0, false);
+    const auto* mgpi = materialMix()->interface<MultiGrainPopulationInterface>(0, 0, false);
     if (mgpi) return mgpi->populationBulkDensity(c);
     throw FATALERROR("This function should only be called for a multi-grain dust mix");
 }
@@ -195,7 +195,7 @@ double AbsorptionOnlyMaterialMixDecorator::populationBulkDensity(int c) const
 
 Range AbsorptionOnlyMaterialMixDecorator::populationSizeRange(int c) const
 {
-    const auto* mgpi = materialMix()->interface<MultiGrainPopulationInterface>(0, false);
+    const auto* mgpi = materialMix()->interface<MultiGrainPopulationInterface>(0, 0, false);
     if (mgpi) return mgpi->populationSizeRange(c);
     throw FATALERROR("This function should only be called for a multi-grain dust mix");
 }
@@ -204,7 +204,7 @@ Range AbsorptionOnlyMaterialMixDecorator::populationSizeRange(int c) const
 
 const GrainSizeDistribution* AbsorptionOnlyMaterialMixDecorator::populationSizeDistribution(int c) const
 {
-    const auto* mgpi = materialMix()->interface<MultiGrainPopulationInterface>(0, false);
+    const auto* mgpi = materialMix()->interface<MultiGrainPopulationInterface>(0, 0, false);
     if (mgpi) return mgpi->populationSizeDistribution(c);
     throw FATALERROR("This function should only be called for a multi-grain dust mix");
 }
@@ -213,7 +213,7 @@ const GrainSizeDistribution* AbsorptionOnlyMaterialMixDecorator::populationSizeD
 
 double AbsorptionOnlyMaterialMixDecorator::populationMass(int c) const
 {
-    const auto* mgpi = materialMix()->interface<MultiGrainPopulationInterface>(0, false);
+    const auto* mgpi = materialMix()->interface<MultiGrainPopulationInterface>(0, 0, false);
     if (mgpi) return mgpi->populationMass(c);
     throw FATALERROR("This function should only be called for a multi-grain dust mix");
 }
@@ -222,7 +222,7 @@ double AbsorptionOnlyMaterialMixDecorator::populationMass(int c) const
 
 double AbsorptionOnlyMaterialMixDecorator::totalMass() const
 {
-    const auto* mgpi = materialMix()->interface<MultiGrainPopulationInterface>(0, false);
+    const auto* mgpi = materialMix()->interface<MultiGrainPopulationInterface>(0, 0, false);
     if (mgpi) return mgpi->totalMass();
     throw FATALERROR("This function should only be called for a multi-grain dust mix");
 }

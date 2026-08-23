@@ -4,11 +4,11 @@
 ///////////////////////////////////////////////////////////////// */
 
 #include "FluxRecorder.hpp"
+#include "ExtinctionInterface.hpp"
 #include "FITSInOut.hpp"
 #include "Indices.hpp"
 #include "LockFree.hpp"
 #include "Log.hpp"
-#include "MediumSystem.hpp"
 #include "NR.hpp"
 #include "PhotonPacket.hpp"
 #include "ProcessManager.hpp"
@@ -185,7 +185,7 @@ void FluxRecorder::includeSpectralTimeMap()
 void FluxRecorder::finalizeConfiguration()
 {
     // get a pointer to the medium system, if present
-    _ms = _parentItem->find<MediumSystem>(false);
+    _ms = _parentItem->interface<ExtinctionInterface>(2, 1, false);
 
     // get array lengths
     _numWavelengths = _lambdagrid->numBins();

@@ -9,6 +9,7 @@
 #include "Array.hpp"
 #include "DustEmissionOptions.hpp"
 #include "DynamicStateOptions.hpp"
+#include "ExtinctionInterface.hpp"
 #include "IterationOptions.hpp"
 #include "LyaOptions.hpp"
 #include "MaterialMix.hpp"
@@ -96,7 +97,7 @@ class WavelengthGrid;
     These functions support the secondary source system by offering a generic interface for
     calculating the secondary emission properties in a given spatial cell and for a given material
     type, including luminosities, spectra and polarization. */
-class MediumSystem : public SimulationItem
+class MediumSystem : public SimulationItem, public ExtinctionInterface
 {
     ITEM_CONCRETE(MediumSystem, SimulationItem, "a medium system")
         ATTRIBUTE_TYPE_ALLOWED_IF(MediumSystem, "!NoMedium")
@@ -604,8 +605,10 @@ public:
         function aborts the calculation and returns positive infinity when this happens.
 
         If the extinction cross section can be negative, this optimization cannot be applied
-        because the cumulative optical depth could decrease again further along the path. */
-    double getExtinctionOpticalDepth(const PhotonPacket* pp, double distance) const;
+        because the cumulative optical depth could decrease again further along the path.
+
+        This function implements the ExtinctionInterface interface. */
+    double getExtinctionOpticalDepth(const PhotonPacket* pp, double distance) const override;
 
     /** This function returns the extinction optical depth at the specified wavelength along a path
         through the medium system, taking into account only medium components with the specified
