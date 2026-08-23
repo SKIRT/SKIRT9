@@ -6,7 +6,7 @@
 # ------------------------------------------------------------------
 # Builds a library that supports building Voronoi meshes.
 # The source code is taken from the Voro++ library written by
-# Chris H. Rycroft (Harvard University/Lawrence Berkeley Laboratory)
+# Chris H. Rycroft (University of California, Berkeley / Lawrence Berkeley Laboratory)
 # at https://github.com/chr1shr/voro (git commit 122531f).
 #
 # Changes:
