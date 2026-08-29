@@ -385,6 +385,13 @@ void Snapshot::calculateDensityAndMass(Array& rhov, Array& cumrhov, double& mass
 
 ////////////////////////////////////////////////////////////////////
 
+double Snapshot::massForAveraging(int /*m*/) const
+{
+    return 1.;
+}
+
+////////////////////////////////////////////////////////////////////
+
 double Snapshot::volume() const
 {
     return extent().volume();
@@ -417,7 +424,8 @@ double Snapshot::metallicity(Position bfr) const
 {
     thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
     getEntities(entities, bfr);
-    return entities.averageValue([this](int m) { return metallicity(m); }, [this](int m) { return currentMass(m); });
+    return entities.averageValue([this](int m) { return metallicity(m); },
+                                 [this](int m) { return massForAveraging(m); });
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -440,7 +448,8 @@ double Snapshot::temperature(Position bfr) const
 {
     thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
     getEntities(entities, bfr);
-    return entities.averageValue([this](int m) { return temperature(m); }, [this](int m) { return currentMass(m); });
+    return entities.averageValue([this](int m) { return temperature(m); },
+                                 [this](int m) { return massForAveraging(m); });
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -457,7 +466,7 @@ Vec Snapshot::velocity(Position bfr) const
 {
     thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
     getEntities(entities, bfr);
-    return entities.averageValue([this](int m) { return velocity(m); }, [this](int m) { return currentMass(m); });
+    return entities.averageValue([this](int m) { return velocity(m); }, [this](int m) { return massForAveraging(m); });
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -481,7 +490,8 @@ Vec Snapshot::magneticField(Position bfr) const
 {
     thread_local EntityCollection entities;  // can be reused for all queries in a given execution thread
     getEntities(entities, bfr);
-    return entities.averageValue([this](int m) { return magneticField(m); }, [this](int m) { return currentMass(m); });
+    return entities.averageValue([this](int m) { return magneticField(m); },
+                                 [this](int m) { return massForAveraging(m); });
 }
 
 ////////////////////////////////////////////////////////////////////

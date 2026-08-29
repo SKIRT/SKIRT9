@@ -325,6 +325,16 @@ const Array& ParticleSnapshot::properties(int m) const
 
 ////////////////////////////////////////////////////////////////////
 
+double ParticleSnapshot::massForAveraging(int m) const
+{
+    if (hasMassDensityPolicy()) return _pv[m].mass();
+    if (hasCurrentMass()) return currentMass(m);
+    if (hasInitialMass()) return initialMass(m);
+    return 1.;
+}
+
+////////////////////////////////////////////////////////////////////
+
 void ParticleSnapshot::getEntities(EntityCollection& entities, Position bfr) const
 {
     entities.clear();

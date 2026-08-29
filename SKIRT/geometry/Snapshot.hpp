@@ -403,6 +403,15 @@ protected:
         range, the behavior is undefined. */
     virtual const Array& properties(int m) const = 0;
 
+    /** This function returns the mass to be used for weighing the entity with index \f$0\le m \le
+        N_\mathrm{ent}-1\f$ when averaging a quantity over a set of entities, as done by the
+        Position-based property query functions implemented in this class (see for example
+        velocity(Position)). The implementation in this base class always returns 1, so that all
+        entities are weighed equally. A subclass can override this function to weigh entities by an
+        appropriate notion of mass, if one is available for that snapshot type. If the index is out
+        of range, the behavior is undefined. */
+    virtual double massForAveraging(int m) const;
+
 public:
     /** This function replaces the contents of the specified entity collection by the set of
         entities that overlap the specified point \f${\bf{r}}\f$, with their corresponding weights.

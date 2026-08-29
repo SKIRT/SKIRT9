@@ -116,6 +116,13 @@ protected:
         of range, the behavior is undefined. */
     const Array& properties(int m) const override;
 
+    /** This function returns the mass to be used for weighing the particle with index \f$0\le m
+        \le N_\mathrm{ent}-1\f$: the effective mass held by the compact particle representation if
+        a density policy has been set; otherwise the current mass if it is being imported;
+        otherwise the initial mass if it is being imported; otherwise 1. If the index is out of
+        range, the behavior is undefined. */
+    double massForAveraging(int m) const override;
+
 public:
     /** This function replaces the contents of the specified entity collection by the set of
         particles with a smoothing kernel that overlaps the specified point \f${\bf{r}}\f$. The
