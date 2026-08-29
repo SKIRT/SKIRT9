@@ -282,8 +282,12 @@ void FluxRecorder::finalizeConfiguration()
     {
         _wsed.resize(maxContributionPower + 1);
         _wifu.resize(maxContributionPower + 1);
+        _wlc.resize(maxContributionPower + 1);
+        _wstm.resize(maxContributionPower + 1);
         for (auto& array : _wsed) array.resize(lenSED);
         for (auto& array : _wifu) array.resize(lenIFU);
+        for (auto& array : _wlc) array.resize(lenLC);
+        for (auto& array : _wstm) array.resize(lenSTM);
     }
 
     // calculate and log allocated memory size
@@ -295,6 +299,8 @@ void FluxRecorder::finalizeConfiguration()
     for (const auto& array : _stm) allocatedSize += array.size();
     for (const auto& array : _wsed) allocatedSize += array.size();
     for (const auto& array : _wifu) allocatedSize += array.size();
+    for (const auto& array : _wlc) allocatedSize += array.size();
+    for (const auto& array : _wstm) allocatedSize += array.size();
     _parentItem->find<Log>()->info(_parentItem->typeAndName() + " allocated "
                                    + StringUtils::toMemSizeString(allocatedSize * sizeof(double)) + " of memory");
 }
@@ -450,11 +456,23 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
 
                 // record in STM arrays
                 if (_includeSpectralTimeMap) record(_stm, ell + k * _numWavelengths, L, Lext, false);
+
+                // record statistics for LCs and STMs
+                if (_recordStatistics)
+                {
+                    TimeContributionList* timeContributionList = _timeContributionLists.local();
+                    if (!timeContributionList->hasHistoryIndex(pp->historyIndex()))
+                    {
+                        recordTimeContributions(timeContributionList);
+                        timeContributionList->reset(pp->historyIndex());
+                    }
+                    timeContributionList->addContribution(ell, k, Lext);
+                }
             }
         }
 
-        // record statistics for both SEDs and IFUs (not yet implemented for time instruments)
-        if (_recordStatistics)
+        // record statistics for SEDs and IFUs
+        if (_recordStatistics && (_includeFluxDensity || _includeSurfaceBrightness))
         {
             ContributionList* contributionList = _contributionLists.local();
             if (!contributionList->hasHistoryIndex(pp->historyIndex()))
@@ -477,6 +495,13 @@ void FluxRecorder::flush()
         recordContributions(contributionList);
         contributionList->reset();
     }
+
+    // record the dangling time contributions from all threads
+    for (TimeContributionList* timeContributionList : _timeContributionLists.all())
+    {
+        recordTimeContributions(timeContributionList);
+        timeContributionList->reset();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -491,6 +516,8 @@ void FluxRecorder::calibrateAndWrite()
     for (auto& array : _stm) ProcessManager::sumToRoot(array);
     for (auto& array : _wsed) ProcessManager::sumToRoot(array);
     for (auto& array : _wifu) ProcessManager::sumToRoot(array);
+    for (auto& array : _wlc) ProcessManager::sumToRoot(array);
+    for (auto& array : _wstm) ProcessManager::sumToRoot(array);
 
     // calibrate and write only in the root process
     if (!ProcessManager::isRoot()) return;
@@ -883,6 +910,28 @@ void FluxRecorder::calibrateAndWrite()
             lcFile.writeRow(values);
         }
         lcFile.close();
+
+        // output statistics to a separate file
+        if (_recordStatistics)
+        {
+            // open the file and add the column headers
+            TextOutFile statFile(_parentItem, _instrumentName + "_lcstats", "LC statistics");
+            statFile.addColumn("time lag", units->utimelag());
+            for (int p = 0; p <= maxContributionPower; ++p)
+            {
+                statFile.addColumn("Sum[w_i**" + std::to_string(p) + "]");
+            }
+            statFile.writeLine("# --> w_i is luminosity contribution (in W) from i_th launched photon");
+
+            // write the column data
+            for (int k = 0; k != numTimes; ++k)
+            {
+                vector<double> values({units->otimelag(_timegrid->time(k))});
+                for (int p = 0; p <= maxContributionPower; ++p) values.push_back(_wlc[p][k]);
+                statFile.writeRow(values);
+            }
+            statFile.close();
+        }
     }
 
     // ---------------------- STM: spectral-time map ----------------------
@@ -933,6 +982,20 @@ void FluxRecorder::calibrateAndWrite()
                     }
                 }
             }
+
+            // reverse the statistics data
+            for (auto& array : _wstm)
+            {
+                if (array.size())
+                {
+                    for (int k = 0; k < numTimes; ++k)
+                    {
+                        double* begin = &array[k * _numWavelengths];
+                        double* end = begin + _numWavelengths;
+                        std::reverse(begin, end);
+                    }
+                }
+            }
         }
 
         // build a list of file names and corresponding pointers to ifu arrays (which may be empty)
@@ -952,6 +1015,30 @@ void FluxRecorder::calibrateAndWrite()
                 FITSInOut::writeMap(_parentItem, description, filename, *(stmArrays[q]),
                                     units->uspectraltimefluxdensity(), wavegrid, timegrid, units->uwavelength(),
                                     units->utimelag(), info.get());
+            }
+        }
+
+        // output statistics to additional files
+        if (_recordStatistics)
+        {
+            // the output files have single-precision floating point numbers with range of only about 10^+-38
+            // --> scale the values to a range that has a maximum of 10^+-38 to minimize the number of underflows
+            const double WMAX = 1e38;
+            Array cs(maxContributionPower);
+            for (int p = 1; p <= maxContributionPower; ++p)
+            {
+                cs[p - 1] = pow(WMAX / _wstm[p].max(), 1. / p);  // inverse of WMAX == c**p w[p].max()
+            }
+            double c = cs.min();
+            double cn = 1.;
+            for (int p = 0; p <= maxContributionPower; ++p)
+            {
+                string filename = _instrumentName + "_stm_stats" + std::to_string(p);
+                string description = "sum of contributions to the power of " + std::to_string(p);
+                _wstm[p] *= cn;
+                FITSInOut::writeMap(_parentItem, description, filename, _wstm[p], "", wavegrid, timegrid,
+                                    units->uwavelength(), units->utimelag());
+                cn *= c;
             }
         }
     }
@@ -1006,6 +1093,59 @@ void FluxRecorder::recordContributions(ContributionList* contributionList)
                         LockFree::add(_wifu[k][lell], wn);
                         wn *= w;
                     }
+                }
+                w = 0;
+            }
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
+void FluxRecorder::recordTimeContributions(TimeContributionList* contributionList)
+{
+    // sort the contributions on time and wavelength index so that contributions to the same bin are consecutive
+    contributionList->sort();
+    const vector<TimeContribution>& contributions = contributionList->contributions();
+    size_t numContributions = contributions.size();
+
+    // for LCs, group contributions on k index (time bin)
+    if (_includeLightCurve)
+    {
+        double w = 0;
+        for (size_t i = 0; i != numContributions; ++i)
+        {
+            w += contributions[i].w();
+            if (i + 1 == numContributions || contributions[i].k() != contributions[i + 1].k())
+            {
+                int k = contributions[i].k();
+                double wn = 1.;
+                for (int p = 0; p <= maxContributionPower; ++p)
+                {
+                    LockFree::add(_wlc[p][k], wn);
+                    wn *= w;
+                }
+                w = 0;
+            }
+        }
+    }
+
+    // for STMs, group contributions on ellk index (wavelength and time bins)
+    if (_includeSpectralTimeMap)
+    {
+        double w = 0;
+        for (size_t i = 0; i != numContributions; ++i)
+        {
+            w += contributions[i].w();
+            if (i + 1 == numContributions || contributions[i].k() != contributions[i + 1].k()
+                || contributions[i].ell() != contributions[i + 1].ell())
+            {
+                size_t ellk = contributions[i].ell() + contributions[i].k() * _numWavelengths;
+                double wn = 1.;
+                for (int p = 0; p <= maxContributionPower; ++p)
+                {
+                    LockFree::add(_wstm[p][ellk], wn);
+                    wn *= w;
                 }
                 w = 0;
             }

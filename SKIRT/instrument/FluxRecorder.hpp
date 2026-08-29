@@ -50,25 +50,26 @@ class WavelengthGrid;
     The class can also record information intended for calculating statistical properties of the
     results. Let \f$N\f$ denote the number of primary and secondary photon packets launched during
     the peel-off segments of the simulation. We define \f$w_i, i=1,\dots,N\f$ as the contribution
-    of the \f$i\f$th photon packet to a particular bin (a wavelength bin for an %SED, or a pixel in
-    one of the wavelength frames for an IFU). The value of \f$w_i\f$ includes the contributions of
-    all photon packets peeled-off and/or scattered from the originally launched packet (called the
-    \em history of that packet). Given this definition, the class tracks and outputs the sums
-    \f$\sum_i w_i^k\f$, with \f$k=0,\dots,4\f$ for each bin. These sums allow calculating second
-    order statistical properties such as the relative error \f$R\f$ and fourth order statistical
-    properties such as the variance of the variance VOV. For more information, see, e.g., the user
-    manual for the MCNP code (A General Monte Carlo N-Particle Transport Code, Version 5, April 24,
-    2003, Revised 2/1/2008, Los Alamos National Laboratory, USA) or Camps and Baes 2018 (ApJ).
-
-    \note Currently, statistics are not implemented for the LC and STM output types.
+    of the \f$i\f$th photon packet to a particular bin (a wavelength bin for an %SED, a pixel in
+    one of the wavelength frames for an IFU, a time bin for an LC, or a wavelength/time bin for an
+    STM). The value of \f$w_i\f$ includes the contributions of all photon packets peeled-off and/or
+    scattered from the originally launched packet (called the \em history of that packet). Given
+    this definition, the class tracks and outputs the sums \f$\sum_i w_i^k\f$, with \f$k=0,\dots,4\f$
+    for each bin. These sums allow calculating second order statistical properties such as the
+    relative error \f$R\f$ and fourth order statistical properties such as the variance of the
+    variance VOV. For more information, see, e.g., the user manual for the MCNP code (A General
+    Monte Carlo N-Particle Transport Code, Version 5, April 24, 2003, Revised 2/1/2008, Los Alamos
+    National Laboratory, USA) or Camps and Baes 2018 (ApJ).
 
     All of these output possibilities are summarized in the table below. A separate IFU or STM
     output file is written for each line in the table; the first column in the table lists the
-    portion of the output filename <tt>prefix_instr_XXX.fits</tt> indicating the output type. Note
-    that an output file is created only if the corresponding information has been requested \em and
-    it is meaningful. For example, if the transparent flux is know to be identical to the total
-    flux (because there are no media), the transparent file is not written. Also, if the simulation
-    does not include media emission, the secondary flux files are not written.
+    portion of the output filename <tt>prefix_instr_XXX.fits</tt> indicating the output type (for
+    an STM, the filename additionally includes an <tt>stm_</tt> infix, i.e.
+    <tt>prefix_instr_stm_XXX.fits</tt>). Note that an output file is created only if the
+    corresponding information has been requested \em and it is meaningful. For example, if the
+    transparent flux is know to be identical to the total flux (because there are no media), the
+    transparent file is not written. Also, if the simulation does not include media emission, the
+    secondary flux files are not written.
 
     File name              | Description | Configured by
     -----------------------|-------------|--------------
@@ -102,9 +103,10 @@ class WavelengthGrid;
     Flux components for Stokes vector elements | \em recordComponents = true & \em recordPolarization = true
     N-times scattered primary flux             | \em recordComponents = true & \em numScatteringLevels > 0
 
-    The second file, called <tt>prefix_instr_sedstats.txt</tt>, is written only if statistics are
-    requested. It includes a column for the wavelength plus a column for each of the individual
-    photon contribution sums, for powers from zero to 4.
+    The second file, called <tt>prefix_instr_sedstats.txt</tt> or <tt>prefix_instr_lcstats.txt</tt>,
+    is written only if statistics are requested. It includes a column for the wavelength or time
+    lag, respectively, plus a column for each of the individual photon contribution sums, for
+    powers from zero to 4.
 
     Calling sequence
     ----------------
@@ -342,6 +344,43 @@ private:
         specified list into the statistics arrays. */
     void recordContributions(ContributionList* contributionList);
 
+    /** Private data structure to remember a single contribution from a photon packet to a time
+        statistics bin (used for LC and STM output). */
+    class TimeContribution
+    {
+    public:
+        TimeContribution(int ell, int k, double w) : _ell(ell), _k(k), _w(w) {}
+        bool operator<(const TimeContribution& c) const { return std::tie(_k, _ell) < std::tie(c._k, c._ell); }
+        int ell() const { return _ell; }
+        int k() const { return _k; }
+        double w() const { return _w; }
+
+    private:
+        int _ell{0};   // wavelength index (relevant only for STM)
+        int _k{0};     // time index
+        double _w{0};  // contribution
+    };
+
+    /** Private data structure to remember a list of time contributions for a given photon packet
+        history. See ContributionList for more information. */
+    class TimeContributionList
+    {
+    public:
+        bool hasHistoryIndex(size_t historyIndex) const { return _historyIndex == historyIndex; }
+        void addContribution(int ell, int k, double w) { _contributions.emplace_back(ell, k, w); }
+        void reset(size_t historyIndex = 0) { _historyIndex = historyIndex, _contributions.clear(); }
+        void sort() { std::sort(_contributions.begin(), _contributions.end()); }
+        const vector<TimeContribution>& contributions() const { return _contributions; }
+
+    private:
+        size_t _historyIndex{0};
+        vector<TimeContribution> _contributions;
+    };
+
+    /** This private helper function records the photon packet history contributions in the
+        specified list into the time statistics arrays (used for LC and STM output). */
+    void recordTimeContributions(TimeContributionList* contributionList);
+
     //======================== Data Members ========================
 
 private:
@@ -402,9 +441,12 @@ private:
     // detector arrays for statistics that should not be calibrated, initialized when configuration is finalized
     vector<Array> _wsed;
     vector<Array> _wifu;
+    vector<Array> _wlc;
+    vector<Array> _wstm;
 
-    // thread-local contribution list
+    // thread-local contribution lists
     ThreadLocalMember<ContributionList> _contributionLists;
+    ThreadLocalMember<TimeContributionList> _timeContributionLists;
 };
 
 ////////////////////////////////////////////////////////////////////
