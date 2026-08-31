@@ -436,7 +436,7 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
         if (_includeFluxDensity)
         {
             record(_sed, ell, L, Lext, true);
-            if (_recordStatistics) recordContributions(_wsedLists, _wsed, pp->historyIndex(), ell, Lext);
+            if (_recordStatistics) recordContribution(_wsedLists, _wsed, pp->historyIndex(), ell, Lext);
         }
 
         // record in IFU arrays
@@ -444,7 +444,7 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
         {
             size_t index = l + ell * _numPixelsInFrame;
             record(_ifu, index, L, Lext, false);
-            if (_recordStatistics) recordContributions(_wifuLists, _wifu, pp->historyIndex(), index, Lext);
+            if (_recordStatistics) recordContribution(_wifuLists, _wifu, pp->historyIndex(), index, Lext);
         }
 
         // if this is a time instrument
@@ -461,7 +461,7 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
                     // to allow converting the aggregated value between an amount of energy and a number of photons
                     record(_lc, k, L, Lext, true);
                     record(_lcw, k, L * wavelength, Lext * wavelength, true);
-                    if (_recordStatistics) recordContributions(_wlcLists, _wlc, pp->historyIndex(), k, Lext);
+                    if (_recordStatistics) recordContribution(_wlcLists, _wlc, pp->historyIndex(), k, Lext);
                 }
 
                 // record in STM arrays
@@ -469,7 +469,7 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
                 {
                     size_t index = ell + k * _numWavelengths;
                     record(_stm, index, L, Lext, false);
-                    if (_recordStatistics) recordContributions(_wstmLists, _wstm, pp->historyIndex(), index, Lext);
+                    if (_recordStatistics) recordContribution(_wstmLists, _wstm, pp->historyIndex(), index, Lext);
                 }
             }
         }
@@ -1074,8 +1074,8 @@ void FluxRecorder::flushContributionList(ContributionList* contributionList, vec
 
 ////////////////////////////////////////////////////////////////////
 
-void FluxRecorder::recordContributions(ThreadLocalMember<ContributionList>& contributionLists, vector<Array>& target,
-                                       size_t historyIndex, size_t index, double w)
+void FluxRecorder::recordContribution(ThreadLocalMember<ContributionList>& contributionLists, vector<Array>& target,
+                                      size_t historyIndex, size_t index, double w)
 {
     ContributionList* contributionList = contributionLists.local();
     if (!contributionList->hasHistoryIndex(historyIndex))

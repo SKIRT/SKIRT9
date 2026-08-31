@@ -351,8 +351,8 @@ private:
         that corresponds to that array. If the specified history index differs from the one
         currently buffered in the thread-local list, the previously buffered contributions are
         first flushed to the target array (see flushContributionList()). */
-    void recordContributions(ThreadLocalMember<ContributionList>& contributionLists, vector<Array>& target,
-                             size_t historyIndex, size_t index, double w);
+    void recordContribution(ThreadLocalMember<ContributionList>& contributionLists, vector<Array>& target,
+                            size_t historyIndex, size_t index, double w);
 
     //======================== Data Members ========================
 
@@ -417,7 +417,7 @@ private:
     vector<Array> _wlc;
     vector<Array> _wstm;
 
-    // thread-local contribution lists, one per statistics detector array (see recordContributions())
+    // thread-local contribution lists, one per statistics detector array (see recordContribution())
     ThreadLocalMember<ContributionList> _wsedLists;
     ThreadLocalMember<ContributionList> _wifuLists;
     ThreadLocalMember<ContributionList> _wlcLists;
