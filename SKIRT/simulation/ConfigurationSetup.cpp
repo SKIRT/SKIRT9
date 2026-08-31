@@ -486,18 +486,32 @@ void ConfigurationSetup::setupSelfAfter()
         log->info("  Photon life cycle: " + ea + " explicit absorption; " + fs + " forced scattering");
     }
 
-    // disable path length stretching if the wavelength of a photon packet can change during its lifetime
-    if ((_hasMovingMedia || _hasScatteringDispersion || _hubbleExpansionRate || _hasLymanAlpha) && _forceScattering
-        && _pathLengthBias > 0.)
+    // log path length stretching issues
+    if (_forceScattering)
     {
-        log->warning("  Disabling path length stretching to allow Doppler shifts to be properly sampled");
-        _pathLengthBias = 0.;
+        // disable path length stretching if the wavelength of a photon packet can change during a scattering event
+        if (_pathLengthBias > 0. && _hasScatteringDispersion)
+        {
+            log->warning("  Disabling path length stretching because it is ineffective when scattering can change the "
+                         "photon wavelength");
+            _pathLengthBias = 0.;
+        }
+
+        // disable path length stretching if explicit absorption is enabled
+        if (_pathLengthBias > 0. && _explicitAbsorption)
+        {
+            log->warning("  Disabling path length stretching because it is ineffective with explicit absorption");
+            _pathLengthBias = 0.;
+        }
     }
-    // inform user that path length stretching is not implemented for non-forced scattering
-    if (!_forceScattering && _pathLengthBias > 0.)
+    else
     {
-        log->warning("  Disabling path length stretching because it is not implemented without forced scattering");
-        _pathLengthBias = 0.;
+        // inform user that path length stretching is not implemented for non-forced scattering
+        if (_pathLengthBias > 0.)
+        {
+            log->warning("  Disabling path length stretching because it is not implemented without forced scattering");
+            _pathLengthBias = 0.;
+        }
     }
 
     // --- log magnetic field issues ---
