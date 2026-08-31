@@ -306,44 +306,30 @@ public:
 
 private:
     /** Private data structure to remember a single contribution from a photon packet to a
-        statistics bin, identified by a \em primary and a \em secondary grouping index (the
-        meaning of each index depends on the client; see the addContribution() calls in detect()).
-        A list of these contributions is sorted and then grouped by the client into bins, either by
-        the primary index alone or by the combination of both indices (see operator<()). Grouping
-        by the primary index alone requires that index to be the first (and thus primary) sort key,
-        which is why it is passed as the constructor's first argument; grouping by the combination
-        of both indices works regardless of which of the two is passed first, because sorting on
-        either order keeps identical (primary, secondary) pairs consecutive. */
+        statistics bin, identified by the target index of that bin in the (single) detector array
+        for which this contribution was recorded. */
     class Contribution
     {
     public:
-        Contribution(int primary, int secondary, double w) : _primary(primary), _secondary(secondary), _w(w) {}
-        bool operator<(const Contribution& c) const
-        {
-            return std::tie(_primary, _secondary) < std::tie(c._primary, c._secondary);
-        }
-        int primary() const { return _primary; }
-        int secondary() const { return _secondary; }
+        Contribution(size_t index, double w) : _index(index), _w(w) {}
+        bool operator<(const Contribution& c) const { return _index < c._index; }
+        size_t index() const { return _index; }
         double w() const { return _w; }
 
     private:
-        int _primary{0};    // primary grouping index; must be used alone for single-index grouping
-        int _secondary{0};  // secondary grouping index; used only for pair-wise grouping
-        double _w{0};       // contribution
+        size_t _index{0};  // target index in the detector array
+        double _w{0};      // contribution
     };
 
     /** Private data structure to remember a list of contributions for a given photon packet
-        history. We assume that all detections for a given history are handled inside the same
-        execution thread and that histories (within a particular thread) are handled one after the
-        other (i.e. not interleaved). */
+        history, destined for a single detector array. We assume that all detections for a given
+        history are handled inside the same execution thread and that histories (within a
+        particular thread) are handled one after the other (i.e. not interleaved). */
     class ContributionList
     {
     public:
         bool hasHistoryIndex(size_t historyIndex) const { return _historyIndex == historyIndex; }
-        void addContribution(int primary, int secondary, double w)
-        {
-            _contributions.emplace_back(primary, secondary, w);
-        }
+        void addContribution(size_t index, double w) { _contributions.emplace_back(index, w); }
         void reset(size_t historyIndex = 0) { _historyIndex = historyIndex, _contributions.clear(); }
         void sort() { std::sort(_contributions.begin(), _contributions.end()); }
         const vector<Contribution>& contributions() const { return _contributions; }
@@ -353,13 +339,20 @@ private:
         vector<Contribution> _contributions;
     };
 
-    /** This private helper function records the photon packet history contributions in the
-        specified list into the SED/IFU statistics arrays. */
-    void recordContributions(ContributionList* contributionList);
+    /** This private helper function sums the (already sorted) contributions in the specified list,
+        grouped by target index, and adds the appropriate powers of each group's total to the
+        corresponding statistics detector array. It is used both to process a photon packet history
+        that has just been superseded by the next one, and to process the dangling contributions of
+        all histories still buffered when the simulation ends. */
+    void flushContributionList(ContributionList* contributionList, vector<Array>& target);
 
-    /** This private helper function records the photon packet history contributions in the
-        specified list into the LC/STM statistics arrays. */
-    void recordTimeContributions(ContributionList* contributionList);
+    /** This private helper function records a single contribution to the specified statistics
+        detector array on behalf of the given photon packet history, using the thread-local list
+        that corresponds to that array. If the specified history index differs from the one
+        currently buffered in the thread-local list, the previously buffered contributions are
+        first flushed to the target array (see flushContributionList()). */
+    void recordContributions(ThreadLocalMember<ContributionList>& contributionLists, vector<Array>& target,
+                             size_t historyIndex, size_t index, double w);
 
     //======================== Data Members ========================
 
@@ -424,9 +417,11 @@ private:
     vector<Array> _wlc;
     vector<Array> _wstm;
 
-    // thread-local contribution lists (see Contribution for why the two are kept separate)
-    ThreadLocalMember<ContributionList> _contributionLists;      // for SED/IFU: primary=wavelength, secondary=pixel
-    ThreadLocalMember<ContributionList> _timeContributionLists;  // for LC/STM: primary=time, secondary=wavelength
+    // thread-local contribution lists, one per statistics detector array (see recordContributions())
+    ThreadLocalMember<ContributionList> _wsedLists;
+    ThreadLocalMember<ContributionList> _wifuLists;
+    ThreadLocalMember<ContributionList> _wlcLists;
+    ThreadLocalMember<ContributionList> _wstmLists;
 };
 
 ////////////////////////////////////////////////////////////////////
