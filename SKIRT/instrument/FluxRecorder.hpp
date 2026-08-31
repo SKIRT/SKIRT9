@@ -306,20 +306,30 @@ public:
 
 private:
     /** Private data structure to remember a single contribution from a photon packet to a
-        statistics bin. */
+        statistics bin, identified by a \em primary and a \em secondary grouping index (the
+        meaning of each index depends on the client; see the addContribution() calls in detect()).
+        A list of these contributions is sorted and then grouped by the client into bins, either by
+        the primary index alone or by the combination of both indices (see operator<()). Grouping
+        by the primary index alone requires that index to be the first (and thus primary) sort key,
+        which is why it is passed as the constructor's first argument; grouping by the combination
+        of both indices works regardless of which of the two is passed first, because sorting on
+        either order keeps identical (primary, secondary) pairs consecutive. */
     class Contribution
     {
     public:
-        Contribution(int ell, int l, double w) : _ell(ell), _l(l), _w(w) {}
-        bool operator<(const Contribution& c) const { return std::tie(_ell, _l) < std::tie(c._ell, c._l); }
-        int ell() const { return _ell; }
-        int l() const { return _l; }
+        Contribution(int primary, int secondary, double w) : _primary(primary), _secondary(secondary), _w(w) {}
+        bool operator<(const Contribution& c) const
+        {
+            return std::tie(_primary, _secondary) < std::tie(c._primary, c._secondary);
+        }
+        int primary() const { return _primary; }
+        int secondary() const { return _secondary; }
         double w() const { return _w; }
 
     private:
-        int _ell{0};   // wavelength index
-        int _l{0};     // pixel index (relevant only for IFUs)
-        double _w{0};  // contribution
+        int _primary{0};    // primary grouping index; must be used alone for single-index grouping
+        int _secondary{0};  // secondary grouping index; used only for pair-wise grouping
+        double _w{0};       // contribution
     };
 
     /** Private data structure to remember a list of contributions for a given photon packet
@@ -330,7 +340,10 @@ private:
     {
     public:
         bool hasHistoryIndex(size_t historyIndex) const { return _historyIndex == historyIndex; }
-        void addContribution(int ell, int l, double w) { _contributions.emplace_back(ell, l, w); }
+        void addContribution(int primary, int secondary, double w)
+        {
+            _contributions.emplace_back(primary, secondary, w);
+        }
         void reset(size_t historyIndex = 0) { _historyIndex = historyIndex, _contributions.clear(); }
         void sort() { std::sort(_contributions.begin(), _contributions.end()); }
         const vector<Contribution>& contributions() const { return _contributions; }
@@ -341,45 +354,12 @@ private:
     };
 
     /** This private helper function records the photon packet history contributions in the
-        specified list into the statistics arrays. */
+        specified list into the SED/IFU statistics arrays. */
     void recordContributions(ContributionList* contributionList);
 
-    /** Private data structure to remember a single contribution from a photon packet to a time
-        statistics bin (used for LC and STM output). */
-    class TimeContribution
-    {
-    public:
-        TimeContribution(int ell, int k, double w) : _ell(ell), _k(k), _w(w) {}
-        bool operator<(const TimeContribution& c) const { return std::tie(_k, _ell) < std::tie(c._k, c._ell); }
-        int ell() const { return _ell; }
-        int k() const { return _k; }
-        double w() const { return _w; }
-
-    private:
-        int _ell{0};   // wavelength index (relevant only for STM)
-        int _k{0};     // time index
-        double _w{0};  // contribution
-    };
-
-    /** Private data structure to remember a list of time contributions for a given photon packet
-        history. See ContributionList for more information. */
-    class TimeContributionList
-    {
-    public:
-        bool hasHistoryIndex(size_t historyIndex) const { return _historyIndex == historyIndex; }
-        void addContribution(int ell, int k, double w) { _contributions.emplace_back(ell, k, w); }
-        void reset(size_t historyIndex = 0) { _historyIndex = historyIndex, _contributions.clear(); }
-        void sort() { std::sort(_contributions.begin(), _contributions.end()); }
-        const vector<TimeContribution>& contributions() const { return _contributions; }
-
-    private:
-        size_t _historyIndex{0};
-        vector<TimeContribution> _contributions;
-    };
-
     /** This private helper function records the photon packet history contributions in the
-        specified list into the time statistics arrays (used for LC and STM output). */
-    void recordTimeContributions(TimeContributionList* contributionList);
+        specified list into the LC/STM statistics arrays. */
+    void recordTimeContributions(ContributionList* contributionList);
 
     //======================== Data Members ========================
 
@@ -444,9 +424,9 @@ private:
     vector<Array> _wlc;
     vector<Array> _wstm;
 
-    // thread-local contribution lists
-    ThreadLocalMember<ContributionList> _contributionLists;
-    ThreadLocalMember<TimeContributionList> _timeContributionLists;
+    // thread-local contribution lists (see Contribution for why the two are kept separate)
+    ThreadLocalMember<ContributionList> _contributionLists;      // for SED/IFU: primary=wavelength, secondary=pixel
+    ThreadLocalMember<ContributionList> _timeContributionLists;  // for LC/STM: primary=time, secondary=wavelength
 };
 
 ////////////////////////////////////////////////////////////////////

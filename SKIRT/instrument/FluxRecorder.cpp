@@ -458,20 +458,24 @@ void FluxRecorder::detect(PhotonPacket* pp, int l, double distance)
                 if (_includeSpectralTimeMap) record(_stm, ell + k * _numWavelengths, L, Lext, false);
 
                 // record statistics for LCs and STMs
+                // (the time bin k is passed as the primary index because LC statistics must group
+                // contributions by time bin alone, regardless of wavelength; see Contribution)
                 if (_recordStatistics)
                 {
-                    TimeContributionList* timeContributionList = _timeContributionLists.local();
+                    ContributionList* timeContributionList = _timeContributionLists.local();
                     if (!timeContributionList->hasHistoryIndex(pp->historyIndex()))
                     {
                         recordTimeContributions(timeContributionList);
                         timeContributionList->reset(pp->historyIndex());
                     }
-                    timeContributionList->addContribution(ell, k, Lext);
+                    timeContributionList->addContribution(k, ell, Lext);
                 }
             }
         }
 
         // record statistics for SEDs and IFUs
+        // (the wavelength bin ell is passed as the primary index because SED statistics must group
+        // contributions by wavelength bin alone, regardless of pixel; see Contribution)
         if (_recordStatistics && (_includeFluxDensity || _includeSurfaceBrightness))
         {
             ContributionList* contributionList = _contributionLists.local();
@@ -497,7 +501,7 @@ void FluxRecorder::flush()
     }
 
     // record the dangling time contributions from all threads
-    for (TimeContributionList* timeContributionList : _timeContributionLists.all())
+    for (ContributionList* timeContributionList : _timeContributionLists.all())
     {
         recordTimeContributions(timeContributionList);
         timeContributionList->reset();
@@ -1049,20 +1053,21 @@ void FluxRecorder::calibrateAndWrite()
 void FluxRecorder::recordContributions(ContributionList* contributionList)
 {
     // sort the contributions on wavelength and pixel index so that contributions to the same bin are consecutive
+    // (the wavelength index is primary; see detect() for why)
     contributionList->sort();
     const vector<Contribution>& contributions = contributionList->contributions();
     size_t numContributions = contributions.size();
 
-    // for SEDs, group contributions on ell index (wavelength bin)
+    // for SEDs, group contributions on the wavelength bin (primary index) alone
     if (_includeFluxDensity)
     {
         double w = 0;
         for (size_t i = 0; i != numContributions; ++i)
         {
             w += contributions[i].w();
-            if (i + 1 == numContributions || contributions[i].ell() != contributions[i + 1].ell())
+            if (i + 1 == numContributions || contributions[i].primary() != contributions[i + 1].primary())
             {
-                int ell = contributions[i].ell();
+                int ell = contributions[i].primary();
                 double wn = 1.;
                 for (int k = 0; k <= maxContributionPower; ++k)
                 {
@@ -1074,19 +1079,19 @@ void FluxRecorder::recordContributions(ContributionList* contributionList)
         }
     }
 
-    // for IFUs, group contributions on lell index (wavelength and pixel bins)
+    // for IFUs, group contributions on the wavelength and pixel bins (primary and secondary index)
     if (_includeSurfaceBrightness)
     {
         double w = 0;
         for (size_t i = 0; i != numContributions; ++i)
         {
             w += contributions[i].w();
-            if (i + 1 == numContributions || contributions[i].ell() != contributions[i + 1].ell()
-                || contributions[i].l() != contributions[i + 1].l())
+            if (i + 1 == numContributions || contributions[i].primary() != contributions[i + 1].primary()
+                || contributions[i].secondary() != contributions[i + 1].secondary())
             {
-                if (contributions[i].l() >= 0)
+                if (contributions[i].secondary() >= 0)
                 {
-                    size_t lell = contributions[i].l() + contributions[i].ell() * _numPixelsInFrame;
+                    size_t lell = contributions[i].secondary() + contributions[i].primary() * _numPixelsInFrame;
                     double wn = 1.;
                     for (int k = 0; k <= maxContributionPower; ++k)
                     {
@@ -1102,23 +1107,24 @@ void FluxRecorder::recordContributions(ContributionList* contributionList)
 
 ////////////////////////////////////////////////////////////////////
 
-void FluxRecorder::recordTimeContributions(TimeContributionList* contributionList)
+void FluxRecorder::recordTimeContributions(ContributionList* contributionList)
 {
     // sort the contributions on time and wavelength index so that contributions to the same bin are consecutive
+    // (the time index is primary; see detect() for why)
     contributionList->sort();
-    const vector<TimeContribution>& contributions = contributionList->contributions();
+    const vector<Contribution>& contributions = contributionList->contributions();
     size_t numContributions = contributions.size();
 
-    // for LCs, group contributions on k index (time bin)
+    // for LCs, group contributions on the time bin (primary index) alone
     if (_includeLightCurve)
     {
         double w = 0;
         for (size_t i = 0; i != numContributions; ++i)
         {
             w += contributions[i].w();
-            if (i + 1 == numContributions || contributions[i].k() != contributions[i + 1].k())
+            if (i + 1 == numContributions || contributions[i].primary() != contributions[i + 1].primary())
             {
-                int k = contributions[i].k();
+                int k = contributions[i].primary();
                 double wn = 1.;
                 for (int p = 0; p <= maxContributionPower; ++p)
                 {
@@ -1130,17 +1136,17 @@ void FluxRecorder::recordTimeContributions(TimeContributionList* contributionLis
         }
     }
 
-    // for STMs, group contributions on ellk index (wavelength and time bins)
+    // for STMs, group contributions on the time and wavelength bins (primary and secondary index)
     if (_includeSpectralTimeMap)
     {
         double w = 0;
         for (size_t i = 0; i != numContributions; ++i)
         {
             w += contributions[i].w();
-            if (i + 1 == numContributions || contributions[i].k() != contributions[i + 1].k()
-                || contributions[i].ell() != contributions[i + 1].ell())
+            if (i + 1 == numContributions || contributions[i].primary() != contributions[i + 1].primary()
+                || contributions[i].secondary() != contributions[i + 1].secondary())
             {
-                size_t ellk = contributions[i].ell() + contributions[i].k() * _numWavelengths;
+                size_t ellk = contributions[i].secondary() + contributions[i].primary() * _numWavelengths;
                 double wn = 1.;
                 for (int p = 0; p <= maxContributionPower; ++p)
                 {
