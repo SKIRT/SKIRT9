@@ -694,13 +694,16 @@ std::pair<void*, size_t> System::acquireMemoryMap(string path)
 
 void System::releaseMemoryMap(string path)
 {
+    // use the canonical path as a unique identifier for the file, just as acquireMemoryMap() does
+    path = canonicalPath(path);
+
+    // perform the mapping operation in a critical section because
+    //  - access to our map dictionary is certainly not thread-safe
+    //  - thread-safety of the operating system calls is not so clear
+    std::unique_lock<std::mutex> lock(_mapMutex);
+
     if (_maps.count(path))
     {
-        // perform the mapping operation in a critical section because
-        //  - access to our map dictionary is certainly not thread-safe
-        //  - thread-safety of the operating system calls is not so clear
-        std::unique_lock<std::mutex> lock(_mapMutex);
-
         MapRecord& record = _maps.at(path);
         record.count--;
 

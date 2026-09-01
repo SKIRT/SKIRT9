@@ -58,7 +58,7 @@ void ItemListPropertyHandler::setToEmpty()
 
 bool ItemListPropertyHandler::addValue(Item* value)
 {
-    if (isValidValue(value->type()))
+    if (value && isValidValue(value->type()))
     {
         target()->insertIntoItemListProperty(property(), -1, value);
         setChanged();
@@ -84,7 +84,7 @@ bool ItemListPropertyHandler::addNewItemOfType(string type)
 
 bool ItemListPropertyHandler::insertValue(int index, Item* value)
 {
-    if (isValidValue(value->type()))
+    if (value && isValidValue(value->type()))
     {
         target()->insertIntoItemListProperty(property(), index, value);
         setChanged();

@@ -71,8 +71,8 @@ public:
     static string toUpperFirst(string text);
 
     /** Splits the text string into substrings wherever the separator string occurs, and returns
-        the list of those strings. If the separator does not match anywhere, the function returns a
-        single-element list containing the complete text string. */
+        the list of those strings. If the separator does not match anywhere, or if the separator is
+        empty, the function returns a single-element list containing the complete text string. */
     static vector<string> split(string text, string separator);
 
     /** Joins the list of strings by inserting the separator between consecutive non-empty strings,

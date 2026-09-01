@@ -54,9 +54,12 @@ void GhostItem::setDoubleListProperty(const PropertyDef* property, vector<double
 void GhostItem::setItemProperty(const PropertyDef* property, Item* item)
 {
     auto& prop = _itemProperties[property->name()];
-    destroyChild(prop);
-    prop = item;
-    addChild(prop);
+    if (item != prop)
+    {
+        destroyChild(prop);
+        prop = item;
+        addChild(prop);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -111,7 +114,7 @@ string GhostItem::getStringProperty(const PropertyDef* property) const
     if (_stringProperties.count(name))
         return _stringProperties.at(name);
     else
-        throw FATALERROR("Unknow string property " + name);
+        throw FATALERROR("Unknown string property " + name);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -122,7 +125,7 @@ bool GhostItem::getBoolProperty(const PropertyDef* property) const
     if (_boolProperties.count(name))
         return _boolProperties.at(name);
     else
-        throw FATALERROR("Unknow Boolean property " + name);
+        throw FATALERROR("Unknown Boolean property " + name);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -133,7 +136,7 @@ int GhostItem::getIntProperty(const PropertyDef* property) const
     if (_intProperties.count(name))
         return _intProperties.at(name);
     else
-        throw FATALERROR("Unknow integer property " + name);
+        throw FATALERROR("Unknown integer property " + name);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -144,7 +147,7 @@ string GhostItem::getEnumProperty(const PropertyDef* property) const
     if (_enumProperties.count(name))
         return _enumProperties.at(name);
     else
-        throw FATALERROR("Unknow enumeration property " + name);
+        throw FATALERROR("Unknown enumeration property " + name);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -155,7 +158,7 @@ double GhostItem::getDoubleProperty(const PropertyDef* property) const
     if (_doubleProperties.count(name))
         return _doubleProperties.at(name);
     else
-        throw FATALERROR("Unknow double property " + name);
+        throw FATALERROR("Unknown double property " + name);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -166,7 +169,7 @@ vector<double> GhostItem::getDoubleListProperty(const PropertyDef* property) con
     if (_doubleListProperties.count(name))
         return _doubleListProperties.at(name);
     else
-        throw FATALERROR("Unknow double list property " + name);
+        throw FATALERROR("Unknown double list property " + name);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -177,7 +180,7 @@ Item* GhostItem::getItemProperty(const PropertyDef* property) const
     if (_itemProperties.count(name))
         return _itemProperties.at(name);
     else
-        throw FATALERROR("Unknow item property " + name);
+        throw FATALERROR("Unknown item property " + name);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -188,7 +191,7 @@ vector<Item*> GhostItem::getItemListProperty(const PropertyDef* property) const
     if (_itemListProperties.count(name))
         return _itemListProperties.at(name);
     else
-        throw FATALERROR("Unknow item list property " + name);
+        throw FATALERROR("Unknown item list property " + name);
 }
 
 ////////////////////////////////////////////////////////////////////

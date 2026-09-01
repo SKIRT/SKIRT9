@@ -242,18 +242,18 @@ public:
                 if (it) result.push_back(it);
         return result;
     }
-    virtual void clearTargetValue(Item* target) const override
+    void clearTargetValue(Item* target) const override
     {
         auto tg = dynamic_cast<T*>(target);
         if (tg) (tg->*_clearer)();
     }
-    virtual void insertIntoTargetValue(Item* target, int index, Item* value) const override
+    void insertIntoTargetValue(Item* target, int index, Item* value) const override
     {
         auto val = dynamic_cast<V*>(value);
         auto tg = dynamic_cast<T*>(target);
         if (val && tg) (tg->*_inserter)(index, val);
     }
-    virtual void removeFromTargetValue(Item* target, int index) const override
+    void removeFromTargetValue(Item* target, int index) const override
     {
         auto tg = dynamic_cast<T*>(target);
         if (tg) (tg->*_remover)(index);

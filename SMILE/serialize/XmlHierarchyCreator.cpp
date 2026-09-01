@@ -293,11 +293,16 @@ namespace
 
     // This function recursively sets up the properties of the specified SMILE data item and its children.
     // Setting up the properties at the current level poses a dual challenge:
-    //  - we need to process scalar and compound properties in the order provided in the XML file
     //  - we need to ensure that all properties defined for the item are handled
+    //  - scalar properties must be processed in schema definition order rather than in the order
+    //    their attributes happen to appear in the file, because a property's value can depend on a
+    //    sibling property declared earlier in the schema -- for example through the "@otherProperty"
+    //    quantity mechanism in AbstractDoublePropertyHandler::quantity()
     // To achieve this, we proceed as follows:
     //  - build a dictionary of handlers for all defined properties
-    //  - process the properties in the XML file
+    //  - verify that every XML attribute in the file corresponds to a known, non-compound property
+    //  - process the attributes in schema definition order
+    //  - process the compound properties (child elements) in the order given in the file
     //  - the handlers keep track of whether a value has been set
     //  - process the "virgin" handlers to set default values or complain if there is no default
     // Actually setting the values is accomplished by asking each of the handlers to accept an appropriate
@@ -318,16 +323,23 @@ namespace
             handlers[name] = schema->createPropertyHandler(item, name, nameMgr);
         }
 
-        // process scalar properties (derived from XML attributes)
-        for (const string& name : reader.attributeNames())
+        // verify that every XML attribute corresponds to a known, non-compound property of this item
+        // (this check must not depend on attribute order, so it is done as a separate pass, up front)
+        vector<string> attributeNames = reader.attributeNames();
+        for (const string& name : attributeNames)
         {
             if (!handlers.count(name))
                 reader.throwError("Item of type '" + item->type() + "' has no property named '" + name + "'");
-            auto& handler = handlers[name];
-            if (handler->isCompound())
-                reader.throwError("Property '" + handler->name()
-                                  + "' has a non-compound data type and is given as an xml element");
-            handler->acceptVisitor(&readerSetter);
+            if (handlers[name]->isCompound())
+                reader.throwError("Property '" + handlers[name]->name()
+                                  + "' has a compound data type and is given as an xml attribute");
+        }
+
+        // process scalar properties (derived from XML attributes) in schema definition order rather
+        // than in the order the attributes happen to appear in the file -- see the note above
+        for (const string& name : schema->properties(item->type()))
+        {
+            if (StringUtils::contains(attributeNames, name)) handlers[name]->acceptVisitor(&readerSetter);
         }
 
         // process compound properties (derived from XML child elements)
@@ -339,7 +351,7 @@ namespace
             auto& handler = handlers[name];
             if (!handler->isCompound())
                 reader.throwError("Property '" + handler->name()
-                                  + "' has a compund data type and is given as an xml attribute");
+                                  + "' has a non-compound data type and is given as an xml element");
             handler->acceptVisitor(&readerSetter);
         }
 

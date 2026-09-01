@@ -376,6 +376,15 @@ string XmlReader::getValue()
         value += c;
     }
 
+    // Verify that every ampersand starts one of the five supported escape sequences
+    for (auto amp = value.find('&'); amp != string::npos; amp = value.find('&', amp + 1))
+    {
+        if (value.compare(amp, 6, "&apos;") != 0 && value.compare(amp, 6, "&quot;") != 0
+            && value.compare(amp, 4, "&lt;") != 0 && value.compare(amp, 4, "&gt;") != 0
+            && value.compare(amp, 5, "&amp;") != 0)
+            throwError("Unsupported entity or character reference in attribute value");
+    }
+
     // Substitute the escape sequences
     value = StringUtils::replace(value, "&apos;", "\'");
     value = StringUtils::replace(value, "&quot;", "\"");

@@ -52,7 +52,7 @@ Item* ItemPropertyHandler::value() const
 
 bool ItemPropertyHandler::setValue(Item* value)
 {
-    if (isValidValue(value->type()))
+    if (value && isValidValue(value->type()))
     {
         target()->setItemProperty(property(), value);
         setChanged();

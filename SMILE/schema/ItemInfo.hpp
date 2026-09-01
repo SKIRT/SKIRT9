@@ -355,7 +355,15 @@ private: \
         ii_loadItemInfo_##propname(); \
     } \
     itemtype* _##propname{nullptr}; \
-    void  ii_set_##propname(itemtype* value) {destroyChild(_##propname); _##propname = value; addChild(_##propname);} \
+    void  ii_set_##propname(itemtype* value) \
+    { \
+        if (value != _##propname) \
+        { \
+            destroyChild(_##propname); \
+            _##propname = value; \
+            addChild(_##propname); \
+        } \
+    } \
 public: \
     /** This function returns the value of the discoverable item property \em propname: title. */ \
     itemtype* propname() const { return _##propname; } \

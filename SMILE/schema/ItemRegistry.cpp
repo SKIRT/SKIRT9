@@ -205,7 +205,7 @@ const SchemaDef* ItemRegistry::getSchemaDef(string name)
     if (_schemas.count(name))
         return &_schemas.at(name);
     else
-        throw FATALERROR("Unknow schema definition " + name);
+        throw FATALERROR("Unknown schema definition " + name);
 }
 
 ////////////////////////////////////////////////////////////////////

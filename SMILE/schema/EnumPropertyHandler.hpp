@@ -34,7 +34,7 @@ public:
         name and the enumeration name for the current value. In addition, the function inserts the
         names provided in the conditional expression of the "insert" attribute of the target
         property, if any. */
-    virtual void insertNames() override;
+    void insertNames() override;
 
     /** Accepts the specified property handler visitor. */
     void acceptVisitor(PropertyHandlerVisitor* visitor) override;

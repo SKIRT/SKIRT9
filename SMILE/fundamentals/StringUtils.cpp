@@ -44,9 +44,9 @@ namespace
         // string will not contain two consecutive '*'
         if (*first == '*' && *(first + 1) != '\0' && *second == '\0') return false;
 
-        // If the first string contains '?', or current characters
-        // of both strings match, test the remaining segment
-        if (*first == '?' || *first == *second) return match(first + 1, second + 1);
+        // If the first string contains '?' and there is still a character left to match it against,
+        // or if the current characters of both strings match, test the remaining segment
+        if ((*first == '?' && *second != '\0') || *first == *second) return match(first + 1, second + 1);
 
         // If there is *, then there are two possibilities
         // a) We consider current character of second string
@@ -190,6 +190,13 @@ string StringUtils::toUpperFirst(string text)
 vector<string> StringUtils::split(string text, string separator)
 {
     vector<string> result;
+
+    // an empty separator never matches, so avoid looping forever looking for it
+    if (separator.empty())
+    {
+        result.push_back(text);
+        return result;
+    }
 
     string::size_type start = 0;
     string::size_type end = text.find(separator);
@@ -422,8 +429,9 @@ string StringUtils::toString(double value, char format, int precision, int width
         precision = 0;
     }
 
-    // avoid very large values in fixed point format (because they would overrun our output buffer)
-    if (format == 'f' && value >= 1e20)
+    // avoid very large positive or negative values in fixed point format
+    // (because they would overrun our output buffer)
+    if (format == 'f' && abs(value) >= 1e20)
     {
         format = 'e';
         precision = 18;
@@ -432,9 +440,11 @@ string StringUtils::toString(double value, char format, int precision, int width
     // force precision within range
     precision = min(max(precision, 0), 18);
 
-    // perform the conversion
+    // perform the conversion; given the guard above, 'f' format only ever sees a value with
+    // at most 20 integer digits, so the buffer comfortably covers sign + 20 digits + '.' + the
+    // maximum precision of 18 fractional digits + terminator (41 characters needed at most)
     char formatString[] = {'%', '1', '.', '*', format, 0};
-    char result[30];
+    char result[48];
     snprintf(result, sizeof(result), formatString, precision, value);
 
     // pad if needed

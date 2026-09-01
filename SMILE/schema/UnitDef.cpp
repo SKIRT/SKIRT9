@@ -56,7 +56,7 @@ std::tuple<double, double, double> UnitDef::def(string qty, string unit) const
     }
 
     // otherwise report the error
-    throw FATALERROR("Unknow quantity " + qty + " and/or unit (system) " + unit);
+    throw FATALERROR("Unknown quantity " + qty + " and/or unit (system) " + unit);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -76,7 +76,7 @@ double UnitDef::in(string qty, string unit, double value) const
     }
 
     // otherwise report the error
-    throw FATALERROR("Unknow quantity " + qty + " and/or unit (system) " + unit);
+    throw FATALERROR("Unknown quantity " + qty + " and/or unit (system) " + unit);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -97,7 +97,7 @@ double UnitDef::out(string qty, string unit, double value) const
     }
 
     // otherwise report the error
-    throw FATALERROR("Unknow quantity " + qty + " and/or unit (system) " + unit);
+    throw FATALERROR("Unknown quantity " + qty + " and/or unit (system) " + unit);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -111,7 +111,7 @@ string UnitDef::unit(string qty, string unitSystem, string unitStyle) const
         if (_unitSystems.at(unitSystem).count(qty)) return _unitSystems.at(unitSystem).at(qty);
     }
 
-    throw FATALERROR("Unknow quantity " + qty + " and/or unit system " + unitSystem);
+    throw FATALERROR("Unknown quantity " + qty + " and/or unit system " + unitSystem);
 }
 
 ////////////////////////////////////////////////////////////////////

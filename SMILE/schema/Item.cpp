@@ -252,7 +252,7 @@ int Item::getUtilityProperty(string name) const
     if (_utility && _utility->count(name))
         return _utility->at(name);
     else
-        throw FATALERROR("Unknow ghost property " + name);
+        throw FATALERROR("Unknown ghost property " + name);
 }
 
 ////////////////////////////////////////////////////////////////////

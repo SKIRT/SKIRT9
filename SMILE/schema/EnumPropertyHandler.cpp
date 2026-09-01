@@ -71,8 +71,11 @@ string EnumPropertyHandler::titleForValue() const
 
 void EnumPropertyHandler::setValue(string value)
 {
-    target()->setEnumProperty(property(), value);
-    setChanged();
+    if (isValidValue(value))
+    {
+        target()->setEnumProperty(property(), value);
+        setChanged();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
