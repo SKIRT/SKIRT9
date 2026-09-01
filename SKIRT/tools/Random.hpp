@@ -162,11 +162,11 @@ public:
         points can be written as \f[ p(x) = p_i \left(\frac{x}{x_i}\right)^{\alpha_i},
         \quad\mathrm{with}\; \alpha_i = \frac{\ln p_{i+1}/\ln p_i}{\ln x_{i+1}/\ln x_i} \f]
 
-        With \f$\mathcal{X}\f$ a random deviate for which \f$x_i\leq\mathcal{X}\leq x_{i+1}\f$
-        happens to be true, we thus need to invert the relation \f[ \mathcal{X}-x_i = \int_{x_i}^x
+        With \f$\mathcal{X}\f$ a random deviate for which \f$P_i\leq\mathcal{X}\leq P_{i+1}\f$
+        happens to be true, we thus need to invert the relation \f[ \mathcal{X}-P_i = \int_{x_i}^x
         p(x')\,\mathrm{d}x' = \int_{x_i}^x p_i \left(\frac{x'}{x_i}\right)^{\alpha_i}\mathrm{d}x' =
         p_i x_i \;\mathrm{gln}\left(-\alpha_i, \frac{x}{x_i}\right) \f] which leads to
-        \f[x = x_i \;\mathrm{gexp}\left(-\alpha_i, \frac{\mathcal{X}-x_i}{p_i x_i}\right)\f]
+        \f[x = x_i \;\mathrm{gexp}\left(-\alpha_i, \frac{\mathcal{X}-P_i}{p_i x_i}\right)\f]
         where \f$\mathrm{gln}(a,x)\f$ is the generalized logarithm and \f$\mathrm{gexp}(a,x)\f$ the
         generalized exponential, defined in the description of respectively the
         SpecialFunctions::gln() and SpecialFunctions::gexp() functions. */

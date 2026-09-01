@@ -64,17 +64,15 @@ namespace
 
 void FileLog::output(string message, Log::Level level)
 {
-    if (!_out.is_open() && (level == Level::Warning || level == Level::Error))
+    std::unique_lock<std::mutex> lock(_mutex);
+
+    if (!_out.is_open())
     {
-        std::unique_lock<std::mutex> lock(_mutex);
+        if (level != Level::Warning && level != Level::Error) return;
         open();
     }
 
-    if (_out.is_open())
-    {
-        std::unique_lock<std::mutex> lock(_mutex);
-        _out << System::timestamp() << _messageBegin[static_cast<size_t>(level)] << message << std::endl;
-    }
+    _out << System::timestamp() << _messageBegin[static_cast<size_t>(level)] << message << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////

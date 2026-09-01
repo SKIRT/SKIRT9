@@ -115,7 +115,7 @@ public:
         Examples:
         - (0, 0) considers just the receiving object.
         - (2, 0) considers the receiving object, its parent, and its grandparent.
-        - (1, 1) considers the receiving object and its siblings.
+        - (1, 1) considers the receiving object, its parent, and its siblings.
         - (0, 2) considers the receiving object, its children and its grandchildren.
         - (99, 99) considers all items in the hierarchy.
 

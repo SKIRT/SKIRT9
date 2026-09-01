@@ -114,7 +114,7 @@ void FITSInOut::read(string filepath, Array& data, int& nx, int& ny, int& nz)
 
     // Read the array of pixels from the file
     int dummy;
-    ffgpvd(fptr, 0, 1, nelements, 0, &data[0], &dummy, &status);
+    ffgpvd(fptr, 0, 1, nelements, 0, begin(data), &dummy, &status);
     if (status) report_error(filepath, "reading", status);
 
     // Close the file
@@ -191,7 +191,7 @@ void FITSInOut::write(string filepath, const Array& data, string dataUnits, int 
     if (status) report_error(filepath, "writing", status);
 
     // Write the array of pixels to the image
-    ffpprd(fptr, 0, 1, nelements, const_cast<double*>(&data[0]), &status);
+    ffpprd(fptr, 0, 1, nelements, const_cast<double*>(begin(data)), &status);
     if (status) report_error(filepath, "writing", status);
 
     // If the data has 3 dimensions, write a FITS table extension with the values of the third axis
@@ -272,7 +272,7 @@ void FITSInOut::writeMap(string filepath, const Array& data, string dataUnits, c
     if (status) report_error(filepath, "writing", status);
 
     // Write the array of pixels to the image
-    ffpprd(fptr, 0, 1, nelements, const_cast<double*>(&data[0]), &status);
+    ffpprd(fptr, 0, 1, nelements, const_cast<double*>(begin(data)), &status);
     if (status) report_error(filepath, "writing", status);
 
     // Write a FITS table extension with the values of the x axis
@@ -337,7 +337,7 @@ void FITSInOut::readColumn(string filepath, Array& data, int n)
 
     // Read the array of values from the first column in the table
     int dummy;
-    ffgcvd(fptr, 1, 1, 1, n, 0., &data[0], &dummy, &status);
+    ffgcvd(fptr, 1, 1, 1, n, 0., begin(data), &dummy, &status);
     if (status) report_error(filepath, "reading", status);
 
     // Close the file

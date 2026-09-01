@@ -80,7 +80,7 @@ void TextOutFile::writeLine(string line)
 
 void TextOutFile::writeRow(vector<double> values)
 {
-    writeRowPrivate(values.size(), &values[0]);
+    writeRowPrivate(values.size(), values.data());
 }
 
 ////////////////////////////////////////////////////////////////////
