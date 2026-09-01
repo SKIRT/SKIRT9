@@ -59,7 +59,8 @@ double SpinFlipSEDFamily::cdf(Array& lambdav, Array& pv, Array& Pv, const Range&
     double wavelengthDispersion = s * wavelengthCenter / Constants::c();
 
     // build an appropriate grid
-    size_t n = numWavelengthsPerDispersionUnit * wavelengthRange.width() / wavelengthDispersion;
+    size_t n = max(static_cast<size_t>(10), static_cast<size_t>(numWavelengthsPerDispersionUnit
+                                                                * wavelengthRange.width() / wavelengthDispersion));
     NR::buildLinearGrid(lambdav, wavelengthRange.min(), wavelengthRange.max(), n);
 
     // calculate the tabulated values
