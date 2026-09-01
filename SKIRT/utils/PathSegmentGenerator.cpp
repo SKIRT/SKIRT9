@@ -1,6 +1,6 @@
 /*//////////////////////////////////////////////////////////////////
 ////     The SKIRT project -- advanced radiative transfer       ////
-////       © Astronomical Observato_ry(), Ghent University         ////
+////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
 #include "PathSegmentGenerator.hpp"

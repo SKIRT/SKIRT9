@@ -284,9 +284,14 @@ public:
     static double firstIntersectionCone(Vec r0, Vec k, double cosTheta)
     {
         double c = cosTheta;
-        return c ? smallestPositiveSolution(c * c - k.z() * k.z(), c * c * Vec::dot(r0, k) - r0.z() * k.z(),
-                                            c * c * r0.norm2() - r0.z() * r0.z())
-                 : -r0.z() / k.z();  // degenerate cone identical to xy-plane
+        if (c)
+            return smallestPositiveSolution(c * c - k.z() * k.z(), c * c * Vec::dot(r0, k) - r0.z() * k.z(),
+                                            c * c * r0.norm2() - r0.z() * r0.z());
+
+        // degenerate cone identical to xy-plane; intersection exists only if not parallel to it
+        if (std::abs(k.z()) < EPS) return 0.;
+        double s = -r0.z() / k.z();
+        return s > 0. ? s : 0.;
     }
 
     /** This function determines the solutions of the intersection of the ray \f$({\bf{r}}_0,

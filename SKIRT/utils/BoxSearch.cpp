@@ -37,7 +37,8 @@ namespace
                 case 2: center = box.center().y(); break;
                 case 3: center = box.center().z(); break;
             }
-            bins[static_cast<int>((center - cmin) / binwidth)] += 1;
+            int bin = min(max(static_cast<int>((center - cmin) / binwidth), 0), nbins - 1);
+            bins[bin] += 1;
         }
 
         // set target number of entities per block (in floating point because this works better for small numbers)

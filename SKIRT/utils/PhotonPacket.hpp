@@ -329,7 +329,13 @@ public:
         Material mixes that need to store scattering information should call this function for each
         peel-off and random-walk scattering operation. If \em valid is false, the material mix
         should update the relevant fields and set \em valid to true. If \em valid is already true,
-        the previously stored field values can be retrieved. */
+        the previously stored field values can be retrieved.
+
+        Because the returned pointer refers to an element of an internal, growable container, it
+        may be invalidated by a subsequent call to this function (for example, one made after
+        changing the current medium component through setScatteringComponent()). Client code should
+        therefore not retain the pointer across such a call; instead, call this function again to
+        obtain a fresh, valid pointer whenever the information record is needed. */
     ScatteringInfo* getScatteringInfo();
 
     // ------- Data members -------

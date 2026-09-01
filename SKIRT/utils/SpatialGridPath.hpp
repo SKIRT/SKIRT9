@@ -72,16 +72,6 @@ public:
         If \f$\Delta s\le 0\f$, the function does nothing. */
     void addSegment(int m, double ds);
 
-    /** This function clears the path, adds any segments needed to move the initial position along
-        the propagation direction (both specified in the constructor) inside a given box, and
-        finally returns the resulting position. The small value specified by \em eps is added to
-        the path length beyond the intersection point so that the final position is well inside the
-        box, guarding against rounding errors. If the initial position is already inside the box,
-        no segments are added. If the half-ray formed by the initial position and the propagation
-        direction does not intersect the box, the function returns some arbitrary position outside
-        the box. */
-    Position moveInside(const Box& box, double eps);
-
     // ------- Working with path segments -------
 
     /** This data structure holds information about a given segment in the path. In addition to the
