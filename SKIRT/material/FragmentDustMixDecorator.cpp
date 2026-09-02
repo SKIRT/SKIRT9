@@ -232,7 +232,7 @@ bool FragmentDustMixDecorator::peeloffScattering(double& I, double& Q, double& U
         for (int f = 0; f != _numFrags; ++f)
         {
             double If = 0., Qf = 0., Uf = 0., Vf = 0.;
-            _dustMix->peeloffScattering(If, Qf, Uf, Vf, lambda, bfkobs, bfky, state, pp);
+            _fragments[f]->peeloffScattering(If, Qf, Uf, Vf, lambda, bfkobs, bfky, state, pp);
             double wf = wv[f] / sum;
             I += If * wf;
             Q += Qf * wf;

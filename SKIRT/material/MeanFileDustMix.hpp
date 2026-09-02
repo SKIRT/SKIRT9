@@ -21,7 +21,7 @@
 
     The wavelengths are by default given in micron (the units can be overridden by column header
     info in the file). The extinction mass coefficients are by default given in
-    \f$\text{m}^2\,\text{kg}^{-2}\f$ (again, this can be overridden by column header info in the
+    \f$\text{m}^2\,\text{kg}^{-1}\f$ (again, this can be overridden by column header info in the
     file). The wavelengths must be listed in increasing or decreasing order. Property values
     outside of the tabulated wavelength range are clamped to the nearest border value. As a
     special-case consequence, if only a single wavelength is tabulated, the properties are

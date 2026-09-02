@@ -135,7 +135,7 @@
     \f[ g=\sqrt{D_\mathrm{MW}^2+D_\ast^2} \f]
 
     \f[ \Sigma_c=5\times10^7\,\mathrm{M}_\odot\mathrm{kpc}^{-2}\times
-        \Bigl(\frac{\sqrt{0.001+0.1U_\mathrm{MW}}}{g(1+1.69\sqrt{0.001+0.1U_\mathrm{MW}}}\Bigr) \f]
+        \Bigl(\frac{\sqrt{0.001+0.1U_\mathrm{MW}}}{g(1+1.69\sqrt{0.001+0.1U_\mathrm{MW}})}\Bigr) \f]
 
     \f[ \alpha=0.5+\frac{1}{1+\sqrt{U_\mathrm{MW}D_\mathrm{MW}^2/600}} \f]
 

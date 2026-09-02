@@ -80,7 +80,7 @@ std::pair<double, double> DipolePhaseFunction::generateAnglesFromPhaseFunction(c
     // construct and sample from the normalized cumulative distribution of phi for this wavelength and theta angle
     double polDegree = sv->linearPolarizationDegree();
     double polAngle = sv->polarizationAngle();
-    double PF = polDegree * (costheta * costheta + 1.) / (costheta * costheta - 1.) / (4 * M_PI);
+    double PF = polDegree * (costheta * costheta - 1.) / (costheta * costheta + 1.) / (4 * M_PI);
     double cos2polAngle = cos(2 * polAngle) * PF;
     double sin2polAngle = sin(2 * polAngle) * PF;
     double phi = _random->cdfLinLin(_phiv, _phi1v + cos2polAngle * _phisv + sin2polAngle * _phicv);
