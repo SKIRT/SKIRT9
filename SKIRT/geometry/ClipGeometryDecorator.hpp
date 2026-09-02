@@ -13,9 +13,21 @@
 /** The abstract ClipGeometryDecorator class implements a decorator that adjusts another geometry
     by setting the density equal to zero inside or outside a region defined in a subclass. Each
     ClipGeometryDecorator subclass must implement the virtual functions dimension() and inside().
-    The decorator increases the density in the remaining region with a constant factor to ensure
-    that the total mass remains equal to one. The current implementation does not properly adjust
-    the surface densities along the coordinate axes for the mass taken away by the cavity. */
+    The decorator increases the density in the remaining region with a single constant factor
+    \f$1/(1-\chi)\f$, where \f$\chi\f$ is the (Monte Carlo estimated) fraction of the original mass
+    taken away by the clipping, to ensure that the total mass of the decorated geometry remains
+    equal to one.
+
+    The SigmaX(), SigmaY() and SigmaZ() functions implemented by this base class apply this same
+    single factor to the corresponding surface density of the geometry being decorated. This is
+    exact only if the clip removes the same fraction of mass along each of the three coordinate
+    axes. For an asymmetric clip, it is not: for example, a box clip may remove more material along
+    the Z-axis than along the Y-axis, in which case the uniform factor over- or under-corrects one
+    or more of these three values. Computing the exact per-axis values would require additional
+    density sampling along each axis individually; this is not done because these functions are
+    used only for reporting purposes, not during the actual radiative transfer simulation. A
+    subclass may override one or more of these functions to provide a more exact value where the
+    shape of its particular clip region allows it. */
 class ClipGeometryDecorator : public Geometry
 {
     /** The enumeration type indicating which region to remove (Inside or Outside). */
@@ -60,17 +72,23 @@ public:
 
     /** This function returns the X-axis surface density, i.e. the integration of the density along
         the entire X-axis, \f[ \Sigma_X = \int_{-\infty}^\infty \rho(x,0,0)\,{\text{d}}x. \f] It
-        returns the corresponding value of the geometry being decorated after re-normalization. */
+        returns the corresponding value of the geometry being decorated after applying the uniform
+        renormalization factor described in the class documentation. This value is exact only if
+        the clip removes the same fraction of mass along the X-axis as it does overall. */
     double SigmaX() const override;
 
     /** This function returns the Y-axis surface density, i.e. the integration of the density along
         the entire Y-axis, \f[ \Sigma_Y = \int_{-\infty}^\infty \rho(0,y,0)\,{\text{d}}y. \f] It
-        returns the corresponding value of the geometry being decorated after re-normalization. */
+        returns the corresponding value of the geometry being decorated after applying the uniform
+        renormalization factor described in the class documentation. This value is exact only if
+        the clip removes the same fraction of mass along the Y-axis as it does overall. */
     double SigmaY() const override;
 
     /** This function returns the Z-axis surface density, i.e. the integration of the density along
         the entire Z-axis, \f[ \Sigma_Z = \int_{-\infty}^\infty \rho(0,0,z)\,{\text{d}}z. \f] It
-        returns the corresponding value of the geometry being decorated after re-normalization. */
+        returns the corresponding value of the geometry being decorated after applying the uniform
+        renormalization factor described in the class documentation. This value is exact only if
+        the clip removes the same fraction of mass along the Z-axis as it does overall. */
     double SigmaZ() const override;
 
 protected:

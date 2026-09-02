@@ -38,7 +38,7 @@ void BrokenExpDiskGeometry::setupSelfBefore()
         intprev = intR;
         _Xv[i] = _Xv[i - 1] + 0.5 * (RR - RL) * (intL + intR);
     }
-    double IR = _Xv[N - 1];
+    double IR = _Xv[N];
     _Xv /= IR;
 
     // calculate _rho0;

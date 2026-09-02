@@ -71,8 +71,8 @@ double ReadFitsGeometry::density(Position bfr) const
     rotate(x, y);
 
     // Find the corresponding pixel in the image
-    int i = static_cast<int>(floor(x - _xmin) / _pixelScale);
-    int j = static_cast<int>(floor(y - _ymin) / _pixelScale);
+    int i = static_cast<int>(floor((x - _xmin) / _pixelScale));
+    int j = static_cast<int>(floor((y - _ymin) / _pixelScale));
     if (i < 0 || i >= _numPixelsX || j < 0 || j >= _numPixelsY) return 0.0;
 
     // Return the density
@@ -159,7 +159,7 @@ double ReadFitsGeometry::SigmaZ() const
     int j = static_cast<int>(floor((-_ymin) / _pixelScale));
 
     // Return the z-axis surface density
-    return _image[i + _nx * j] / (_pixelScale * _pixelScale);
+    return _image[i + _nx * j] / (_deltax * _pixelScale);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -38,20 +38,19 @@ public:
         properties of this class. */
     bool inside(Position bfr) const override;
 
-    /** This function returns the X-axis surface density, i.e. the integration of the density along
-        the entire X-axis, \f[ \Sigma_X = \int_{-\infty}^\infty \rho(x,0,0)\,{\text{d}}x. \f] It
-        returns the corresponding value of the geometry being decorated after normalization. */
-    double SigmaX() const override;
-
-    /** This function returns the Y-axis surface density, i.e. the integration of the density along
-        the entire Y-axis, \f[ \Sigma_Y = \int_{-\infty}^\infty \rho(0,y,0)\,{\text{d}}y. \f] It
-        returns the corresponding value of the geometry being decorated after normalization. */
-    double SigmaY() const override;
-
     /** This function returns the Z-axis surface density, i.e. the integration of the density along
-        the entire Z-axis, \f[ \Sigma_Z = \int_{-\infty}^\infty \rho(0,0,z)\,{\text{d}}z. \f] If
-        the inside region is being removed, this function returns zero; otherwise it returns the
-        corresponding value of the geometry being decorated. */
+        the entire Z-axis, \f[ \Sigma_Z = \int_{-\infty}^\infty \rho(0,0,z)\,{\text{d}}z. \f]
+        Because the clip region is defined purely in terms of cylindrical radius, the Z-axis itself
+        (at R=0) is always either entirely inside or entirely outside the clipped region, so unlike
+        the generic ClipGeometryDecorator::SigmaX() and ClipGeometryDecorator::SigmaY() this value
+        can be computed exactly rather than approximated. If the inside region is being removed,
+        the entire Z-axis lies in the removed region and this function returns zero; otherwise the
+        entire Z-axis is retained and this function returns the corresponding value of the geometry
+        being decorated, renormalized by the same factor used in density(). This class does not
+        override SigmaX() or SigmaY(): a cylindrical clip partially clips the X-axis and Y-axis (at
+        \f$|x|>{\text{clipRadius}}\f$ and \f$|y|>{\text{clipRadius}}\f$ respectively when removing
+        the outside region), so no exact shortcut is available for those two, and the inherited
+        ClipGeometryDecorator implementation is used instead. */
     double SigmaZ() const override;
 };
 

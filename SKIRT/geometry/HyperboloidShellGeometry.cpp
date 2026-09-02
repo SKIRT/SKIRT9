@@ -23,6 +23,8 @@ void HyperboloidShellGeometry::setupSelfBefore()
 
     // determine the radius of the outer wall top cross section
     _bout = _Dout * sin(_DeltaOut);
+    if (_aout >= _bout)
+        throw FATALERROR("the outer real axis should be smaller than the outer wall top cross section radius");
 
     // determine the imaginary axis of the hyperboloid outer wall
     _cout = _aout * _zmax / Quadrics::sqrtDiffSquares(_bout, _aout);
@@ -32,6 +34,8 @@ void HyperboloidShellGeometry::setupSelfBefore()
 
     // determine the radius of the inner wall top cross section
     _bin = _Din * sin(_DeltaIn);
+    if (_ain >= _bin)
+        throw FATALERROR("the inner real axis should be smaller than the inner wall top cross section radius");
 
     // determine the imaginary axis of the hyperboloid inner wall
     _cin = _ain * _zmax / Quadrics::sqrtDiffSquares(_bin, _ain);

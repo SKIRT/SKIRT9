@@ -43,6 +43,7 @@ Position UniformBoxGeometry::generatePosition() const
 
 double UniformBoxGeometry::SigmaX() const
 {
+    if (_box.ymin() > 0. || _box.ymax() < 0. || _box.zmin() > 0. || _box.zmax() < 0.) return 0.;
     return 1. / (_box.ywidth() * _box.zwidth());
 }
 
@@ -50,6 +51,7 @@ double UniformBoxGeometry::SigmaX() const
 
 double UniformBoxGeometry::SigmaY() const
 {
+    if (_box.xmin() > 0. || _box.xmax() < 0. || _box.zmin() > 0. || _box.zmax() < 0.) return 0.;
     return 1. / (_box.xwidth() * _box.zwidth());
 }
 
@@ -57,6 +59,7 @@ double UniformBoxGeometry::SigmaY() const
 
 double UniformBoxGeometry::SigmaZ() const
 {
+    if (_box.xmin() > 0. || _box.xmax() < 0. || _box.ymin() > 0. || _box.ymax() < 0.) return 0.;
     return 1. / (_box.xwidth() * _box.ywidth());
 }
 

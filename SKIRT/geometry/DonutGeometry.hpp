@@ -6,6 +6,7 @@
 #ifndef DONUTGEOMETRY_HPP
 #define DONUTGEOMETRY_HPP
 
+#include "Array.hpp"
 #include "AxGeometry.hpp"
 
 ////////////////////////////////////////////////////////////////////
@@ -43,7 +44,12 @@ class DonutGeometry : public AxGeometry
 protected:
     /** This function calculates some frequently used values. The normalization parameter \f$A\f$
         is set by the normalization condition that total mass equals one, i.e. \f[ A = \frac{1}{V}
-        = \frac{1}{2 \pi^2 r_{\text{large}} r_{\text{small}}^2}. \f] */
+        = \frac{1}{2 \pi^2 r_{\text{large}} r_{\text{small}}^2}. \f] It also tabulates, using
+        trapezoidal integration at a large number of radii spanning \f$[r_{\text{large}} -
+        r_{\text{small}}, r_{\text{large}} + r_{\text{small}}]\f$, the cumulative distribution of
+        the marginal radial probability density \f[ p(R)\,{\text{d}}R \propto R\,
+        \sqrt{r_{\text{small}}^2 - (R-r_{\text{large}})^2}\,{\text{d}}R, \f] so that
+        generatePosition() can generate a random radius through numerical inversion. */
     void setupSelfBefore() override;
 
     //======================== Other Functions =======================
@@ -53,14 +59,23 @@ public:
         height \f$z\f$. It just implements the geometry definition. */
     double density(double R, double z) const override;
 
-    /** This function generates a random position from the uniform ring torus geometry. A random
-        azimuth angle \f$\phi\f$ is readily found by choosing a random deviate \f${\cal{X}}\f$ and
-        setting \f$\phi = 2\pi {\cal{X}}\f$. Then, a random position in the small circle in the
-        azimuthal plane is found (in polar coordinates) as \f$ \theta' = 2\pi {\cal{X}}_1 \f$ and
-        \f$ r' = r_{\text{small}} \sqrt{{\cal{X}}_2}\f$, with \f$ {\cal{X}}_1 \f$ and \f$
-        {\cal{X}}_2 \f$ two more random deviates. Finally, these small circle coordinates are
-        transformed to global cylindrical coordinates as \f$z = r' \sin(\theta')\f$ and \f$R =
-        r_{\text{large}} + r' \cos(\theta')\f$. */
+    /** This function generates a random position from the uniform ring torus geometry. Because
+        the cylindrical volume element \f$R\,{\text{d}}R\,{\text{d}}\varphi\,{\text{d}}z\f$
+        depends on \f$R\f$, sampling a position uniformly within the meridional cross-section
+        circle and revolving it around the z-axis would not produce a position that is uniform by
+        volume within the torus. Instead, the function first draws a random cylindrical radius
+        \f$R\f$ from the marginal probability density \f$p(R)\,{\text{d}}R \propto R\,
+        \sqrt{r_{\text{small}}^2-(R-r_{\text{large}})^2}\,{\text{d}}R\f$ tabulated by
+        setupSelfBefore(), using linear interpolation of its cumulative distribution (the
+        cumulative distribution of this \f$p(R)\f$ does not invert analytically, because its
+        antiderivative mixes an arcsine term with algebraic terms in \f$R\f$). Because the density
+        is uniform inside the torus, the height \f$z\f$ then has a uniform conditional
+        distribution given this \f$R\f$, over the range \f$|z| \le
+        \sqrt{r_{\text{small}}^2-(R-r_{\text{large}})^2}\f$ set by the torus tube at that radius,
+        so a random \f$z\f$ is drawn directly by choosing a random deviate \f${\cal{X}}_1\f$ and
+        setting \f$z = \sqrt{r_{\text{small}}^2-(R-r_{\text{large}})^2}\,(2{\cal{X}}_1-1)\f$.
+        Finally, a random azimuth angle \f$\phi\f$ is found by choosing a random deviate
+        \f${\cal{X}}_2\f$ and setting \f$\phi = 2\pi {\cal{X}}_2\f$. */
     Position generatePosition() const override;
 
     /** This function returns the radial surface density, i.e. the integration of the density along
@@ -84,6 +99,8 @@ private:
     // data members initialized during setup
     double _A{0.};
     double _r02{0.};
+    Array _Rv;
+    Array _Xv;
 };
 
 ////////////////////////////////////////////////////////////////////

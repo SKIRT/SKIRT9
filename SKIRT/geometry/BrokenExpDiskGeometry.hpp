@@ -105,7 +105,7 @@ protected:
     /** This function returns the surface density along the Z-axis, i.e. the integration of the
         density along the entire Z-axis, \f[ \Sigma_Z = \int_{-\infty}^\infty \rho(0,z)\,
         {\text{d}} z \f] For the BrokenExpDiskGeometry model, one obtains \f[ \Sigma_Z = 2\,
-        \rho_0\, z_0 \left(1+{\text{e}}^{-s\,R_{break}}\right)^{\frac{1}{s}
+        \rho_0\, h_z \left(1+{\text{e}}^{-s\,R_{break}/h_{\text{out}}}\right)^{\frac{1}{s}
         \left(\frac{h_{\text{out}}}{h_{\text{inn}}} - 1\right)}\f] */
     double SigmaZ() const override;
 
