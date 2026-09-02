@@ -41,16 +41,19 @@ public:
     /** This function returns the Z-axis surface density, i.e. the integration of the density along
         the entire Z-axis, \f[ \Sigma_Z = \int_{-\infty}^\infty \rho(0,0,z)\,{\text{d}}z. \f]
         Because the clip region is defined purely in terms of cylindrical radius, the Z-axis itself
-        (at R=0) is always either entirely inside or entirely outside the clipped region, so unlike
-        the generic ClipGeometryDecorator::SigmaX() and ClipGeometryDecorator::SigmaY() this value
-        can be computed exactly rather than approximated. If the inside region is being removed,
-        the entire Z-axis lies in the removed region and this function returns zero; otherwise the
-        entire Z-axis is retained and this function returns the corresponding value of the geometry
-        being decorated, renormalized by the same factor used in density(). This class does not
-        override SigmaX() or SigmaY(): a cylindrical clip partially clips the X-axis and Y-axis (at
-        \f$|x|>{\text{clipRadius}}\f$ and \f$|y|>{\text{clipRadius}}\f$ respectively when removing
-        the outside region), so no exact shortcut is available for those two, and the inherited
-        ClipGeometryDecorator implementation is used instead. */
+        (at R=0) is always either entirely inside or entirely outside the clipped region: if the
+        inside region is being removed, the entire Z-axis lies in the removed region, and this
+        function returns exactly zero, unlike the generic ClipGeometryDecorator::SigmaZ()
+        implementation (which would otherwise return the undecorated geometry's nonzero value even
+        though the true result is known to be zero in this case). Otherwise, the entire Z-axis is
+        retained, and this function returns the corresponding value of the geometry being
+        decorated, without renormalization, exactly like the inherited ClipGeometryDecorator
+        implementation, for the same reason explained in the ClipGeometryDecorator class
+        documentation: mixing a renormalized Z value with non-renormalized X and Y values would be
+        inconsistent and unpredictable for client code, including code that normalizes the mass of
+        medium components based on these values. This class does not override SigmaX() or SigmaY():
+        the inherited ClipGeometryDecorator implementation already returns the undecorated
+        geometry's own values. */
     double SigmaZ() const override;
 };
 

@@ -16,18 +16,23 @@
     The decorator increases the density in the remaining region with a single constant factor
     \f$1/(1-\chi)\f$, where \f$\chi\f$ is the (Monte Carlo estimated) fraction of the original mass
     taken away by the clipping, to ensure that the total mass of the decorated geometry remains
-    equal to one.
+    equal to one. The density(), generatePosition() functions (and, indirectly, any Monte Carlo
+    sampling of positions) fully reflect this renormalization.
 
-    The SigmaX(), SigmaY() and SigmaZ() functions implemented by this base class apply this same
-    single factor to the corresponding surface density of the geometry being decorated. This is
-    exact only if the clip removes the same fraction of mass along each of the three coordinate
-    axes. For an asymmetric clip, it is not: for example, a box clip may remove more material along
-    the Z-axis than along the Y-axis, in which case the uniform factor over- or under-corrects one
-    or more of these three values. Computing the exact per-axis values would require additional
-    density sampling along each axis individually; this is not done because these functions are
-    used only for reporting purposes, not during the actual radiative transfer simulation. A
-    subclass may override one or more of these functions to provide a more exact value where the
-    shape of its particular clip region allows it. */
+    The SigmaX(), SigmaY() and SigmaZ() functions implemented by this base class, on the other
+    hand, simply return the corresponding value for the geometry being decorated, \em without
+    applying the renormalization factor described above. This is a deliberate choice rather than an
+    oversight. A clip generally removes a different fraction of mass along each of the three
+    coordinate axes, so the single, uniform renormalization factor is exact for at most one of
+    them; applying it to all three regardless would make some of the reported values exact (or
+    nearly so) while leaving the others approximate, without any way for client code to tell which
+    is which. Because these functions are used, among other purposes, to help normalize the mass of
+    medium components, such a partially-corrected, inconsistent result could bias the simulation
+    output in a way that is difficult to predict or diagnose. Simply returning the undecorated
+    geometry's own values sacrifices precision on an individual axis, but is predictable and
+    consistent, both across all three axes and across all subclasses of this class. A subclass may
+    still override one of these functions where a genuinely exact special case applies for the
+    particular shape of its clip region. */
 class ClipGeometryDecorator : public Geometry
 {
     /** The enumeration type indicating which region to remove (Inside or Outside). */
@@ -71,24 +76,21 @@ public:
     Position generatePosition() const override;
 
     /** This function returns the X-axis surface density, i.e. the integration of the density along
-        the entire X-axis, \f[ \Sigma_X = \int_{-\infty}^\infty \rho(x,0,0)\,{\text{d}}x. \f] It
-        returns the corresponding value of the geometry being decorated after applying the uniform
-        renormalization factor described in the class documentation. This value is exact only if
-        the clip removes the same fraction of mass along the X-axis as it does overall. */
+        the entire X-axis, \f[ \Sigma_X = \int_{-\infty}^\infty \rho(x,0,0)\,{\text{d}}x. \f] As
+        explained in the class documentation, it simply returns the corresponding value of the
+        geometry being decorated, without attempting to correct for the clipping. */
     double SigmaX() const override;
 
     /** This function returns the Y-axis surface density, i.e. the integration of the density along
-        the entire Y-axis, \f[ \Sigma_Y = \int_{-\infty}^\infty \rho(0,y,0)\,{\text{d}}y. \f] It
-        returns the corresponding value of the geometry being decorated after applying the uniform
-        renormalization factor described in the class documentation. This value is exact only if
-        the clip removes the same fraction of mass along the Y-axis as it does overall. */
+        the entire Y-axis, \f[ \Sigma_Y = \int_{-\infty}^\infty \rho(0,y,0)\,{\text{d}}y. \f] As
+        explained in the class documentation, it simply returns the corresponding value of the
+        geometry being decorated, without attempting to correct for the clipping. */
     double SigmaY() const override;
 
     /** This function returns the Z-axis surface density, i.e. the integration of the density along
-        the entire Z-axis, \f[ \Sigma_Z = \int_{-\infty}^\infty \rho(0,0,z)\,{\text{d}}z. \f] It
-        returns the corresponding value of the geometry being decorated after applying the uniform
-        renormalization factor described in the class documentation. This value is exact only if
-        the clip removes the same fraction of mass along the Z-axis as it does overall. */
+        the entire Z-axis, \f[ \Sigma_Z = \int_{-\infty}^\infty \rho(0,0,z)\,{\text{d}}z. \f] As
+        explained in the class documentation, it simply returns the corresponding value of the
+        geometry being decorated, without attempting to correct for the clipping. */
     double SigmaZ() const override;
 
 protected:

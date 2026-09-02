@@ -52,21 +52,21 @@ Position ClipGeometryDecorator::generatePosition() const
 
 double ClipGeometryDecorator::SigmaX() const
 {
-    return _geometry->SigmaX() * _norm;
+    return _geometry->SigmaX();
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double ClipGeometryDecorator::SigmaY() const
 {
-    return _geometry->SigmaY() * _norm;
+    return _geometry->SigmaY();
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double ClipGeometryDecorator::SigmaZ() const
 {
-    return _geometry->SigmaZ() * _norm;
+    return _geometry->SigmaZ();
 }
 
 ////////////////////////////////////////////////////////////////////
