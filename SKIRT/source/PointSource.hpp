@@ -58,9 +58,13 @@ public:
 
     /** This function causes the photon packet \em pp to be launched from the source using the
         given history index, wavelength, weighted luminosity contribution, and redshift interface.
-        The position of the emission is determined randomly from the geometry configured for the
-        source. The emission is unpolarized and isotropic; the emission direction is simply sampled
-        from a uniform distribution on the unit sphere. */
+        The position of the emission is the point source's configured position. If an angular
+        distribution is configured, the emission direction is drawn from it (and the distribution
+        is passed along with the photon packet so that peel-off packets can retrieve the
+        appropriate bias factor); otherwise the emission is isotropic and the direction is sampled
+        from a uniform distribution on the unit sphere. Similarly, the polarization state of the
+        emission is determined by the configured polarization profile, if any; otherwise the
+        emission is unpolarized. */
     void launchSpecialty(PhotonPacket* pp, size_t historyIndex, double lambda, double Lw,
                          VelocityInterface* bvi) const override;
 };

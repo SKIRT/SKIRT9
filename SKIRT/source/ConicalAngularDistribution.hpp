@@ -43,10 +43,10 @@ public:
     double probabilityForInclinationCosine(double costheta) const override;
 
     /** This function generates a random inclination cosine \f$\cos\theta\f$ according to an
-        isotropic distribution within a cone with (half) opening angle \f$Delta\f$. This can be
+        isotropic distribution within a cone with (half) opening angle \f$\Delta\f$. This can be
         easily obtained by picking a uniform deviate \f${\cal{X}}\f$ and setting \f[ \theta =
         \begin{cases} \;\arccos\left[ 1-2{\cal{X}}(1-\cos\Delta)\right] & \qquad\text{if $0\le
-        {\cal{X}} < \dfrac{\pi}{2}$} \\ \;\arccos\left[ 1-2\cos\Delta - 2{\cal{X}}(1-\cos\Delta)
+        {\cal{X}} < \dfrac12$} \\ \;\arccos\left[ 1-2\cos\Delta - 2{\cal{X}}(1-\cos\Delta)
         \right] & \qquad\text{if $\dfrac12 \le {\cal{X}} < 1$} \end{cases} \f] */
     double generateInclinationCosine() const override;
 

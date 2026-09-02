@@ -41,7 +41,7 @@ namespace
             _tableI.axisArray<0>(cosv);
             size_t numCos = cosv.size();
             Array deltacosv(numCos);
-            for (size_t t = 1; t != numCos; ++t) deltacosv = cosv[t] - cosv[t - 1];
+            for (size_t t = 1; t != numCos; ++t) deltacosv[t] = cosv[t] - cosv[t - 1];
 
             // get the wavelength grid points
             _tableI.axisArray<1>(lambdav);
