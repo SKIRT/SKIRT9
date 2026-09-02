@@ -32,7 +32,7 @@ class FullInstrument : public FrameInstrument
     //============= Construction - Setup - Destruction =============
 
 protected:
-    /** This function augments the FluxRecorder configuration established in the FrameInstrumet
+    /** This function augments the FluxRecorder configuration established in the FrameInstrument
         base class by requesting an SED in addition to a data cube. */
     void setupSelfBefore() override;
 };

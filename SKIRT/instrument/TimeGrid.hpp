@@ -34,6 +34,7 @@
 class TimeGrid : public SimulationItem
 {
     ITEM_ABSTRACT(TimeGrid, SimulationItem, "a time grid")
+        ATTRIBUTE_TYPE_DISPLAYED_IF(TimeGrid, "Level2")
     ITEM_END()
 
     //============= Construction - Setup - Destruction =============

@@ -21,7 +21,7 @@ void TimeGrid::setupSelfBefore()
 
     // verify that there is at least one bin
     int numBins = _bins.size();
-    if (numBins == 0) throw FATALERROR("There must be at least on time bin");
+    if (numBins == 0) throw FATALERROR("There must be at least one time bin");
 
     // verify that the bin borders and characteristic time are properly ordered
     for (const auto& bin : _bins)

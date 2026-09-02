@@ -21,7 +21,6 @@
 class LinTimeGrid : public TimeGrid
 {
     ITEM_CONCRETE(LinTimeGrid, TimeGrid, "a linear time grid")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(FileTimeGrid, "Level2")
 
         PROPERTY_DOUBLE(minTime, "the minimum time")
         ATTRIBUTE_QUANTITY(minTime, "timelag")

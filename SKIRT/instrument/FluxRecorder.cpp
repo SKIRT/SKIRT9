@@ -852,10 +852,13 @@ void FluxRecorder::calibrateAndWrite()
             // the output files have single-precision floating point numbers with range of only about 10^+-38
             // --> scale the values to a range that has a maximum of 10^+-38 to minimize the number of underflows
             const double WMAX = 1e38;
+            // since every contribution is nonnegative, w[1].max() > 0 guarantees w[k].max() > 0 for all k
+            bool anyContribution = _wifu[1].max() > 0;
             Array cs(maxContributionPower);
             for (int k = 1; k <= maxContributionPower; ++k)
             {
-                cs[k - 1] = pow(WMAX / _wifu[k].max(), 1. / k);  // inverse of WMAX == c**k w[k].max()
+                // inverse of WMAX == c**k w[k].max(); if there were no contributions, no rescaling is needed
+                cs[k - 1] = anyContribution ? pow(WMAX / _wifu[k].max(), 1. / k) : 1.;
             }
             double c = cs.min();
             double cn = 1.;
@@ -1023,10 +1026,13 @@ void FluxRecorder::calibrateAndWrite()
             // the output files have single-precision floating point numbers with range of only about 10^+-38
             // --> scale the values to a range that has a maximum of 10^+-38 to minimize the number of underflows
             const double WMAX = 1e38;
+            // since every contribution is nonnegative, w[1].max() > 0 guarantees w[k].max() > 0 for all k
+            bool anyContribution = _wstm[1].max() > 0;
             Array cs(maxContributionPower);
             for (int p = 1; p <= maxContributionPower; ++p)
             {
-                cs[p - 1] = pow(WMAX / _wstm[p].max(), 1. / p);  // inverse of WMAX == c**p w[p].max()
+                // inverse of WMAX == c**p w[p].max(); if there were no contributions, no rescaling is needed
+                cs[p - 1] = anyContribution ? pow(WMAX / _wstm[p].max(), 1. / p) : 1.;
             }
             double c = cs.min();
             double cn = 1.;

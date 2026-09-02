@@ -28,7 +28,6 @@
 class FileTimeGrid : public TimeGrid
 {
     ITEM_CONCRETE(FileTimeGrid, TimeGrid, "a time grid loaded from a text file")
-        ATTRIBUTE_TYPE_DISPLAYED_IF(FileTimeGrid, "Level2")
 
         PROPERTY_STRING(filename, "the name of the file with the time bins")
 
