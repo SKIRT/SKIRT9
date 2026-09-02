@@ -35,12 +35,11 @@ Position SpiralStructureGeometryDecorator::generatePosition() const
     Position bfr = _geometry->generatePosition();
     double R, dummyphi, z;
     bfr.cylindrical(R, dummyphi, z);
-    double c = 1.0 + (_cn - 1.0) * _w;
     double phi, t;
     do
     {
         phi = 2.0 * M_PI * random()->uniform();
-        t = random()->uniform() * c / perturbation(R, phi);
+        t = random()->uniform() * _c / perturbation(R, phi);
     } while (t > 1);
     return Position(R, phi, z, Position::CoordinateSystem::CYLINDRICAL);
 }
