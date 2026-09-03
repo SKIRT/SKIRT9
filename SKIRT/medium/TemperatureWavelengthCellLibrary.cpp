@@ -105,12 +105,16 @@ vector<int> TemperatureWavelengthCellLibrary::mapping(const Array& bv) const
     {
         if (Tv[m] > 0. && lambdav[m] > 0.)
         {
+            // if all qualifying cells share the same temperature and/or wavelength, the corresponding
+            // bin width is zero; put them all in bin 0 for that dimension
             double T = Tv[m];
-            int i = max(0, min(_numTemperatures - 1, static_cast<int>((T - Tmin) / dT)));
+            int i = dT > 0. ? max(0, min(_numTemperatures - 1, static_cast<int>((T - Tmin) / dT))) : 0;
 
             double lambda = lambdav[m];
             double loglambda = log10(lambda);
-            int j = max(0, min(_numWavelengths - 1, static_cast<int>((loglambda - loglambdamin) / dloglambda)));
+            int j = dloglambda > 0.
+                        ? max(0, min(_numWavelengths - 1, static_cast<int>((loglambda - loglambdamin) / dloglambda)))
+                        : 0;
 
             nv[m] = i + _numTemperatures * j;
         }

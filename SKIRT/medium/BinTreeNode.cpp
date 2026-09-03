@@ -203,7 +203,6 @@ void BinTreeNode::addNeighbors()
             {
                 for (auto neighbor : neighbors(BACK))
                 {
-                    neighbor->deleteNeighbor(BOTTOM, this);
                     neighbor->deleteNeighbor(FRONT, this);
                     if (neighbor->zmin() <= zc) makeNeighbors(FRONT, neighbor, CHILD_0);
                     if (neighbor->zmax() >= zc) makeNeighbors(FRONT, neighbor, CHILD_1);
@@ -213,7 +212,6 @@ void BinTreeNode::addNeighbors()
             {
                 for (auto neighbor : neighbors(FRONT))
                 {
-                    neighbor->deleteNeighbor(BOTTOM, this);
                     neighbor->deleteNeighbor(BACK, this);
                     if (neighbor->zmin() <= zc) makeNeighbors(BACK, neighbor, CHILD_0);
                     if (neighbor->zmax() >= zc) makeNeighbors(BACK, neighbor, CHILD_1);
@@ -223,7 +221,6 @@ void BinTreeNode::addNeighbors()
             {
                 for (auto neighbor : neighbors(LEFT))
                 {
-                    neighbor->deleteNeighbor(BOTTOM, this);
                     neighbor->deleteNeighbor(RIGHT, this);
                     if (neighbor->zmin() <= zc) makeNeighbors(RIGHT, neighbor, CHILD_0);
                     if (neighbor->zmax() >= zc) makeNeighbors(RIGHT, neighbor, CHILD_1);
@@ -233,7 +230,6 @@ void BinTreeNode::addNeighbors()
             {
                 for (auto neighbor : neighbors(RIGHT))
                 {
-                    neighbor->deleteNeighbor(BOTTOM, this);
                     neighbor->deleteNeighbor(LEFT, this);
                     if (neighbor->zmin() <= zc) makeNeighbors(LEFT, neighbor, CHILD_0);
                     if (neighbor->zmax() >= zc) makeNeighbors(LEFT, neighbor, CHILD_1);
@@ -243,7 +239,6 @@ void BinTreeNode::addNeighbors()
             {
                 for (auto neighbor : neighbors(BOTTOM))
                 {
-                    neighbor->deleteNeighbor(BOTTOM, this);
                     neighbor->deleteNeighbor(TOP, this);
                     makeNeighbors(TOP, neighbor, CHILD_0);
                 }
@@ -252,7 +247,6 @@ void BinTreeNode::addNeighbors()
             {
                 for (auto neighbor : neighbors(TOP))
                 {
-                    neighbor->deleteNeighbor(BOTTOM, this);
                     neighbor->deleteNeighbor(BOTTOM, this);
                     makeNeighbors(BOTTOM, neighbor, CHILD_1);
                 }

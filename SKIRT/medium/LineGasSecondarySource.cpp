@@ -59,8 +59,9 @@ double LineGasSecondarySource::prepareLuminosities()
     ProcessManager::sumToAll(_Lv);
 
     // calculate the total luminosity, and normalize the individual luminosities to unity
+    // (if the total luminosity is zero, leave the individual luminosities at zero as well)
     double L = _Lv.sum();
-    _Lv /= L;
+    if (L > 0.) _Lv /= L;
 
     // log the luminosity and the number of emitting cells
     auto log = find<Log>();
@@ -83,10 +84,12 @@ void LineGasSecondarySource::preparePacketMap(size_t firstIndex, size_t numIndic
 {
     int numCells = _ms->numCells();
 
-    // determine a uniform weight for each cell with non-negligable emission, and normalize to unity
+    // determine a uniform weight for each cell with non-negligible emission, and normalize to unity
+    // (if no cell has any emission, leave the weights at zero as well)
     Array wv(numCells);
     for (int m = 0; m != numCells; ++m) wv[m] = _Lv[m] > 0. ? 1. : 0.;
-    wv /= wv.sum();
+    double wvsum = wv.sum();
+    if (wvsum > 0.) wv /= wvsum;
 
     // calculate the final, composite-biased launch weight for each cell, normalized to unity
     double xi = _config->secondarySpatialBias();
@@ -189,7 +192,8 @@ void LineGasSecondarySource::launch(PhotonPacket* pp, size_t historyIndex, doubl
     auto m = std::upper_bound(_Iv.cbegin(), _Iv.cend(), historyIndex) - _Iv.cbegin() - 1;
 
     // calculate the weight related to biased source selection
-    double ws = _Lv[m] / _Wv[m];
+    // (if the cell has zero launch weight, its luminosity must be zero as well, so the result is zero)
+    double ws = _Wv[m] > 0. ? _Lv[m] / _Wv[m] : 0.;
 
     // calculate the emission spectrum and bulk velocity for this cell, if not already available
     t_gascell.calculateIfNeeded(m, _h, _ms);

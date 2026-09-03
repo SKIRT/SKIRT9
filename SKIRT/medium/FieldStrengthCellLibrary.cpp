@@ -64,8 +64,14 @@ vector<int> FieldStrengthCellLibrary::mapping(const Array& bv) const
         double U = Uv[m];
         if (U > 0.)
         {
-            double logU = log10(U);
-            nv[m] = max(0, min(_numFieldStrengths - 1, static_cast<int>((logU - logUmin) / dlogU)));
+            // if all qualifying cells share the same field strength, dlogU is zero; put them all in bin 0
+            if (dlogU > 0.)
+            {
+                double logU = log10(U);
+                nv[m] = max(0, min(_numFieldStrengths - 1, static_cast<int>((logU - logUmin) / dlogU)));
+            }
+            else
+                nv[m] = 0;
         }
         else
         {

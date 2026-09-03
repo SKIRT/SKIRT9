@@ -17,7 +17,7 @@
     graphite).
 
     Specifically, there is no destruction if \f$T_\mathrm{eq}<=T_\mathrm{min}\f$; all grains are
-    destroyed if \f$T_\mathrm{eq}>=T_\mathrm{min}\f$; and in between the destruction fraction is
+    destroyed if \f$T_\mathrm{eq}>=T_\mathrm{max}\f$; and in between the destruction fraction is
     obtained by linear interpolation. */
 class LinearDustDestructionRecipe : public DustDestructionRecipe
 {
