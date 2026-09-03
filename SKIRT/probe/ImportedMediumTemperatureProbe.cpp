@@ -22,7 +22,11 @@ void ImportedMediumTemperatureProbe::probeImportedMedium(string sh, const Import
         auto getValue = [](const Snapshot* snapshot, int m) { return snapshot->temperature(m); };
         auto getWeight = [dust](const Snapshot* snapshot, int m) {
             double w = snapshot->density(m);
-            if (dust) w /= snapshot->metallicity(m);
+            if (dust)
+            {
+                double Z = snapshot->metallicity(m);
+                w = Z > 0. ? w / Z : 0.;
+            }
             return w;
         };
 

@@ -21,7 +21,11 @@ void ImportedMediumVelocityProbe::probeImportedMedium(string sh, const ImportedM
         auto getValue = [](const Snapshot* snapshot, int m) { return snapshot->velocity(m); };
         auto getWeight = [dust](const Snapshot* snapshot, int m) {
             double w = snapshot->density(m);
-            if (dust) w /= snapshot->metallicity(m);
+            if (dust)
+            {
+                double Z = snapshot->metallicity(m);
+                w = Z > 0. ? w / Z : 0.;
+            }
             return w;
         };
 

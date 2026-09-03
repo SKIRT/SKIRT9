@@ -90,7 +90,7 @@ void PlanarCutsForm::writePlanarCut(const ProbeFormBridge* bridge, bool xd, bool
     double offset = 0.;
     if (!xd) offset = xp;
     if (!yd) offset = yp;
-    if (!zd) offset = yp;
+    if (!zd) offset = zp;
     string position = offset ? " parallel to the " : " in the ";
 
     // write the file

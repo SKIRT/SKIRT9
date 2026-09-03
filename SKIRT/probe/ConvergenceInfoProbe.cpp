@@ -121,7 +121,10 @@ namespace
         vector<int> countV(numBins + 1);
         for (double tau : tauV)
         {
-            int index = max(0, min(numBins, static_cast<int>((tau - taumin) / (taumax - taumin) * numBins)));
+            // if all cells share the same optical depth, taumax==taumin; put them all in bin 0
+            int index = taumax > taumin
+                            ? max(0, min(numBins, static_cast<int>((tau - taumin) / (taumax - taumin) * numBins)))
+                            : 0;
             countV[index]++;
         }
         int count = 0;
