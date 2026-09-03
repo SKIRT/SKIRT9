@@ -12,11 +12,11 @@ class SchemaDef;
 ////////////////////////////////////////////////////////////////////
 
 /** The SimulationItemRegistry class manages the registration of all discoverable SimulationItem
-    subclasses in the \c SKIRT program (defined in the \c core project subdirectory). A single
-    instance of the SimulationItemRegistry class must be constructed just after program startup,
-    and certainly before any parallel threads are started. A good place is early in the main()
-    function. The program should not use the exit() or abort() functions, but rather let the main()
-    function run to normal completion and return an exit code. */
+    subclasses in the \c SKIRT program. A single instance of the SimulationItemRegistry class must
+    be constructed just after program startup, and certainly before any parallel threads are
+    started. A good place is early in the main() function. The program should not use the exit() or
+    abort() functions, but rather let the main() function run to normal completion and return an
+    exit code. */
 class SimulationItemRegistry final
 {
 public:

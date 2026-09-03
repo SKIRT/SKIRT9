@@ -89,7 +89,7 @@ public:
     /** Returns the input/output file paths object for this simulation hierarchy. */
     FilePaths* filePaths() const;
 
-    /** Returns the logging mechanism for this simulation hierarchy. */
+    /** Returns the parallel factory for this simulation hierarchy. */
     ParallelFactory* parallelFactory() const;
 
     //======================== Data Members ========================
