@@ -88,6 +88,7 @@
 #include "FieldStrengthCellLibrary.hpp"
 #include "FileBand.hpp"
 #include "FileBorderWavelengthGrid.hpp"
+#include "FileGaussianLinesSED.hpp"
 #include "FileGrainSizeDistribution.hpp"
 #include "FileIndexedSEDFamily.hpp"
 #include "FileLineSED.hpp"
@@ -144,6 +145,7 @@
 #include "LinearDustDestructionRecipe.hpp"
 #include "ListBand.hpp"
 #include "ListBorderWavelengthGrid.hpp"
+#include "ListGaussianLinesSED.hpp"
 #include "ListGrainSizeDistribution.hpp"
 #include "ListLineSED.hpp"
 #include "ListMesh.hpp"
@@ -382,6 +384,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<TabulatedSED>();
     ItemRegistry::add<FileSED>();
     ItemRegistry::add<ListSED>();
+    ItemRegistry::add<GaussianLinesSED>();
+    ItemRegistry::add<FileGaussianLinesSED>();
+    ItemRegistry::add<ListGaussianLinesSED>();
     ItemRegistry::add<LyaGaussianSED>();
     ItemRegistry::add<LyaDoublePeakedSED>();
     ItemRegistry::add<LyaSEDDecorator>();
