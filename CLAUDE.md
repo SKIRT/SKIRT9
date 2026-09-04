@@ -58,6 +58,20 @@ The output directory must already exist (`skirt` will not create it). The `.ski`
 
 There is no in-repo unit test suite or `ctest` target. Correctness is checked with a separate functional/regression suite of 800+ `.ski` test cases with reference output (in a sibling `Functional9` directory, see below), run via the Python Toolkit for SKIRT (PTS): `pts test_fun <pattern>` (e.g. `pts test_fun *Disk*`) or `pts test_fun .` for the full suite, `pts endorse_fun <pattern>` to accept new reference output after verifying it. Ask before running or modifying anything under `Functional9` — it's not part of this repository.
 
+### Ad hoc test cases while developing a new feature
+
+`Functional9/NEWTESTS/<CaseName>/` is a standing exception to the "ask before touching `Functional9`" rule above: a lightweight, manual staging area for trying out new `.ski` cases while a feature is still under development, before they're ready to become part of the official suite. Claude may create cases there without asking first; everything else under `Functional9` still requires asking. Convention used for these cases:
+
+- One case per subdirectory, named descriptively (e.g. `Functional9/NEWTESTS/FileFreqUnits/`), containing a single `.ski` file plus `in/`, `out/` and `ref/` subfolders — mirroring the PTS layout so a case can later be relocated into the real suite with no restructuring.
+- Any input file the ski file references (e.g. for a `File...`-style class) goes in `in/`.
+- Run `skirt` directly (not `pts test_fun`), single-threaded, with input/output isolated to that case's own folders:
+  ```bash
+  release/SKIRT/main/skirt -t 1 -i Functional9/NEWTESTS/<CaseName>/in -o Functional9/NEWTESTS/<CaseName>/out Functional9/NEWTESTS/<CaseName>/<name>.ski
+  ```
+- Leave `ref/` empty. Comparing `out/` against expectations, promoting it into `ref/`, and moving the finished case out of `NEWTESTS` into its permanent location are for the user to do by hand — never do this automatically.
+- For testing an SED (or another similarly self-contained item), a minimal `NoMedium` simulation with one `PointSource` and one or more `SEDInstrument`s is enough; no medium system is needed. When a feature has multiple independent parts worth checking at different resolutions (e.g. several emission lines), give it several `SEDInstrument`s in one ski file rather than several ski files: one coarse instrument spanning the full range (using the system's `defaultWavelengthGrid`) to confirm the spectrum is ~0 away from the features under test, plus one tightly-zoomed instrument per feature, each overriding the default with its own `<wavelengthGrid>` element.
+- For a quick visual sanity check, a temporary plotting script (e.g. Python/matplotlib reading the `*_sed.dat` output) is fine, but keep the script and its images entirely out of `Functional9` — use the scratchpad instead — and delete them once reviewed, since they aren't part of the test deliverable.
+
 ## Documentation and project layout
 
 The full user/developer/administrator documentation published on the SKIRT project web site is maintained as Doxygen-style source text in a separate sibling repository, normally checked out at `../../Web9/git`. It's worth consulting while working in this repo, in particular:
