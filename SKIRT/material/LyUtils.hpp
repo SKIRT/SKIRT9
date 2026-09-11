@@ -109,13 +109,13 @@ namespace LyUtils
         the definition given in the class header. */
     double section(double lambda, double center, double vth, double A, double a, double g);
 
-    /** This function draws a random hydrogen atom velocity as seen by an incoming photon from the
+    /** This function draws a random atom velocity as seen by an incoming photon from the
         appropriate probability distributions, reflecting the preference for photons to be
         scattered by atoms to which they appear close to resonance. In addition, it determines
         whether the photon scatters through the isotropic or dipole phase function.
 
         The function arguments include the photon packet wavelength as it is perceived in the local
-        gas frame and the hydrogen temperature and number density in the current spatial cell. The
+        gas frame and the temperature and number density in the current spatial cell. The
         latter two values are used in the variable acceleration scheme. The return value is a pair:
         the first item is the atom velocity and the second item is true for the dipole phase
         function and false for isotropic scattering.

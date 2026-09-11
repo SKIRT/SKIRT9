@@ -59,15 +59,10 @@ const MaterialMix* XRayIonicGasMixFamily::mix(double /*Z*/, double T, const Arra
 
 const MaterialMix* XRayIonicGasMixFamily::mix()
 {
-    // create a default mix in case this is called before the setupSelfBefore()
-    if (!_defaultMix)
-    {
-        setup();
+    // perform setup if not already done
+    setup();
 
-        vector<double> abundances(_ionNames.size(), 0.);
-        _defaultMix = new XRayIonicGasMix(this, _ions, abundances, 0., _boundElectrons, _resonantScattering, true);
-    }
-    return _defaultMix;
+    return _mixes[0];
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -92,6 +87,15 @@ void XRayIonicGasMixFamily::setup()
         case ElectronScattering::FreeWithPolarization:
             _boundElectrons = XRayIonicGasMix::ElectronScattering::FreeWithPolarization;
             break;
+        case ElectronScattering::FreeBound: _boundElectrons = XRayIonicGasMix::ElectronScattering::FreeBound;
+    }
+
+    // create a default mix if none found
+    if (!_mixes.size())
+    {
+        // add empty mix
+        Array abundances(_ionNames.size(), 0.);
+        mix(0., 0., abundances);
     }
 }
 

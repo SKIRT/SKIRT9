@@ -16,7 +16,7 @@
 
 /** The XRayIonicGasMix class describes the material properties of a partially ionised gas in the
     X-ray wavelength range, taking into account the effects of photo-absorption, fluorescence,
-    recombination, electron scattering, and optionally　resonant scattering. It supports the line 
+    recombination, electron scattering, and resonant scattering. It supports the line 
     production and transfer for the Lyman-series of hydrogen-like ions and the K-series of helium-like 
     ions.　It is largely an extension of the XRayAtomicGasMix class, supporting all ions instead of 
     just the neutral atoms. To avoid the use of this material mix outside of the regime for which it has
@@ -26,8 +26,10 @@
     The class assumes a gas containing a mixture of (ionized) elements with atomic numbers ranging
     from 1 (hydrogen) to 30 (zinc). Including fully ionized ions, this results in a total of 495
     possible ions. Not all ions have to be used, the user can specify what ions are included with
-    the \em ions property. The spatial density distribution of the gas is determined by the product
-    of the number density and the abundances of the ions in use. The temperature of the gas can
+    the \em ions property. The abundances of the ions are specified in the ski file as a constant
+	through the \em abundances property. If an abundance is set to zero, the corresponding ion is
+	not used in the mix. The spatial density distribution of the gas is determined by the product
+    of the number density and the abundances of the ions in use. The \em temperature of the gas can
     also be configured by the user as a constant property. In other words, the abundances and the
     temperature are considered to be spatially constant (for a given medium component), while the
     overall density can obviously vary across space as usual.
@@ -43,15 +45,17 @@
     "falls" into an empty space created by photo-absorption, emitting a new photon with a different
     energy. For each electron shell and for each possible fluorescence transition towards that
     shell, the \em yield defines the probability that such fluorescence event occurs after an
-    electron has been liberated in that shell. This class supports the following fluorescent lines,
+    electron has been liberated in that shell. This class supports the following fluorescence lines,
     all with energies above \f$4.3 \, \text{eV}\f$: K\f$_{\alpha2}\f$, K\f$_{\alpha1}\f$,
     K\f$_{\beta3}\f$, K\f$_{\beta1}\f$, L\f$_{\beta4}\f$, L\f$_{\beta3}\f$, L\f$_{1,2}\f$,
     L\f$_{1,3}\f$, L\f$_{\eta}\f$, L\f$_{l}\f$, L\f$_{\gamma5}\f$, L\f$_{\beta6}\f$,
     L\f$_{\beta1}\f$, L\f$_{\alpha2}\f$, L\f$_{\alpha1}\f$, M\f$_{1,2}\f$, M\f$_{1,3}\f$,
     M\f$_{2,4}\f$, M\f$_{3,4}\f$, M\f$_{3,5}\f$ M\f$_{2}\f$N\f$_{1}\f$, M\f$_{3}\f$N\f$_{1}\f$
-    (these transitions are not all the same as the ones in the XRayAtomicGasMix class!).
+    These transitions are not all the same as those in the XRayAtomicGasMix class, and even
+	transitions that are the same may yield slightly different results, as the resources are obtained from different sources.
 
-    Unlike the XRayAtomicGasMix, the fluorescent lines never have an intrinsic shape.
+	Similar to the XRayAtomicGasMix, certain elements have intrinsic line shape data associated with them.
+	For this class, this is limited to the (K_{\alpha1}) and (K_{\alpha2}) lines for the Fe ions.
 
     Because fluorescence only occurs as the result of a photo-absorption event, this class
     implements fluorescence as a form of scattering (where the wavelength of the photon being
@@ -61,7 +65,7 @@
 
     <b>Recombination</b>
 
-    For hydrogen-like ions and helium-like ions, photo-absorption cannot be followed by fluorescence 
+    For hydrogen-like and helium-like ions, photo-absorption cannot be followed by fluorescence 
     since the ion will have no excited electrons left. Instead it can be followed by a radiative 
     recombination event either to the ground state or to an excited level, which will then cascade 
     down to the ground state. This class assumes instantaneous recombination and only implements 
@@ -71,10 +75,10 @@
 
     <b>Scattering by bound electrons</b>
 
-    Electrons bound to atoms or free in the gas scatter incoming X-ray photons. Currently this
-    class can only model electrons as free using inelastic (Compton) scattering. We completely
-    ignore elastic (Rayleigh) scattering and inelastic (bound-Compton) scattering. The user can
-    select one of three implementations for electron scattering, these are:
+	Electrons bound to the atoms or free in the gas scatter incoming X-ray photons. This process can be
+    elastic (Rayleigh scattering) or inelastic (Compton scattering). This class however always uses inelastic (Compton) scattering for this process; elastic (Rayleigh) scattering is
+	inelastic (Compton) scattering, completely ignoring elastic (Rayleigh) scattering. The user can select one
+	of four implementations for electron scattering, these are:
 
     - \em None: ignore scattering by all electrons.
 
@@ -84,8 +88,13 @@
     - \em FreeWithPolarization: use free-electron Compton scattering for all electrons with support
     for polarization.
 
-    This means that all electrons are treated the same way. A material mix with Fe+0 will thus have
-    the same scattering cross section as a material mix with Fe+26.
+    - \em FreeBound: use an interpolation between the free-electron and bound-electron Compton
+    scattering cross sections for each ion, based on the number of electrons still bound to that
+    ion.
+
+	When using the \em Free or \em FreeWithPolarization implementations, all electrons are treated the 
+	same regardless of ionization state, so that a material mix with Fe+0 has the same electron scattering cross section as a material mix with Fe+26. 
+	For \em FreeBound, on the other hand, the scattering cross section for a given ion depends on the amount of free and bound electrons.
 
     <b>Resonant scattering</b>
 
@@ -120,7 +129,7 @@
     single instrument configured with a high-resolution wavelength grid, or separate instruments
     can be configured with wavelength grids to resolve specific features of interest.
 
-    Although there is no secondary emission phase, fluorescent emission and lyman recombination,
+    Although there is no secondary emission phase, fluorescence emission and lyman recombination,
     which are modelled as scattering, do contribute to the secondary emission spectrum. To study
     these processes seperately from the background continuum, configure the instrument to record
     flux components seperately and consider the secondary emission component, which includes these
@@ -139,20 +148,20 @@
     importMetallicity, \em importTemperature, and \em importVariableMixParams must be left at
     'false'. For example, if bulk velocities are also imported for this medium component (i.e. \em
     importVelocity is 'true'), the column order would be \f[ ..., n, v_\mathrm{x}, v_\mathrm{y},
-    v_\mathrm{z} \f]
+    v_\mathrm{z} \f] When a separate XRayIonicGasMix is required for each spatial cell, refer to the XRayIonicGasMixFamily class.
 
-    The relative abundances of the present ions in the gas and the temperature of the gas are
+    The relative abundances of the present ions and the temperature of the gas are
     configured in the ski file as constant properties. In other words, the abundances and the
-    temperature are considered to be spatially constant (for a given medium component).
+    temperature are considered to be spatially constant (for a given medium component). Because of this all
+	the cross sections per hydrogen atom for this material mix are calculated during setup and the result stored, discretized on a
+	high-resolution wavelength grid for later retrieval.
 
     <b>Photo-absorption cross section</b>
 
     The total photo-absorption cross section per hydrogen atom for this material mix is obtained by
     accumulating the photo-absorption cross sections for all shells and for all individual
     elements, weighted by element abundance, and convolved with a Gaussian profile reflecting each
-    element's thermal velocity. Because the abundances and the temperature are fixed, this
-    calculation can be performed during setup and the result stored, discretized on a
-    high-resolution wavelength grid for later retrieval.
+    element's thermal velocity.
 
     Verner and Yakovlev (1995, 1996) provide analytic fits to the photo-absorption cross sections
     \f$\sigma_{ph}(E)\f$ as a function of photon energy \f$E\f$ for all the ions up to Z=30:
@@ -174,6 +183,10 @@
     These yields are obtained from Kaastra & Mewe (1993) for all ions up to Z=30, from neutral down
     to B-like.
 
+	As mentioned earlier, the Fe ions have intrinsic line shape data for the K\f$_{\alpha1}\f$ and K\f$_{\alpha2}\f$ lines.
+	The line shape data was obtained from Pinheiro et al. (2023). Consequently, the energies and fluorescence yields for these lines are also taken from this source.
+	Additional line shapes were available for the Fe ions, but the corresponding yields differed significantly from those used for the other lines in Kaastra & Mewe (1993) and were therefore not included.
+
     <b>Recombination cross section</b>
 
     The total recombination cross section per hydrogen-like or helium-like ion for this material mix is obtained
@@ -183,27 +196,92 @@
 
     <b>Electron scattering - cross section and phase function</b>
 
-    As described above, this class provides a free-electron Compton scattering implementation. Note
-    that the cross section must be multiplied by the abundance of the corresponding ion. Since we
-    assume all electrons to be free, the cross section for an ion with atomic number \f$Z\f$ is
-    simply given by \f$Z\,\sigma_\mathrm{C}\f$, where \f$\sigma_\mathrm{C}\f$ is the
+    As described above, this class provides several implementations for the scattering of X-ray
+    photons by the electrons bound to the atoms or free in the gas. These implementations involve two types of
+    scattering: free- and bound- electron Compton scattering. Note that, in all cases, the listed
+    cross sections must be multiplied by the abundance of the corresponding ion.
+
+    For free-electron Compton scattering, the cross section for an ion with atomic number
+    \f$Z\f$ given by \f$Z\,\sigma_\mathrm{C}\f$, where \f$\sigma_\mathrm{C}\f$ is the
     (wavelength-dependent) Compton cross section for a single free electron. The implementation of
-    the scattering events is delegated to the ComptonPhaseFunction class; see there for more
+	the scattering events is delegated to the ComptonPhaseFunction class; see there for more
     information on the cross section and phase function for free-electron Compton scattering.
+
+	For bound-electron Compton scattering, the cross sections \f$\sigma_{CS, Z}(E)\f$ are available in
+	tabulated form as a function of the incoming photon energy \f$E\f$. The normalised scattering phase
+	function for element \f$Z\f$ is given by \f[ \Phi_{CS, Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}
+	{\sigma_{CS, Z}(E)}\Big[C^3(\theta, E) + C(\theta,E) -C^2(\theta, E)\sin^2\theta\Big] \cdot S_Z(q), \f]
+	where the incoherent scattering functions \f$S_Z(q)\f$ are tabulated as a function of the dimensionless
+	momentum transfer parameter \f$q\f$, \f$q = \frac{E}{12.4,\mathrm{keV}}\sin(\theta/2),\f] with
+	\f$\theta\f$ the scattering angle, and the Compton factor defined as \f[ C(\theta, E) =
+	{\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f]
+
+	The \em Free and \em FreeWithPolarization implementations use the free-electron Compton scattering cross section
+	for all electrons (bound or free). Whilst the \em FreeBound implementation uses a weighted sum of the free- and
+	bound-electron Compton scattering cross sections for each ion, based on the charge state of that ion. The cross section
+	can be summarized as follows: \f[ \sigma_{FB, Z, N}(E) = (1-\frac{N}{Z}) \sigma_{F, Z}(E) +  \frac{N}{Z} \sigma_{B, Z}(E) \f]
+	where \f$Z\f$ and \f$N\f$ are the atomic number and number of bound electrons and the subscripts \f$FB\f$, \f$F\f$ and \f$B\f$
+	refer to the \em FreeBound, free- and bound- Compton scattering.
 
     <b>Electron scattering - photon energy shift</b>
 
     Compton scattering is inelastic, meaning that the photon transfers a fraction of its energy to
-    the electron involved in the interaction. The energy shift \f$E'/E\f$ is given by the Compton
+    the electron involved in the interaction. The energy shift can again be described by free- or
+	bound-electron Compton scattering.
+
+	For free-electron Compton scattering, the energy shift \f$E'/E\f$ is given by the Compton
     factor \f$C(\theta, E)\f$ defined above. The implementation is delegated to the
     ComptonPhaseFunction class.
 
-    <b>Resonant scattering - cross section and phase function</b>
+	For bound-electron Compton scattering, the energy shift is mostly determined by the momentum
+    distribution of the target electrons, which are bound to the atomic nucleus. As a result, the
+    final photon energy is no longer uniquely defined by the incoming photon energy and the
+    scattering angle, but also depends on the initial momentum of the target electron:
+
+    \f[ E' = {\Big({1+\frac{E}{m_ec^2} \, \left(1-\cos \theta\right) - \frac{p_\text{z}
+    c}{m_ec^2}2\sin \frac{\theta}{2}}\Big)}^{-1} \; E, \f]
+
+    with \f$p_\text{z}\f$ the momentum of the target electron before scattering projected on the
+    scattering vector \f$\bf{k}_\text{out}-\bf{k}_\text{in}\f$.
+
+    The momentum distribution of bound electrons in atom \f$Z\f$ is characterised by the
+    corresponding Compton profile \f$J_Z(p_\text{z}c)\f$, which can be interpreted as a probability
+    density function for the projected electron momentum \f$p_\text{z}c\f$. Compton profiles for
+    all atoms in the photo-absorbing gas are tabulated by Biggs+75.
+
+    In addition, the energy transfer from the photon to the electron should be large enough to
+    liberate an electron, i.e. larger than the ionisation potential \f$I_b\f$ of the outer
+    electrons of element Z. This condition is fulfilled only when \f$p_\text{z}c < p_zc_{max}\f$,
+    with
+
+    \f[p_zc_{max} = \frac{-m_ec^2I_b+E\cdot(E-I_b)\cdot(1-\cos\theta)}{2\cdot(E-I_b)\cdot
+    \sin(\theta/2)}.\f]
+
+    This equation is undefined for \f$\theta=0\f$, but this scattering angle will never occur as
+    the scattering phase function is zero for \f$\theta=0\f$. Following Namito+94, the probability
+    density function for \f$p_\text{z}c\f$ should be truncated at \f$p_zc_{max}\f$.
+
+	The \em Free and \em FreeWithPolarization implementations apply free-electron Compton scattering 
+	for all electrons (bound or free). Whilst the \em FreeBound implementation stochastically selects free- or
+	bound-electron Compton scattering for each photon weighted using the cross section of free- and bound-electron
+	Compton scattering.
+
+        <b>Resonant scattering - cross section and phase function</b>
 
     The resonant transitions are broadened both thermally and intrinsically. The resulting
     cross section is described by a Voigt profile, the implementation of this is delegated to the
-    \em LyUtils and \em VoigtProfile namespaces. The data for the line energies and Einstein A
+\em LyUtils and \em VoigtProfile namespaces. The data for the line energies and Einstein A
     coefficients are obtained from the SPEX database Kaastra et al. (2024).
+
+    \f[\begin{aligned}
+    \sigma(\lambda) &= \sigma_0\, V(a,x), \\
+    \sigma_0 &= \frac{g\,\lambda_0^3\,A}{8\sqrt{2}\,\pi^{3/2}\,v_\mathrm{th}}, \\
+    x &= \frac{c}{\sqrt{2}\,v_\mathrm{th}}\,\frac{\lambda_0-\lambda}{\lambda}, \\
+    a &= \frac{\lambda_0\,\Gamma}{4\sqrt{2}\,\pi\,v_\mathrm{th}},
+    \end{aligned} \f]
+    with \f$V(a,x)\f$ the Voigt profile, \f$\lambda_0\f$ the rest-frame transition wavelength,
+    \f$A\f$ the Einstein A coefficient, \f$g=2J_\mathrm{upper}+1\f$ the statistical weight of the
+    upper level, \f$v_\mathrm{th}\f$ the thermal velocity, and \f$\Gamma\f$ the natural line width.
 
     Resonant scattering in an electric-dipole transition is described as a linear
     combination of an isotropic and a dipole M\"{u}ller matrix. The relative weights
@@ -269,24 +347,31 @@
     <b>Performing scattering</b>
 
     The function performing an actual scattering event randomly selects one of the supported
-    scattering channels (i.e. scattering by an electron, fluorescent line emission following a
+    scattering channels (i.e. scattering by an electron, fluorescence line emission following a
     photo-absorption event or scattering by a resonant line). The relative probabilities for
     these transitions as a function of incoming photon packet wavelength are also calculated during
-    setup. The selected transition determines the scattering mechanism. For electrons, Compton
-    scattering is used. For fluorescence, the emission direction is isotropic, and the outgoing
-    wavelength is the fluorescence wavelength. For the resonant lines, the direction can be
-    either isotropic and unpolarized or following a dipole phase function for both direction and
-    polarization. The outcome is determined by the total angular momentum of the lower level \f$J\f$
-    and the difference in the total angular momentum between the upper and lower levels \f$\Delta J\f$.
+    setup. The selected transition determines the scattering mechanism. For electrons, the appropriate
+    scattering function is used (free- or bound- Compton). For fluorescence, the emission direction is
+	isotropic, and the outgoing wavelength is the fluorescence wavelength. For the resonant lines, the
+	direction can be either isotropic and unpolarized or following a dipole phase function for both
+	direction and polarization. The outcome is determined by the total angular momentum of the lower
+	level \f$J\f$ and the difference in the total angular momentum between the upper and lower levels
+	\f$\Delta J\f$.
 
-    <b>Thermal dispersion</b>
+    <b>Temperature</b>
 
-    The thermal dispersion appropriate for a given interaction depends on the (constant)
-    temperature configured for this material mix and on the mass of the interacting atom. For
-    electron scattering and fluorescence events, the implementation is straightforward. Once a
+    As is the case for the XRayAtomicGasMix class, the temperature configured for this material mix
+    is a constant value. It does not affect the ionization state of the gas. Instead, the
+    temperature determines the thermal dispersion, or broadening, of the photo-absorption
+    edges, the fluorescence and recombination line emission, and the resonant scattering lines.
+
+    For electron scattering and fluorescence events, the implementation is straightforward. Once a
     channel has been randomly selected, the magnitude of the interacting atom's thermal velocity is
     taken from a precalculated table and a velocity vector is sampled from the Maxwell
     distribution.
+
+	Recombination is treated the exact same as fluorescence except that its temperature-dependent
+	yield is obtained from a table during setup.
 
     For photo-absorption, the situation is much more involved. In principle, the full cross section
     curve for each ionization transition must be convolved with a Gaussian kernel of appropriate
@@ -307,6 +392,13 @@
 
     The thermal broadening present in the resonant scattering is already built into the Voigt
     profile, its implementation can be found in the \em LyUtils and \em VoigtProfile namespaces.
+
+	For resonant scattering both the cross section and photon energy shift are dependent on the
+	temperature. If branching occurs, i.e. there is a cascade prior to a final transition to the
+	ground state, then the photon energy is simply shifted from its final transition wavelength.
+	When branching does not occur, i.e. the scattering is coherent, then the photon energy is shifted
+	according to the sampled atom velocity. The implementation of this is delegated to the \em LyUtils
+	and \em VoigtProfile namespaces.
     */
 class XRayIonicGasMix : public MaterialMix
 {
@@ -354,6 +446,8 @@ public:
         simulation to perform scattering. */
     void setupSelfBefore() override;
 
+    /** This explicit constructor is used to create a new instance of the class. It is used by the
+		XRayIonicGasMixFamily class to create a new instance for each cell. */
     explicit XRayIonicGasMix(SimulationItem* parent, string ions, vector<double> abundances, double temperature,
                              ElectronScattering electronScattering, bool resonantScattering, bool setup);
 
