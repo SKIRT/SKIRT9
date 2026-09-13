@@ -8,7 +8,6 @@
 #include "FatalError.hpp"
 #include "FilePaths.hpp"
 #include "Log.hpp"
-#include "StoredTableDictionary.hpp"
 #include "TextInFile.hpp"
 #include <set>
 
@@ -875,31 +874,27 @@ namespace
 
     // ============== Case B recombination-line emissivity tables ==============
 
-    // table files for the built-in recombination lines, mapped explicitly because the file
-    // labels follow per-set wavelength conventions (truncated vacuum for H I, air for He I,
-    // rounded vacuum for He II) while the line indices use air wavelengths for optical lines;
-    // no Case B table exists for Lyman-alpha
+    // the built-in recombination lines, mapped to their species cube (0 H I, 1 He I, 2 He II) and
+    // their transition. H I and He II are located in the cube by upper/lower quantum number; He I has
+    // no quantum numbers in its source table, so it is located by wavelength (upper = lower = -1). No
+    // Case B table exists for Lyman-alpha, which always uses the analytic P_B form.
     struct LineFile
     {
         int lineIdx;
-        const char* filename;
+        int cubeId;
+        int upper;
+        int lower;
     };
     const vector<LineFile>& recombLineFiles()
     {
-        static const vector<LineFile> table = {{GasLineEmission::Ha, "HI_CaseB_6564A_line.stab"},
-                                               {GasLineEmission::Hb, "HI_CaseB_4862A_line.stab"},
-                                               {GasLineEmission::Hg, "HI_CaseB_4341A_line.stab"},
-                                               {GasLineEmission::Hd, "HI_CaseB_4102A_line.stab"},
-                                               {GasLineEmission::HeBalmer, "HI_CaseB_3971A_line.stab"},
-                                               {GasLineEmission::Paa, "HI_CaseB_18756A_line.stab"},
-                                               {GasLineEmission::Pab, "HI_CaseB_12821A_line.stab"},
-                                               {GasLineEmission::Bra, "HI_CaseB_40522A_line.stab"},
-                                               {GasLineEmission::HeI5876, "HeI_CaseB_5876A_line.stab"},
-                                               {GasLineEmission::HeI6678, "HeI_CaseB_6678A_line.stab"},
-                                               {GasLineEmission::HeI7065, "HeI_CaseB_7065A_line.stab"},
-                                               {GasLineEmission::HeI10830, "HeI_CaseB_10830A_line.stab"},
-                                               {GasLineEmission::HeII1640, "HeII_CaseB_1640A_line.stab"},
-                                               {GasLineEmission::HeII4686, "HeII_CaseB_4687A_line.stab"}};
+        static const vector<LineFile> table = {
+            {GasLineEmission::Ha, 0, 3, 2},        {GasLineEmission::Hb, 0, 4, 2},
+            {GasLineEmission::Hg, 0, 5, 2},        {GasLineEmission::Hd, 0, 6, 2},
+            {GasLineEmission::HeBalmer, 0, 7, 2},  {GasLineEmission::Paa, 0, 4, 3},
+            {GasLineEmission::Pab, 0, 5, 3},       {GasLineEmission::Bra, 0, 5, 4},
+            {GasLineEmission::HeI5876, 1, -1, -1}, {GasLineEmission::HeI6678, 1, -1, -1},
+            {GasLineEmission::HeI7065, 1, -1, -1}, {GasLineEmission::HeI10830, 1, -1, -1},
+            {GasLineEmission::HeII1640, 2, 3, 2},  {GasLineEmission::HeII4686, 2, 4, 3}};
         return table;
     }
 
@@ -972,21 +967,18 @@ namespace
         return solution;
     }
 
-    // one Case B recombination table set for the extended inventory: the wavelength index
-    // file, the stab file name prefix (the label is the truncated wavelength in A), and the
-    // line family
+    // one Case B recombination table set for the extended inventory: the species cube index and
+    // the line family (used for the carrier mass and the H I / He I / He II flags)
     struct RecombSet
     {
-        const char* indexFile;
-        const char* prefix;
+        int cubeId;
         bool isHeI;
         bool isHeII;
         double mass;
     };
     constexpr double _protonMass = 1.67262192e-27;
-    const RecombSet _recombSets[] = {{"HI_wavelengths.txt", "HI_CaseB_", false, false, _protonMass},
-                                     {"HeI_wavelengths.txt", "HeI_CaseB_", true, false, 4.0 * _protonMass},
-                                     {"HeII_wavelengths.txt", "HeII_CaseB_", false, true, 4.0 * _protonMass}};
+    const RecombSet _recombSets[] = {
+        {0, false, false, _protonMass}, {1, true, false, 4.0 * _protonMass}, {2, false, true, 4.0 * _protonMass}};
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1023,13 +1015,58 @@ void GasLineEmission::initializeRecombinationTables()
 {
     if (_recombRegistry.ready) return;
 
-    // open the stabdict containing the recombination tables
-    _recombRegistry.dict.open(_item, "EmissionCaseB.stabdict", "T(K),n(1/cm3)", "Emis(1)");
+    static const char* cubeFiles[3] = {"HI_CaseB_all_lines.stab", "HeI_CaseB_all_lines.stab",
+                                       "HeII_CaseB_all_lines.stab"};
+    static const char* mapFiles[3] = {"HI_line_index_map.txt", "HeI_line_index_map.txt", "HeII_line_index_map.txt"};
 
-    // open all tables in the dict
+    // open each species' aggregated emissivity cube and read its transition index map
+    for (int c = 0; c != 3; ++c)
+    {
+        _recombRegistry.cube[c].open(_item, cubeFiles[c], "line(1),T(K),n(1/cm3)", "Emis(1)");
+
+        TextInFile in(_item, mapFiles[c], "recombination line index map", true);
+        in.addColumn("line index");
+        in.addColumn("upper level");
+        in.addColumn("lower level");
+        in.addColumn("wavelength", "wavelength", "micron");
+        double index, upper, lower, wav_m;
+        while (in.readRow(index, upper, lower, wav_m))
+            _recombRegistry.map[c].push_back(
+                {static_cast<int>(index), static_cast<int>(upper), static_cast<int>(lower), wav_m});
+    }
+
+    // point each built-in recombination line at its cube line: H I and He II by quantum number,
+    // He I by nearest wavelength (its source table carries no quantum numbers)
     for (const auto& entry : recombLineFiles())
     {
-        _recombRegistry.table[entry.lineIdx] = _recombRegistry.dict.open(entry.filename);
+        int found = -1;
+        if (entry.upper > 0)
+        {
+            for (const auto& row : _recombRegistry.map[entry.cubeId])
+                if (row.upper == entry.upper && row.lower == entry.lower)
+                {
+                    found = row.index;
+                    break;
+                }
+        }
+        else
+        {
+            double best = std::numeric_limits<double>::max();
+            for (const auto& row : _recombRegistry.map[entry.cubeId])
+            {
+                double dist = std::abs(row.wav_m - lineWavelengths[entry.lineIdx]);
+                if (dist < best)
+                {
+                    best = dist;
+                    found = row.index;
+                }
+            }
+            if (best > 5e-10) found = -1;
+        }
+        if (found < 0)
+            throw FATALERROR("No Case B emissivity table for built-in recombination line index "
+                             + std::to_string(entry.lineIdx));
+        _recombRegistry.table[entry.lineIdx] = {entry.cubeId, found};
     }
 
     _recombRegistry.ready = true;
@@ -1104,9 +1141,11 @@ void GasLineEmission::initializeExtendedLineRegistry(const vector<SpeciesSpec>& 
     // quit if extended lines are already loaded
     if (static_cast<int>(_registry.size()) > numLines) return;
 
-    // file names already claimed by the built-in recombination lines
-    std::set<string> claimedFiles;
-    for (const auto& entry : recombLineFiles()) claimedFiles.insert(entry.filename);
+    // (cube, line index) pairs already claimed by the built-in recombination lines
+    std::set<std::pair<int, int>> claimedCubeLines;
+    for (const auto& entry : recombLineFiles())
+        claimedCubeLines.insert(
+            {_recombRegistry.table[entry.lineIdx].cubeId, _recombRegistry.table[entry.lineIdx].lineIdx});
 
     // (model slot, transition) pairs already claimed by the built-in collisional lines
     std::set<std::pair<int, int>> claimedTransitions;
@@ -1117,24 +1156,15 @@ void GasLineEmission::initializeExtendedLineRegistry(const vector<SpeciesSpec>& 
     int numAdded = 0;
     int numModelsLoaded = 0;
 
-    // recombination inventory: every table enumerated by the per-set wavelength index files
+    // recombination inventory: every line in each species' cube, enumerated from its index map
     for (const auto& set : _recombSets)
     {
-        // read the raw Angstrom value with no unit conversion (i.e. exactly as the old istream-based
-        // code did): the filename and the registry wavelength below both need the untouched value,
-        // and going through the "wavelength" quantity and back would round-trip it through the unit
-        // system's Angstrom<->SI conversion for no benefit, risking a last-bit mismatch that could
-        // flip the truncated integer used to build the filename
-        TextInFile index(_item, set.indexFile, "recombination line wavelengths", true);
-        index.addColumn("Wavelength");
-        double wavelengthA;
-        while (index.readRow(wavelengthA))
+        for (const auto& row : _recombRegistry.map[set.cubeId])
         {
-            string filename = set.prefix + std::to_string(static_cast<long long>(wavelengthA)) + "A_line.stab";
-            if (!claimedFiles.insert(filename).second) continue;
+            if (!claimedCubeLines.insert({set.cubeId, row.index}).second) continue;
 
-            _recombRegistry.table.push_back(_recombRegistry.dict.open(filename));
-            _registry.push_back({wavelengthA * 1e-10, set.mass, -1, -1, set.isHeI, set.isHeII});
+            _recombRegistry.table.push_back({set.cubeId, row.index});
+            _registry.push_back({row.wav_m, set.mass, -1, -1, set.isHeI, set.isHeII});
             _atomicRegistry.lineModel.push_back(-1);
             _atomicRegistry.lineTransition.push_back(-1);
             ++numAdded;
@@ -1203,7 +1233,8 @@ double GasLineEmission::recombinationLineLuminosity(int lineIdx, double T, doubl
 {
     if (_recombRegistry.ready && _recombRegistry.loaded(lineIdx))
     {
-        double eps = _recombRegistry.table[lineIdx](T, ne);
+        const auto& ref = _recombRegistry.table[lineIdx];
+        double eps = _recombRegistry.cube[ref.cubeId](static_cast<double>(ref.lineIdx), T, ne);
         // eps [W m3] with cgs densities and volume: L [W] = eps * ne * nIon * V_cm3 * 1e6
         return eps * ne * nIon * V_cm3 * 1e6;
     }

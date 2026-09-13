@@ -6,7 +6,7 @@
 #ifndef GASLINEEMISSION_HPP
 #define GASLINEEMISSION_HPP
 
-#include "StoredTableDictionary.hpp"
+#include "StoredTable.hpp"
 class Log;
 class SimulationItem;
 
@@ -257,9 +257,29 @@ private:
     struct RecombRegistry
     {
         bool ready = false;
-        StoredTableDictionary<2> dict;
-        vector<StoredTable<2>> table;
-        bool loaded(int idx) const { return table[idx].isOpen(); }
+
+        // one aggregated Case B emissivity cube Emis(line, T, ne) per species: [0] H I, [1] He I, [2] He II
+        StoredTable<3> cube[3];
+
+        // transition metadata read from each species' line index map (index is 1-based, matching the cube line axis)
+        struct MapRow
+        {
+            int index;
+            int upper;
+            int lower;
+            double wav_m;
+        };
+        vector<MapRow> map[3];
+
+        // per registry line: which cube serves it and at which 1-based line index (cubeId -1 = not a Case B line)
+        struct Ref
+        {
+            int cubeId = -1;
+            int lineIdx = 0;
+        };
+        vector<Ref> table;
+
+        bool loaded(int idx) const { return table[idx].cubeId >= 0; }
     };
     RecombRegistry _recombRegistry;
 
