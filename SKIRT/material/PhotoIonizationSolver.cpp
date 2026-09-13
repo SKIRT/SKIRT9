@@ -300,7 +300,7 @@ namespace
 {
     // Parse ion name like "OIII" -> (element, stage) -> ionFracs index.
     // Returns -1 if the ion is out of range of the tracked stages.
-    int parseIonName(const std::string& name)
+    int parseIonName(const string& name)
     {
         // Element prefixes ordered longest-first to avoid "N" matching "Ne"
         struct ElemDef
@@ -328,7 +328,7 @@ namespace
             size_t slen = std::strlen(e.sym);
             if (name.substr(0, slen) == e.sym)
             {
-                std::string roman = name.substr(slen);
+                string roman = name.substr(slen);
                 for (auto& r : romans)
                 {
                     if (roman == r.str)

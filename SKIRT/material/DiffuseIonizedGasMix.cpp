@@ -8,14 +8,15 @@
 #include "Constants.hpp"
 #include "DisjointWavelengthGrid.hpp"
 #include "FatalError.hpp"
+#include "GasContinuumEmission.hpp"
+#include "GasLineEmission.hpp"
 #include "Log.hpp"
 #include "MaterialState.hpp"
-#include "NebularContinuumEmission.hpp"
-#include "NebularLineEmission.hpp"
 #include "PhotonPacket.hpp"
 #include "Random.hpp"
 #include "SnapshotParameter.hpp"
 #include "StringUtils.hpp"
+#include "VernerCrossSections.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -157,7 +158,29 @@ namespace
         const double X = 1.0 - Y - Z;
         return Y / (4.0 * X);
     }
+
+    // Reemission probability indices (following CMACIONIZE nomenclature)
+    enum ReemissionChannel {
+        Hydrogen = 0,    // Hydrogen Lyman continuum
+        HeliumLyC = 1,   // Helium Lyman continuum
+        HeliumNpEv = 2,  // He 19.8 eV line
+        HeliumTPC = 3,   // Helium two-photon continuum
+        HeliumLyA = 4,   // Helium Lyman alpha
+    };
+    static constexpr int numReemissionChannels = 5;
 }
+
+////////////////////////////////////////////////////////////////////
+
+// out-of-line definition of the ReemissionData type forward-declared in the header (see there for
+// why): none of its details are needed outside this translation unit
+struct DiffuseIonizedGasMix::ReemissionData
+{
+    bool valid = false;
+    double probabilities[numReemissionChannels];
+    double cumulativeProbabilities[numReemissionChannels];
+    double pHabs;  // Probability of H absorption vs He
+};
 
 ////////////////////////////////////////////////////////////////////
 
@@ -177,10 +200,9 @@ void DiffuseIonizedGasMix::setupSelfBefore()
         _transitionTemperatureTable.open(this, "DiffuseIonizedGas5Bin_Transition_multiZ_Temperature",
                                          "Z(1),n_H(1/m3),logU(1),logR2(1),logR3(1),logR4(1),logR5(1)", "logT(K)", true);
 
-        // Cache the transition table's logU axis edges for the per-cell selectTable/getBlendingWeight hot path.
+        // Cache the transition table's upper logU edge, where it meets the standard table.
         Array logUAxis;
         _transitionTemperatureTable.axisArray<2>(logUAxis);
-        _transitionLogUMin = logUAxis[0];
         _transitionLogUMax = logUAxis[logUAxis.size() - 1];
     }
 
@@ -209,22 +231,20 @@ void DiffuseIonizedGasMix::setupSelfBefore()
     // delta_id indices in _dNAxisDeltaIds), and similarly for dC.
     if (useCloudyTemperature() || useCloudyOpacity())
     {
-        _deltaNMapTable.open(this, std::string("DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap"), "delta_id(1)",
-                             "delta_N(1)", true);
-        _deltaCMapTable.open(this, std::string("DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap"), "delta_id(1)",
-                             "delta_C(1)", true);
+        _deltaNMapTable.open(this, "DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap", "delta_id(1)", "delta_N(1)", true);
+        _deltaCMapTable.open(this, "DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap", "delta_id(1)", "delta_C(1)", true);
 
         const size_t nDelta = _deltaNMapTable.axisSize<0>();
         if (nDelta == 0 || _deltaCMapTable.axisSize<0>() != nDelta)
-            throw FATALERROR("DeltaMap table '" + std::string("DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap")
-                             + "' is empty or has mismatched delta_N/delta_C lengths");
+            throw FATALERROR("DeltaMap table 'DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap' is empty or has "
+                             "mismatched delta_N/delta_C lengths");
 
         // Treat anything within eps of zero as "exactly on the centre axis". DELTA_SAMPLES
         // values are written exactly, but floating-point round-trips through PTS storage
         // can introduce sub-ULP noise.
         constexpr double eps = 1e-9;
-        std::vector<std::pair<double, int>> dNcandidates;  // dN value, delta_id (entries with dC=0)
-        std::vector<std::pair<double, int>> dCcandidates;  // dC value, delta_id (entries with dN=0)
+        vector<std::pair<double, int>> dNcandidates;  // dN value, delta_id (entries with dC=0)
+        vector<std::pair<double, int>> dCcandidates;  // dC value, delta_id (entries with dN=0)
         for (int deltaId = 0; deltaId < static_cast<int>(nDelta); ++deltaId)
         {
             const double dN = _deltaNMapTable.valueAtIndices(static_cast<size_t>(deltaId));
@@ -235,14 +255,14 @@ void DiffuseIonizedGasMix::setupSelfBefore()
         }
 
         if (_deltaIdCentre < 0)
-            throw FATALERROR("DeltaMap table '" + std::string("DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap")
-                             + "': no centre entry (dN=0, dC=0) found");
+            throw FATALERROR(
+                "DeltaMap table 'DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap': no centre entry (dN=0, dC=0) found");
         if (dNcandidates.size() < 2)
-            throw FATALERROR("DeltaMap table '" + std::string("DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap")
-                             + "': dN axis has fewer than 2 grid points");
+            throw FATALERROR("DeltaMap table 'DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap': dN axis has fewer than "
+                             "2 grid points");
         if (dCcandidates.size() < 2)
-            throw FATALERROR("DeltaMap table '" + std::string("DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap")
-                             + "': dC axis has fewer than 2 grid points");
+            throw FATALERROR("DeltaMap table 'DiffuseIonizedGas5Bin_Standard_multiZ_DeltaMap': dC axis has fewer than "
+                             "2 grid points");
 
         std::sort(dNcandidates.begin(), dNcandidates.end());
         std::sort(dCcandidates.begin(), dCcandidates.end());
@@ -290,7 +310,8 @@ void DiffuseIonizedGasMix::setupSelfBefore()
     _lambdaLow = rydbergToWavelength(1.0) + 1e-10;   // just above 1 Ryd (912 A)
     _lambdaHigh = rydbergToWavelength(6.0) - 2e-10;  // just below 6 Ryd (152 A)
 
-    // Build emission wavelength grid for nebular continuum (log-spaced, 900 A to 10 micron)
+    // Build the gas emission wavelength grid (log-spaced from 900 A): continuum sampling
+    // range and the window for extended-inventory lines
     {
         class CustomWavelengthGrid : public DisjointWavelengthGrid
         {
@@ -306,9 +327,9 @@ void DiffuseIonizedGasMix::setupSelfBefore()
             Array _wl;
         };
 
-        constexpr int numEmBins = 200;
+        const int numEmBins = numEmissionWavelengths();
         constexpr double lamMin = 9.0e-8;  // 900 A [m]
-        constexpr double lamMax = 1.0e-5;  // 10 micron [m]
+        const double lamMax = maxEmissionWavelength();
         Array emLambdav(numEmBins);
         double logMin = std::log10(lamMin);
         double logMax = std::log10(lamMax);
@@ -342,14 +363,79 @@ void DiffuseIonizedGasMix::setupSelfBefore()
         rfDlambdav = rfWavelengthGrid->dlambdav();
         _emissionSolver.initialize(rfLambdav, rfDlambdav);
 
-        // Set up line emission data from NebularLineEmission
-        _numLines = NebularLineEmission::numLines;
+        // includeExtendedLines=true requires the full resource set (statistical-equilibrium solver,
+        // Case B emissivity tables, extended line registry): a missing resource is a fatal
+        // configuration error rather than a silent fallback. includeExtendedLines=false skips all
+        // three unconditionally, regardless of whether the resources happen to be installed, so
+        // that the fallback lines (legacy P_B recombination, precomputed q_col collisional rates,
+        // built-in registry only) stay reachable and testable on their own.
+        _gasLineEmission.initialize(this);
+        if (includeExtendedLines())
+        {
+            _gasLineEmission.initializeAtomicModels();
+            find<Log>()->info("Collisional line emission uses the statistical-equilibrium solver");
+
+            _gasLineEmission.initializeRecombinationTables();
+            find<Log>()->info("Recombination line emission uses the Case B emissivity tables");
+
+            static const char* romans[] = {"I", "II", "III", "IV",   "V",   "VI", "VII", "VIII", "IX",
+                                           "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII"};
+            static const char* metals[] = {"C", "N", "O", "Ne", "Mg", "Si", "S", "Fe"};
+            vector<GasLineEmission::SpeciesSpec> species;
+            for (int e = 0; e != 8; ++e)
+            {
+                int elem = e + 2;
+                for (int s = 1; s <= PhotoIonizationSolver::numStages[elem]; ++s)
+                    species.push_back(
+                        {string(metals[e]) + "_" + romans[s - 1], PhotoIonizationSolver::stageOffset[elem] + s - 1, e});
+            }
+            _gasLineEmission.initializeExtendedLineRegistry(species);
+        }
+        else
+        {
+            find<Log>()->info(
+                "Using the built-in fallback lines (legacy P_B recombination, precomputed q_col collisional rates)");
+        }
+
+        // select the active lines from the registry (see _activeLines)
+        const auto& registry = _gasLineEmission.lineRegistry();
+        const Array& emLambdav = _emissionWavelengthGrid->lambdav();
+        double emLambdaMin = emLambdav[0];
+        double emLambdaMax = emLambdav[emLambdav.size() - 1];
+        _activeLines.clear();
+        for (int k = 0; k != static_cast<int>(registry.size()); ++k)
+        {
+            if (k < GasLineEmission::numLines
+                || (registry[k].wavelength >= emLambdaMin && registry[k].wavelength <= emLambdaMax))
+                _activeLines.push_back(k);
+        }
+        _numLines = static_cast<int>(_activeLines.size());
         _lineCenters.resize(_numLines);
         _lineMasses.resize(_numLines);
-        for (int k = 0; k < _numLines; k++)
+        for (int i = 0; i < _numLines; i++)
         {
-            _lineCenters[k] = NebularLineEmission::lineWavelengths[k];
-            _lineMasses[k] = NebularLineEmission::lineMasses[k];
+            _lineCenters[i] = registry[_activeLines[i]].wavelength;
+            _lineMasses[i] = registry[_activeLines[i]].mass;
+        }
+
+        // group the collisional lines by atomic model so each species is solved once per cell
+        _lineTransitions.assign(_numLines, -1);
+        _lineGroup.assign(_numLines, -1);
+        for (int i = 0; i < _numLines; ++i)
+        {
+            int slot = _gasLineEmission.lineModelSlot(_activeLines[i]);
+            if (slot < 0) continue;
+            _lineTransitions[i] = _gasLineEmission.lineTransition(_activeLines[i]);
+            auto it = std::find(_groupSlots.begin(), _groupSlots.end(), slot);
+            if (it == _groupSlots.end())
+            {
+                _groupSlots.push_back(slot);
+                _groupLines.emplace_back();
+                it = _groupSlots.end() - 1;
+            }
+            int g = it - _groupSlots.begin();
+            _groupLines[g].push_back(i);
+            _lineGroup[i] = g;
         }
     }
 
@@ -759,8 +845,11 @@ bool DiffuseIonizedGasMix::isSpecificStateConverged(int /*numCells*/, int numUpd
                                                     MaterialState* previousAggregate) const
 {
     // Calculate fraction of converged cells (0-1)
-    // Use numUpdated instead of numCells to only count cells that contain material
-    double fractionNotConverged = static_cast<double>(numNotConverged) / static_cast<double>(numUpdated);
+    // Use numUpdated instead of numCells to only count cells that contain material; when this
+    // component currently has no active cells at all, there is nothing that could have failed to
+    // converge, so treat it as vacuously converged instead of dividing by zero
+    double fractionNotConverged =
+        numUpdated > 0 ? static_cast<double>(numNotConverged) / static_cast<double>(numUpdated) : 0.;
     double convergedFraction = 1.0 - fractionNotConverged;
 
     // Check standard convergence criterion
@@ -835,7 +924,7 @@ bool DiffuseIonizedGasMix::isSpecificStateConverged(int /*numCells*/, int numUpd
 
     // Compact single-line summary: header + 3 criteria flags.
     // Plateau history is appended when at least 2 samples are available.
-    std::string plateauHistory;
+    string plateauHistory;
     if (_convergedFractionHistory.size() >= 2)
     {
         plateauHistory = " ";
@@ -845,24 +934,24 @@ bool DiffuseIonizedGasMix::isSpecificStateConverged(int /*numCells*/, int numUpd
             if (i < _convergedFractionHistory.size() - 1) plateauHistory += "->";
         }
     }
-    log->info("DiffuseIonizedGasMix convergence: " + std::string(converged ? "CONVERGED" : "NOT CONVERGED")
-              + " | per-cell " + StringUtils::toString(convergedFraction * 100., 'f', 1) + "%/"
+    log->info("DiffuseIonizedGasMix convergence: " + string(converged ? "CONVERGED" : "NOT CONVERGED") + " | per-cell "
+              + StringUtils::toString(convergedFraction * 100., 'f', 1) + "%/"
               + StringUtils::toString((1.0 - maxFractionNotConvergedCells()) * 100., 'f', 1) + "% "
-              + std::string(standardConverged ? "PASS" : "FAIL") + " | plateau" + plateauHistory + " "
-              + std::string(stabilityConverged ? "PASS" : "FAIL") + " | global dnHII "
+              + string(standardConverged ? "PASS" : "FAIL") + " | plateau" + plateauHistory + " "
+              + string(stabilityConverged ? "PASS" : "FAIL") + " | global dnHII "
               + StringUtils::toString(globalChange * 100., 'f', 2) + "%/"
               + StringUtils::toString(maxChangeInGlobalIonizedH() * 100., 'f', 2) + "% "
-              + std::string(globalConverged ? "PASS" : "FAIL"));
+              + string(globalConverged ? "PASS" : "FAIL"));
 
     // Log n_HII-weighted mean ion fractions: <x_ion> = sum(x_ion * n_HII * V) / sum(n_HII * V)
     if (currentTotalIonizedH > 0.)
     {
-        std::string ionStr = "  Ion fractions (n_HII-weighted):";
+        string ionStr = "  Ion fractions (n_HII-weighted):";
         for (int i = 0; i < numIonFracAggs; ++i)
         {
             double currentVal = currentAggregate->ionFracAgg(i);
             double meanIonFrac = currentVal / currentTotalIonizedH;
-            ionStr += " " + std::string(ionFracAggTable[i].name).substr(16)  // strip "nHII_weighted_" prefix
+            ionStr += " " + string(ionFracAggTable[i].name).substr(16)  // strip "nHII_weighted_" prefix
                       + "=" + StringUtils::toString(meanIonFrac, 'e', 3);
             // Also log iteration-to-iteration change
             double previousVal = previousAggregate->ionFracAgg(i);
@@ -1093,18 +1182,16 @@ DisjointWavelengthGrid* DiffuseIonizedGasMix::emissionWavelengthGrid() const
 
 DiffuseIonizedGasMix::TableSelection DiffuseIonizedGasMix::selectTable(double logU) const
 {
-    // Transition-table logU edges were cached in setupSelfBefore.
+    // The transition table's upper logU edge was cached in setupSelfBefore.
     const double blendWidth = transitionBlendWidth();
 
-    // Core transition region
-    if (logU >= _transitionLogUMin + blendWidth && logU <= _transitionLogUMax - blendWidth)
-        return TableSelection::Transition;
-
-    // Far from transition range - use standard
-    if (logU < _transitionLogUMin - blendWidth || logU > _transitionLogUMax + blendWidth)
-        return TableSelection::Standard;
-
-    // In blending region
+    // The tables share data only at their common edge, _transitionLogUMax, so blend
+    // there and nowhere else. Below it Transition applies and clamps at its own
+    // floor; Standard would clamp to the shared edge, handing near-neutral gas the
+    // opacity of gas at the ionised-neutral boundary. The opacity path is not gated
+    // by _minLogUEmit.
+    if (logU <= _transitionLogUMax - blendWidth) return TableSelection::Transition;
+    if (logU > _transitionLogUMax + blendWidth) return TableSelection::Standard;
     return TableSelection::Blend;
 }
 
@@ -1113,27 +1200,16 @@ DiffuseIonizedGasMix::TableSelection DiffuseIonizedGasMix::selectTable(double lo
 double DiffuseIonizedGasMix::getBlendingWeight(double logU) const
 {
     // Returns weight for transition table (0 = standard only, 1 = transition only).
-    // Transition-table logU edges were cached in setupSelfBefore.
+    // The transition table's upper logU edge was cached in setupSelfBefore.
     const double blendWidth = transitionBlendWidth();
 
-    // Lower blending region: transitioning into transition table
-    if (logU >= _transitionLogUMin - blendWidth && logU < _transitionLogUMin + blendWidth)
-    {
-        double weight = (logU - (_transitionLogUMin - blendWidth)) / (2.0 * blendWidth);
-        return std::max(0.0, std::min(1.0, weight));
-    }
-
-    // Upper blending region: transitioning back to standard
+    // Blend only at the tables' shared edge; see selectTable().
     if (logU > _transitionLogUMax - blendWidth && logU <= _transitionLogUMax + blendWidth)
     {
         double weight = ((_transitionLogUMax + blendWidth) - logU) / (2.0 * blendWidth);
         return std::max(0.0, std::min(1.0, weight));
     }
-
-    // Core transition region
-    if (logU >= _transitionLogUMin + blendWidth && logU <= _transitionLogUMax - blendWidth) return 1.0;
-
-    // Standard region
+    if (logU <= _transitionLogUMax - blendWidth) return 1.0;
     return 0.0;
 }
 
@@ -1175,7 +1251,7 @@ Array DiffuseIonizedGasMix::emissionSpectrum(const MaterialState* state, const A
     const Array& lambdav = _emissionWavelengthGrid->lambdav();
     for (int i = 0; i < numWavelengths; i++)
     {
-        emission[i] = NebularContinuumEmission::continuumLuminosity(lambdav[i], T, ne, nHII, nHeII, nHeIII, V_cm3);
+        emission[i] = GasContinuumEmission::continuumLuminosity(lambdav[i], T, ne, nHII, nHeII, nHeIII, V_cm3);
     }
 
     return emission;
@@ -1212,30 +1288,60 @@ Array DiffuseIonizedGasMix::lineEmissionSpectrum(const MaterialState* state, con
 
     double nHI = nH * result.ionFracs[0];
 
-    // H recombination lines, photon-conserving form:
-    //   L = P_B(T, ne) * Gamma_HI * n_HI * V * h*nu_line
-    // Uses the same Jv the solver was called with, so Gamma_HI is consistent with the
-    // ion fractions just computed.
+    // recombining ion densities [cm^-3] for the recombination lines
+    double nHII = nH * result.ionFracs[1];
+    double nHeII = nH * yHe * result.ionFracs[PhotoIonizationSolver::stageOffset[1] + 1];
+    double nHeIII = nH * yHe * result.ionFracs[PhotoIonizationSolver::stageOffset[1] + 2];
+
+    // Gamma_HI for the legacy P_B path, from the same Jv the solver was called with so that it
+    // is consistent with the ion fractions just computed
     double gamma[PhotoIonizationSolver::totalStages];
     _emissionSolver.computePhotoionizationRates(Jv, gamma);
     double gammaHI = gamma[0];
-    for (int k = NebularLineEmission::LineIndex::Lya; k <= NebularLineEmission::LineIndex::Bra; ++k)
+    const auto& registry = _gasLineEmission.lineRegistry();
+
+    // collisional lines served by an atomic model: one level-population solve per species,
+    // in the nebular limit (electron collisions at T and ne, no radiative pumping)
+    for (size_t g = 0; g != _groupSlots.size(); ++g)
     {
-        luminosities[k] = NebularLineEmission::hydrogenLineLuminosity(k, T, ne, gammaHI, nHI, V_cm3);
+        const auto& line = registry[_activeLines[_groupLines[g].front()]];
+        double nIon = nH * metalAbundances[line.elementIndex] * result.ionFracs[line.carrierIonIndex];
+        GasLineEmission::Environment env;
+        env.Tkin = T;
+        env.nTotal = nIon * 1e6;    // cm^-3 -> m^-3
+        env.nPartner = {ne * 1e6};  // cm^-3 -> m^-3
+        auto pops = _gasLineEmission.solveLevelPopulations(_gasLineEmission.atomicModel(_groupSlots[g]), env);
+        auto eps = _gasLineEmission.lineEmissivities(_gasLineEmission.atomicModel(_groupSlots[g]), pops);
+        for (int i : _groupLines[g]) luminosities[i] = eps[_lineTransitions[i]] * V_cm3 * 1e-6;  // W m^-3 x m^3
     }
 
-    // Metal forbidden lines
-    for (int k = NebularLineEmission::LineIndex::NII6548; k < NebularLineEmission::numLines; ++k)
+    // remaining lines: recombination lines (Case B tables, legacy P_B fallback for H) and
+    // collisional lines on the legacy table path
+    for (int i = 0; i < _numLines; ++i)
     {
-        int ionIdx = NebularLineEmission::lineCarrierIonIndex[k];
-        int elemIdx = NebularLineEmission::lineElementIndex[k];
-        if (ionIdx < 0 || elemIdx < 0) continue;
+        if (_lineGroup[i] >= 0) continue;
+        int k = _activeLines[i];
+        const auto& line = registry[k];
+        if (line.carrierIonIndex >= 0)
+        {
+            double nIon = nH * metalAbundances[line.elementIndex] * result.ionFracs[line.carrierIonIndex];
+            luminosities[i] = _gasLineEmission.collisionalLineLuminosity(k, T, ne, nIon, V_cm3);
+        }
+        else
+        {
+            double nIon = line.isHeIRecomb ? nHeII : (line.isHeIIRecomb ? nHeIII : nHII);
+            luminosities[i] = _gasLineEmission.recombinationLineLuminosity(k, T, ne, nIon, gammaHI, nHI, V_cm3);
+        }
+    }
 
-        double abundance = metalAbundances[elemIdx];
-        double xIon = result.ionFracs[ionIdx];
-        double nIon = nH * abundance * xIon;
-
-        luminosities[k] = NebularLineEmission::metalLineLuminosity(k, T, ne, nIon, V_cm3);
+    // optional per-cell relative floor on the extended-inventory lines
+    if (lineLuminosityFloor() > 0.)
+    {
+        double Lmax = 0.;
+        for (int i = 0; i < _numLines; ++i) Lmax = max(Lmax, luminosities[i]);
+        double floor = lineLuminosityFloor() * Lmax;
+        for (int i = 0; i < _numLines; ++i)
+            if (_activeLines[i] >= GasLineEmission::numLines && luminosities[i] < floor) luminosities[i] = 0.;
     }
 
     return luminosities;
@@ -1347,8 +1453,8 @@ double DiffuseIonizedGasMix::calculateIonizationParameter(const Array& Jv, doubl
     // Calculate ionizing photon flux: phi = integ (4pi * J_lamb * lambda) / (h*c) dlambda
     // Only consider ionizing radiation (> 1 Ryd range)
 
-    std::vector<double> ionizing_wavelengths;
-    std::vector<double> photon_flux_integrand;
+    vector<double> ionizing_wavelengths;
+    vector<double> photon_flux_integrand;
 
     for (int i = 0; i < rfwlg->numBins(); i++)
     {
@@ -1393,8 +1499,8 @@ double DiffuseIonizedGasMix::calculateIonizationParameter(const Array& Jv, doubl
 // Helper functions for the diffuse reemision
 
 void DiffuseIonizedGasMix::interpolateReemissionSpectrum(int spectrumType, double temperature,
-                                                         std::vector<double>& wavelengths,
-                                                         std::vector<double>& cumulativeDist) const
+                                                         vector<double>& wavelengths,
+                                                         vector<double>& cumulativeDist) const
 {
     // Get wavelength grid from STAB table
     Array lambdaArray;
@@ -1444,8 +1550,8 @@ double DiffuseIonizedGasMix::sampleFromTemperatureDependentSpectrum(int spectrum
     // the same temperature reuse it instead of rebuilding it from STAB lookups.
     thread_local int cachedSpectrumType = -1;
     thread_local double cachedTemperature = 0.;
-    thread_local std::vector<double> cachedWavelengths;
-    thread_local std::vector<double> cachedCumulativeDist;
+    thread_local vector<double> cachedWavelengths;
+    thread_local vector<double> cachedCumulativeDist;
 
     if (spectrumType != cachedSpectrumType || temperature != cachedTemperature)
     {
@@ -1453,8 +1559,8 @@ double DiffuseIonizedGasMix::sampleFromTemperatureDependentSpectrum(int spectrum
         cachedSpectrumType = spectrumType;
         cachedTemperature = temperature;
     }
-    const std::vector<double>& wavelengths = cachedWavelengths;
-    const std::vector<double>& cumulativeDist = cachedCumulativeDist;
+    const vector<double>& wavelengths = cachedWavelengths;
+    const vector<double>& cumulativeDist = cachedCumulativeDist;
 
     // Sample using inverse transform method
     double x = random->uniform();
@@ -1595,7 +1701,8 @@ int DiffuseIonizedGasMix::selectReemissionChannel(const MaterialState* state, do
         return -1;
     }
 
-    const ReemissionData& data = getReemissionData(state, lambda);
+    ReemissionData data;
+    calculateReemissionProbabilities(state, lambda, data);
 
     if (!data.valid)
     {
@@ -1719,30 +1826,13 @@ double DiffuseIonizedGasMix::sampleHeliumTwoPhotonContinuum(double temperature) 
 
 ////////////////////////////////////////////////////////////////////
 
-const DiffuseIonizedGasMix::ReemissionData& DiffuseIonizedGasMix::getReemissionData(const MaterialState* state,
-                                                                                    double lambda) const
-{
-    // Use thread_local to ensure thread safety without mutex
-    static thread_local ReemissionData data;
-    if (state->numberDensity() <= 0.)
-    {
-        data.valid = false;
-        return data;
-    }
-    calculateReemissionProbabilities(state, lambda, data);
-    return data;
-}
-
 ////////////////////////////////////////////////////////////////////
 
 void DiffuseIonizedGasMix::calculate5BinRatioParameters(const Array& Jv, double& logR2, double& logR3, double& logR4,
                                                         double& logR5) const
 {
-    /**
-     * Calculate 5-bin ratio parameters R2, R3, R4, and R5 from radiation field.
-     * R2 = <J2>/<J1>, R3 = <J3>/<J1>, R4 = <J4>/<J1>, R5 = <J5>/<J1>
-     * where <Ji> is the average intensity in bin i.
-     */
+    // 5-bin ratio parameters from the radiation field: R_i = J_i / J_1 for i = 2..5,
+    // with J_i the average intensity in bin i
 
     // Initialize ratios to the sentinel value; STAB will clamp valid ratios into bounds.
     logR2 = _logFloor;
@@ -1853,8 +1943,8 @@ void DiffuseIonizedGasMix::calculateBinAverages(const Array& Jv, double* binAver
         const double binHighWavelength = binHighWl[bin];
 
         // Collect wavelengths and intensities in this bin
-        std::vector<double> binWavelengths;
-        std::vector<double> binIntensities;
+        vector<double> binWavelengths;
+        vector<double> binIntensities;
 
         for (int i = 0; i < rfwlg->numBins(); i++)
         {
@@ -1899,7 +1989,7 @@ void DiffuseIonizedGasMix::calculateBinAverages(const Array& Jv, double* binAver
 ////////////////////////////////////////////////////////////////////
 // Integration
 
-double DiffuseIonizedGasMix::integrate(const std::vector<double>& x, const std::vector<double>& y) const
+double DiffuseIonizedGasMix::integrate(const vector<double>& x, const vector<double>& y) const
 {
     // Input validation
     if (x.size() != y.size() || x.size() < 2)
@@ -1947,7 +2037,7 @@ double DiffuseIonizedGasMix::integrate(const std::vector<double>& x, const std::
 
 ////////////////////////////////////////////////////////////////////
 
-double DiffuseIonizedGasMix::integrateLinearSpace(const std::vector<double>& x, const std::vector<double>& y) const
+double DiffuseIonizedGasMix::integrateLinearSpace(const vector<double>& x, const vector<double>& y) const
 {
     const size_t n = x.size();
 
@@ -1986,11 +2076,11 @@ double DiffuseIonizedGasMix::integrateLinearSpace(const std::vector<double>& x, 
 
 ////////////////////////////////////////////////////////////////////
 
-double DiffuseIonizedGasMix::integrateLogSpace(const std::vector<double>& x, const std::vector<double>& y) const
+double DiffuseIonizedGasMix::integrateLogSpace(const vector<double>& x, const vector<double>& y) const
 {
     const size_t n = x.size();
-    std::vector<double> logY(n);
-    std::vector<bool> validPoints(n);
+    vector<double> logY(n);
+    vector<bool> validPoints(n);
 
     // Convert to log space, handling zeros and negative values
     for (size_t i = 0; i < n; ++i)
@@ -2063,7 +2153,7 @@ double DiffuseIonizedGasMix::integrateLogSpace(const std::vector<double>& x, con
 
 ////////////////////////////////////////////////////////////////////
 
-double DiffuseIonizedGasMix::simpsonIntegration(const std::vector<double>& x, const std::vector<double>& y) const
+double DiffuseIonizedGasMix::simpsonIntegration(const vector<double>& x, const vector<double>& y) const
 {
     const size_t n = x.size();
 
@@ -2104,8 +2194,7 @@ double DiffuseIonizedGasMix::simpsonIntegration(const std::vector<double>& x, co
 
 ////////////////////////////////////////////////////////////////////
 
-double DiffuseIonizedGasMix::trapezoidalIntegrationKahan(const std::vector<double>& x,
-                                                         const std::vector<double>& y) const
+double DiffuseIonizedGasMix::trapezoidalIntegrationKahan(const vector<double>& x, const vector<double>& y) const
 {
     const size_t n = x.size();
 
@@ -2146,41 +2235,19 @@ double DiffuseIonizedGasMix::rydbergToWavelength(double energy_ryd) const
 ////////////////////////////////////////////////////////////////////
 
 double DiffuseIonizedGasMix::getHydrogenCrossSection(double frequency) const
-{  // Verner+ 96 fits
-    // Convert frequency to energy in eV
-    constexpr double h_eV = 4.135667696e-15;  // Planck constant in eVs
-    const double E_eV = h_eV * frequency;
-
-    constexpr double HI_eV = 13.6057;
-    if (E_eV < HI_eV || E_eV > 50000.) return 0.0;
-
-    const double x = E_eV / 0.4298;
-    const double xm1 = x - 1.;
-    const double sigma_cm2 = 5.475e-14 * xm1 * xm1 * pow(x, -4.0185) / pow(1. + sqrt(x / 32.88), 2.963);
-
-    // Convert from cm^2 to m^2
-    return sigma_cm2 * 1e-4;
+{
+    // convert frequency to photon energy in eV, then use the canonical Verner+96 fit
+    const double E_eV = Constants::h() * frequency / Constants::Qelectron();
+    return VernerCrossSections::sigmaHI(E_eV) * 1e-4;  // cm^2 -> m^2
 }
 
 ////////////////////////////////////////////////////////////////////
 
 double DiffuseIonizedGasMix::getHeliumCrossSection(double frequency) const
 {
-    // Verner+ 96 fits
-    // Convert frequency to energy in eV
-    constexpr double h_eV = 4.135667696e-15;  // Planck constant in eVs
-    const double E_eV = h_eV * frequency;
-
-    constexpr double HeI_eV = 24.5874;
-    if (E_eV < HeI_eV || E_eV > 50000.) return 0.0;
-
-    const double x = E_eV / 13.61 - 0.4434;
-    const double xm1 = x - 1.;
-    const double y = sqrt(x * x + 4.562496);
-    const double sigma_cm2 = 9.492e-16 * (xm1 * xm1 + 4.157521) * pow(y, -3.906) / pow(1. + sqrt(y / 1.469), 3.188);
-
-    // Convert from cm^2 to m^2
-    return sigma_cm2 * 1e-4;
+    // convert frequency to photon energy in eV, then use the canonical Verner+96 fit
+    const double E_eV = Constants::h() * frequency / Constants::Qelectron();
+    return VernerCrossSections::sigmaHeI(E_eV) * 1e-4;  // cm^2 -> m^2
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -2331,30 +2398,35 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
         if (inReemissionRange)
         {
             // Get reemission data (includes all probabilities)
-            const ReemissionData& data = getReemissionData(state, lambda);
+            ReemissionData data;
+            calculateReemissionProbabilities(state, lambda, data);
 
-            // Calculate hydrogen reemission probability
-            double hydrogenScatProb = data.probabilities[ReemissionChannel::Hydrogen];
-
-            // Calculate helium reemission probability (if wavelength can ionize helium)
-            double heliumScatProb = 0.0;
-            if (lambda <= _lambdaHe)
+            // if data is invalid, leave probReemission at its 0 default
+            if (data.valid)
             {
-                heliumScatProb += data.probabilities[ReemissionChannel::HeliumLyC];
-                heliumScatProb += data.probabilities[ReemissionChannel::HeliumNpEv];
-                heliumScatProb += data.probabilities[ReemissionChannel::HeliumTPC] * heliumTpcHIonizingFraction;
+                // Calculate hydrogen reemission probability
+                double hydrogenScatProb = data.probabilities[ReemissionChannel::Hydrogen];
 
-                // Handle Helium Lyman alpha on-the-spot absorption
-                const double h0 = state->hNeutralFraction();
-                const double he0 = state->heNeutralFraction();
-                const double T = state->temperature();
-                const double sqrtT_nH0 = std::sqrt(T) * h0;
-                const double pHots = sqrtT_nH0 / (sqrtT_nH0 + heliumLyaOtsCoeff * he0);
-                heliumScatProb += data.probabilities[ReemissionChannel::HeliumLyA] * (1.0 - pHots);
+                // Calculate helium reemission probability (if wavelength can ionize helium)
+                double heliumScatProb = 0.0;
+                if (lambda <= _lambdaHe)
+                {
+                    heliumScatProb += data.probabilities[ReemissionChannel::HeliumLyC];
+                    heliumScatProb += data.probabilities[ReemissionChannel::HeliumNpEv];
+                    heliumScatProb += data.probabilities[ReemissionChannel::HeliumTPC] * heliumTpcHIonizingFraction;
+
+                    // Handle Helium Lyman alpha on-the-spot absorption
+                    const double h0 = state->hNeutralFraction();
+                    const double he0 = state->heNeutralFraction();
+                    const double T = state->temperature();
+                    const double sqrtT_nH0 = std::sqrt(T) * h0;
+                    const double pHots = sqrtT_nH0 / (sqrtT_nH0 + heliumLyaOtsCoeff * he0);
+                    heliumScatProb += data.probabilities[ReemissionChannel::HeliumLyA] * (1.0 - pHots);
+                }
+
+                // Weighted average reemission probability based on which species absorbs
+                probReemission = data.pHabs * hydrogenScatProb + (1.0 - data.pHabs) * heliumScatProb;
             }
-
-            // Weighted average reemission probability based on which species absorbs
-            probReemission = data.pHabs * hydrogenScatProb + (1.0 - data.pHabs) * heliumScatProb;
         }
 
         if (useCloudyOpacity())
@@ -2559,8 +2631,8 @@ void DiffuseIonizedGasMix::computeCellDeltas(const MaterialState* state, double&
 
 ////////////////////////////////////////////////////////////////////
 
-void DiffuseIonizedGasMix::bracketDeltaAxis(double value, const std::vector<double>& axis_values,
-                                            const std::vector<int>& axis_deltaIds, int& deltaIdLo, int& deltaIdHi,
+void DiffuseIonizedGasMix::bracketDeltaAxis(double value, const vector<double>& axis_values,
+                                            const vector<int>& axis_deltaIds, int& deltaIdLo, int& deltaIdHi,
                                             double& w) const
 {
     const size_t n = axis_values.size();

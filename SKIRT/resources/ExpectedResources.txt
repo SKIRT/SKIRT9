@@ -7,5 +7,5 @@ TODDLERS_Cloud_BPASS_chab300 2
 TODDLERS_Cloud_SB99_kroupa100 2
 ExtraDust 3
 ExtraBands 1
-AtomsMolecules 8
+AtomsMolecules 9
 DiffuseIonizedGas 1

@@ -7,6 +7,7 @@
 #define NONLTELINEGASMIX_H
 
 #include "EmittingGasMix.hpp"
+#include "GasLineEmission.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -32,10 +33,10 @@
     The current implementation supports the following molecular or atomic species:
 
     <b>Molecules</b>
-    The properties relevant to the calculation of the level populations and collision partners 
+    The properties relevant to the calculation of the level populations and collision partners
     of the following molecules are based on the LAMDA database (
     https://home.strw.leidenuniv.nl/~moldata/; Schöier et al. 2005; van der Tak et al. 2020).
-    According to the user's choice, the number of energy levels can be set by the 
+    According to the user's choice, the number of energy levels can be set by the
     \em maxEnergyLevels property within the range of supported energy levels for each species.
 
     - \c Two-level \c test molecule (TT): a fictive test molecule (called TT for our purposes)
@@ -69,21 +70,21 @@
     - \c Molecular \c hydrogen (H2): includes rotational energy levels up to \f$J=31\f$. The
     corresponding transition lines are at wavelengths from 28.2 to 3.3 \f$\mu\mathrm{m}\f$. The
     collisional interaction partners include molecular hydrogen, neutral atomic hydrogen, ionized
-    atomic hydrogen, and helium. 
-    
+    atomic hydrogen, and helium.
+
     <b> An assumption of molecular hydrogen:</b> Molecular hydrogen exists in ortho (J is odd) and
     para (J is even) flavors, and these flavors have different collisional coefficients.
     The current implementation assumes that the ratio of ortho to para is 3 to 1.
 
     <b>Atoms</b>
     Atomic line emission from C, O, N, S, Si, Ne, Na, Mg, Fe, and Ar in ionization states ranging from
-    neutral up to ten times ionized is included. The atomic data required for calculating level 
+    neutral up to ten times ionized is included. The atomic data required for calculating level
     populations and electron collisional transition rates are adopted from the CHIANTI database
     (https://www.chiantidatabase.org/chianti_direct_access.html; Dere et al. 1997; Del Zanna et al. 2021).
 
-    In addition, collisional transition rates with other collision partners are available for CI, CII, 
-    OI, OIII, NII, SiI, and SI, based on the LAMDA database. The available collision partners are neutral, 
-    ionized, and molecular hydrogen, as well as neutral helium for CI and OI; atomic and molecular 
+    In addition, collisional transition rates with other collision partners are available for CI, CII,
+    OI, OIII, NII, SiI, and SI, based on the LAMDA database. The available collision partners are neutral,
+    ionized, and molecular hydrogen, as well as neutral helium for CI and OI; atomic and molecular
     hydrogen for CII; and atomic hydrogen for OIII, NII, SiI, and SI.
 
     Level populations can be calculated from the ground state up to the 20th excited level, including all
@@ -91,9 +92,9 @@
     wavelengths from the ultraviolet to the submillimeter regime. The maximum number of energy levels
     included in the calculation can be specified by the user through the \em maxEnergyLevels property,
     up to this limit. For example, users may be interested in only a famous following far-infrared line
-    emission rather than UV and optical lines: CII (158 \f$\mu\mathrm{m}\f$), 
+    emission rather than UV and optical lines: CII (158 \f$\mu\mathrm{m}\f$),
     OI (63 and 145 \f$\mu\mathrm{m}\f$), NII (122 and 205 \f$\mu\mathrm{m}\f$),
-    CI (370 and 609 \f$\mu\mathrm{m}\f$), OIII (52 and 88 \f$\mu\mathrm{m}\f$). 
+    CI (370 and 609 \f$\mu\mathrm{m}\f$), OIII (52 and 88 \f$\mu\mathrm{m}\f$).
     \em maxEnergyLevels should be set to 2 for CII, 3 for OI, NII, CI, and OIII.
 
     <b> Note on highly ionized species: </b> The current implementation does not include photoionization
@@ -101,8 +102,8 @@
     accurately determined in environments with strong ionizing radiation fields.
 
     <b> Neglecting irrelevant transitions:</b> Transitions that have negligible impact on the level
-    populations can be safely ignored to improve computational efficiency by setting the 
-    \em lowestBranchingRatio property to a value greater than zero. The default value of 0.0 
+    populations can be safely ignored to improve computational efficiency by setting the
+    \em lowestBranchingRatio property to a value greater than zero. The default value of 0.0
     includes all transitions, while a value of 0.001, for example, would exclude the calculation
     of emissivity and opacity of the transitions that have a branching ratio below 0.1% of the
     total decay rate from the upper level. This can reduce the number of transitions considered in
@@ -176,7 +177,7 @@
     constant multiplier relative to \f$n_\mathrm{mol}\f$.
 
     Although the NonLTELineGasMix couples the level populations to the radiation field, in some cases
-    the radiation field does not significantly affect the level populations (e.g., UV and optical 
+    the radiation field does not significantly affect the level populations (e.g., UV and optical
     lines from atomic species). In such cases, the user can disable updating the level populations by
     setting the \em updateDynamicStatesFlag property to 'false'.
 
@@ -194,7 +195,7 @@
     artificially combine the effect of both thermal motion and turbulence into an effective
     temperature, \f[ T_\mathrm{eff} = T_\mathrm{kin} + \frac{m v_\mathrm{turb}^2}{2k}. \f]
     If the Gaussian profile is not expressed when convolving the radiation field with the Gaussian
-    profile, the simulation may fail and output an error. Sometimes, the emission is not critical 
+    profile, the simulation may fail and output an error. Sometimes, the emission is not critical
     for estimating the level populations. In this case, the user can choose to take a warning instead
     of an error by setting the \em errorForGaussianIntegral property to 'false'.
 
@@ -311,16 +312,16 @@
     By default, the populations in each cell are initialized assuming a Boltzmann distribution at
     the local gas temperature (i.e., LTE conditions; \em initialLevelPopsCase="LTE"). This
     assumption may significantly differ from the final non-LTE solution, although it often provides
-    a convenient starting point that accelerates convergence. For example, many optical and UV 
-    emission lines from the ionized gas originate from excited levels whose populations are 
-    determined by the balance between collisional transitions and spontaneous radiative decay. In 
+    a convenient starting point that accelerates convergence. For example, many optical and UV
+    emission lines from the ionized gas originate from excited levels whose populations are
+    determined by the balance between collisional transitions and spontaneous radiative decay. In
     such cases, the user can initialize the populations using the collisionally excited solution
-    by specifying \em initialLevelPopsCase="CollisionallyExcited". Alternatively, the users can 
-    set custom initial level populations using a text file by specifying 
+    by specifying \em initialLevelPopsCase="CollisionallyExcited". Alternatively, the users can
+    set custom initial level populations using a text file by specifying
     \em initialLevelPopsCase="Custom". This option is particularly useful when restarting a SKIRT
     simulation from a previously converged solution.  If the \em initialLevelPopsFilename string is
     nonempty, it specifies the name of a text column file with a column for each energy level and
-    a row for each spatial cell in the simulation. Specifically, the first column lists a cell 
+    a row for each spatial cell in the simulation. Specifically, the first column lists a cell
     index that is ignored, and remaining columns list the relative population for each energy level
     in units of number density (the values are scaled to the total number density in the cell, so
     the specific units don't really matter). The rows must exactly match the number and ordering
@@ -748,40 +749,12 @@ public:
 
 private:
     // Data members loaded from text resource files and/or precalculated in setupSelfBefore()
-    // (only the energy levels and transitions actually used are stored in the data members)
 
     string _name;  // human readable species name
 
-    // mass
-    double _mass{0.};  // particle mass for the species under consideration
-
-    // energy levels
-    int _numLevels{0};       // the number of energy levels -- index p
-    vector<double> _energy;  // the energy of each energy level
-    vector<double> _weight;  // the weight (degeneracy) of each energy level
-
-    // radiative transitions
-    int _numLines{0};             // the number of radiative transitions -- index k
-    vector<int> _indexUpRad;      // the upper energy level index for each radiative transition
-    vector<int> _indexLowRad;     // the lower energy level index for each radiative transition
-    vector<double> _einsteinA;    // the Einstein A coefficient for each radiative transition
-    vector<double> _einsteinBul;  // the Einstein Bul coefficient for each radiative transition
-    vector<double> _einsteinBlu;  // the Einstein Blu coefficient for each radiative transition
-    vector<double> _branchRatio;  // the branching ratio for each radiative transition from the same upper energy level
-    Array _center;                // the central emission wavelength for each radiative transition
-
-    // collisional transitions
-    struct ColPartner  // data structure holding information on a collisional partner
-    {
-        string name;              // human readable species name
-        Array T;                  // the temperature grid points
-        int numColTrans{0};       // the number of collisional transitions -- index t
-        vector<int> indexUpCol;   // the upper energy level index for each collisional transition
-        vector<int> indexLowCol;  // the lower energy level index for each collisional transition
-        vector<Array> Kul;        // the coefficient for each collisional transition and for each temperature
-    };
-    int _numColPartners{0};          // the number of collisional interaction partners -- index c
-    vector<ColPartner> _colPartner;  // the data for each collisional partner
+    // the GasLineEmission helper/solver and the atomic model in its layout
+    GasLineEmission _gasLineEmission;
+    GasLineEmission::AtomicModel _model;
 
     // the radiation field wavelength grid for this simulation
     int _numWavelengths{0};  // the number of wavelength bins -- index ell

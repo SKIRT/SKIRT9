@@ -873,7 +873,7 @@ namespace
     inline double chiHIIMgII(double T)
     {
         double T4 = (T < 1e4) ? 1. : ((T > 3e5) ? 30. : 1e-4 * T);
-        return 7.6e-14 * (1. - 1.97 * exp(-4.32 * T4)) * exp(-1.67 / T4);
+        return 7.6e-14 * (1. - 1.97 * exp(-4.32 * T4)) * exp(-1.67e4 / T);
     }
     inline double chiHIIMgI(double T)
     {
@@ -1481,7 +1481,7 @@ namespace
     inline double chiHIIFeII(double T)
     {
         double T4 = (T < 1e4) ? 1. : ((T > 1e5) ? 10. : 1e-4 * T);
-        return 2.1e-9 * pow(T4, 0.0772) * (1. - 0.41 * exp(-7.31 * T4)) * exp(-3.005 / T4);
+        return 2.1e-9 * pow(T4, 0.0772) * (1. - 0.41 * exp(-7.31 * T4)) * exp(-3.005e4 / T);
     }
     inline double chiHIIFeI(double /*T*/)
     {
@@ -1690,9 +1690,7 @@ namespace
     {
         switch (ion)
         {
-            // He
-            case 1: return xiHIHeII(T);
-            case 2: return xiHIHeIII(T);
+            // He is solved on its own path (xiHIHeII / xiHIHeIII by name); no cases here
             // C: CII-CV (ions 4-7 in Verner indexing)
             case 4: return xiHICII(T);
             case 5: return xiHICIII(T);
@@ -1769,15 +1767,11 @@ namespace
     // -- C --
     inline double xiHeICIV(double T)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 1e7) ? 1000. : 1e-4 * T);
-        return 1.12e-9 * pow(T4, 0.42) * (1. - 0.69 * exp(-0.34 * T4));
+        return 4.6e-19 * T * T;
     }
-    inline double xiHeICV(double T)
+    inline double xiHeICV(double /*T*/)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 1e7) ? 1000. : 1e-4 * T);
-        if (T4 < 1.) return 3.12e-16 * pow(T4, -0.0737) * (1. + 35. * exp(2.4 * T4));
-        if (T4 < 35.) return 1.49e-14 * pow(T4, 2.73) * (1. + 5.93 * exp(-0.0874 * T4));
-        return 5.8e-11 * pow(T4, 0.73) * (1. - 0.86 * exp(-0.0096 * T4));
+        return 1e-14;
     }
     inline double chiHeIICI(double T)
     {
@@ -1789,22 +1783,17 @@ namespace
     }  // 6.29 eV
 
     // -- N --
-    inline double xiHeINIII(double T)
+    inline double xiHeINIII(double /*T*/)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 1e7) ? 1000. : 1e-4 * T);
-        if (T4 < 4.) return 4.84e-10 * pow(T4, 0.92) * (1. + 2.37 * exp(-10.2 * T4));
-        return 3.17e-9 * pow(T4, 0.2) * (1. - 0.72 * exp(-0.0481 * T4));
+        return 0.8e-10;
     }
-    inline double xiHeINIV(double T)
+    inline double xiHeINIV(double /*T*/)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 1e7) ? 1000. : 1e-4 * T);
-        return 2.05e-9 * pow(T4, 0.23) * (1. - 0.72 * exp(-0.19 * T4));
+        return 1.5e-10;
     }
-    inline double xiHeINV(double T)
+    inline double xiHeINV(double /*T*/)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 1e7) ? 1000. : 1e-4 * T);
-        if (T4 < 9.) return 1.26e-11 * pow(T4, 1.55) * (1. + 11.2 * exp(-7.82 * T4));
-        return 3.75e-10 * pow(T4, 0.54) * (1. - 0.82 * exp(-0.0207 * T4));
+        return 2e-9;
     }
     inline double chiHeIINII(double T)
     {
@@ -1814,19 +1803,15 @@ namespace
     // -- O --
     inline double xiHeIOIII(double T)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 1e7) ? 1000. : 1e-4 * T);
-        if (T4 < 5.) return 7.1e-12 * pow(T4, 2.6) * (1. + 8.99 * exp(-0.78 * T4));
-        return 6.21e-10 * pow(T4, 0.53) * (1. - 0.66 * exp(-0.0222 * T4));
+        return 3.2e-14 * pow(T, 0.95);
     }
-    inline double xiHeIOIV(double T)
+    inline double xiHeIOIV(double /*T*/)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 1e7) ? 1000. : 1e-4 * T);
-        return 1.12e-9 * pow(T4, 0.42) * (1. - 0.71 * exp(-0.0198 * T4));
+        return 1e-9;
     }
-    inline double xiHeIOV(double T)
+    inline double xiHeIOV(double /*T*/)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 1e7) ? 1000. : 1e-4 * T);
-        return 9.97e-10 * pow(T4, 0.4) * (1. - 0.46 * exp(-0.35 * T4));
+        return 6e-10;
     }
     inline double chiHeIIOI(double T)
     {
@@ -1836,50 +1821,37 @@ namespace
     }
 
     // -- Ne --
-    inline double xiHeINeIII(double T)
+    inline double xiHeINeIII(double /*T*/)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 1e7) ? 1000. : 1e-4 * T);
-        if (T4 < 0.5) return 1e-14;
-        if (T4 < 0.8) return 8.48e-12 * pow(T4, 3.35) * (1. - 1.92 * exp(-1.5 * T4));
-        return 2.52e-11 * pow(T4, 0.14) * (1. - 1.99 * exp(-0.91 * T4));
+        return 1e-14;
     }
     inline double xiHeINeIV(double T)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 1e7) ? 1000. : 1e-4 * T);
-        if (T4 < 2.5) return 1e-14;
-        if (T4 < 9.5) return 1.34e-13 * pow(T4, 2.33) * (1. - 2.55 * exp(-0.37 * T4));
-        return 1e-10 * pow(T4, 0.24) * (1. - 1.09 * exp(-0.0247 * T4));
+        return 1e-16 * sqrt(T);
     }
     inline double xiHeINeV(double T)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 1e7) ? 1000. : 1e-4 * T);
-        if (T4 < 5.) return 1.77e-09 * pow(T4, 0.14) * (1. + 0.0488 * exp(-3.35 * T4));
-        return 2.67e-10 * pow(T4, 0.54) * (1. + 0.91 * exp(-0.0188 * T4));
+        return 1.7e-11 * sqrt(T);
     }
 
     // -- Mg --
-    inline double xiHeIMgIV(double T)
+    inline double xiHeIMgIV(double /*T*/)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 1e7) ? 1000. : 1e-4 * T);
-        if (T4 < 0.7) return 1.88e-11 * pow(T4, 0.13) * (1. + 0.83 * exp(-4.94 * T4));
-        return 3.41e-11 * pow(T4, 0.15) * (1. - 0.45 * exp(-0.0483 * T4));
+        return 7.5e-10;
     }
     inline double xiHeIMgV(double T)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 1e7) ? 1000. : 1e-4 * T);
-        return 1.37e-09 * pow(T4, 0.21) * (1. - 0.59 * exp(-0.0594 * T4));
+        return 1.4e-10 * pow(T, 0.30);
     }
 
     // -- Si --
     inline double xiHeISiIV(double T)
     {
-        double T4 = (T < 100.) ? 0.01 : ((T > 1e6) ? 100. : 1e-4 * T);
-        return 1.03e-9 * pow(T4, 0.6) * (1. - 0.61 * exp(-1.42 * T4));
+        return 1.95e-12 * pow(T, 0.70);
     }
     inline double xiHeISiV(double T)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 5e5) ? 50. : 1e-4 * T);
-        return 5.75e-10 * pow(T4, 0.93) * (1. + 1.33 * exp(-0.29 * T4));
+        return 2.54e-11 * pow(T, 0.45);
     }
     inline double chiHeIISiI(double /*T*/)
     {
@@ -1897,13 +1869,7 @@ namespace
     // -- S --
     inline double xiHeISIV(double T)
     {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 3.1e4) ? 3.1 : 1e-4 * T);
-        return 3.58e-9 * pow(T4, 0.00777) * (1. - 0.94 * exp(-0.3 * T4));
-    }
-    inline double xiHeISV(double T)
-    {
-        double T4 = (T < 1e3) ? 0.1 : ((T > 3.1e4) ? 3.1 : 1e-4 * T);
-        return 7.44e-13 * pow(T4, 0.34) * (1. + 3.74 * exp(-5.18 * T4));
+        return 1.1e-11 * sqrt(T);
     }
     inline double chiHeIISII(double T)
     {
@@ -1927,7 +1893,10 @@ namespace
 
     /** Helium charge exchange recombination rate [cm^3/s] for a given ion (Verner index).
         Reaction: ion + HeI -> ion_lower + HeII.
-        The ion index refers to the HIGHER stage (the one being recombined). */
+        The ion index refers to the HIGHER stage (the one being recombined). The rates are Cloudy's
+        (atmdat_char_tran.cpp: Butler & Dalgarno 1980b, with Fang & Kwong 1997 and Opradolce et al.
+        1985 for Si IV and Si V). Iron (Fe IV, Fe V), absent from that compilation, uses fits in the
+        Arnaud & Rothenflug (1985) form. */
     inline double xiHeI(int ion, double T)
     {
         switch (ion)
@@ -1953,10 +1922,9 @@ namespace
             // Si: SiIV-SiV (ions 45-46)
             case 45: return xiHeISiIV(T);
             case 46: return xiHeISiV(T);
-            // S: SIV-SV (ions 56-57)
-            case 56: return xiHeISIV(T);
-            case 57: return xiHeISV(T);
-            // Fe: FeIV-FeV (ions 61-62)
+            // S: SIV (ion 57); S V is not tracked in this layout
+            case 57: return xiHeISIV(T);
+            // Fe: FeIV-FeV (ions 61-62); Cloudy carries no iron helium channel
             case 61: return xiHeIFeIV(T);
             case 62: return xiHeIFeV(T);
             default: return 0.;

@@ -3,7 +3,7 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "NebularContinuumEmission.hpp"
+#include "GasContinuumEmission.hpp"
 
 ////////////////////////////////////////////////////////////////////
 
@@ -4293,8 +4293,8 @@ namespace
 
 // ===== Full continuum luminosity: public class entry point =====
 
-double NebularContinuumEmission::continuumLuminosity(double lambda_m, double T, double ne, double nHII, double nHeII,
-                                                     double nHeIII, double V_cm3)
+double GasContinuumEmission::continuumLuminosity(double lambda_m, double T, double ne, double nHII, double nHeII,
+                                                 double nHeIII, double V_cm3)
 {
     if (T <= 0.0 || ne <= 0.0) return 0.0;
 
