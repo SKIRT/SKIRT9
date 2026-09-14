@@ -423,7 +423,7 @@ FreeBoundComptonHelper::FreeBoundComptonHelper(SimulationItem* item) : _free(ite
 
 double FreeBoundComptonHelper::sectionSca(double lambda, int Z, int N) const
 {
-    double b = (double)N / (double)Z;  // bound fraction
+    double b = static_cast<double>(N) / Z;
     return (1. - b) * _free.sectionSca(lambda, Z, N) + b * _bound.sectionSca(lambda, Z, N);
 }
 
@@ -432,7 +432,7 @@ double FreeBoundComptonHelper::sectionSca(double lambda, int Z, int N) const
 void FreeBoundComptonHelper::peeloffScattering(double& I, double& lambda, int Z, int N, Direction bfk,
                                                Direction bfkobs) const
 {
-    double b = (double)N / (double)Z;  // bound fraction
+    double b = static_cast<double>(N) / Z;
     double sigmaFree = (1. - b) * _free.sectionSca(lambda, Z, N);
     double sigmaBound = b * _bound.sectionSca(lambda, Z, N);
 
@@ -447,7 +447,7 @@ void FreeBoundComptonHelper::peeloffScattering(double& I, double& lambda, int Z,
 
 Direction FreeBoundComptonHelper::performScattering(double& lambda, int Z, int N, Direction bfk) const
 {
-    double b = (double)N / (double)Z;  // bound fraction
+    double b = static_cast<double>(N) / Z;
     double sigmaFree = (1. - b) * _free.sectionSca(lambda, Z, N);
     double sigmaBound = b * _bound.sectionSca(lambda, Z, N);
 
