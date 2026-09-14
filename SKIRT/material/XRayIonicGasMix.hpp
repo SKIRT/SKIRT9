@@ -16,12 +16,12 @@
 
 /** The XRayIonicGasMix class describes the material properties of a partially ionised gas in the
     X-ray wavelength range, taking into account the effects of photo-absorption, fluorescence,
-    recombination, electron scattering, and resonant scattering. It supports the line 
-    production and transfer for the Lyman-series of hydrogen-like ions and the K-series of helium-like 
-    ions.　It is largely an extension of the XRayAtomicGasMix class, supporting all ions instead of 
-    just the neutral atoms. To avoid the use of this material mix outside of the regime for which it has
-    been designed, all cross sections are forced to zero below 4.3 eV and above 500 keV
-    (corresponding approximately to a wavelength range from 2.5 pm to 290 nm).
+    recombination, electron scattering, and resonant scattering. It supports the line production and
+	transfer for the Lyman-series of hydrogen-like ions and the K-series of helium-like ions.　It is
+	largely an extension of the XRayAtomicGasMix class, supporting all ions instead of just the
+	neutral atoms. To avoid the use of this material mix outside of the regime for which it has been
+	designed, all cross sections are forced to zero below 4.3 eV and above 500 keV (corresponding
+	approximately to a wavelength range from 2.5 pm to 290 nm).
 
     The class assumes a gas containing a mixture of (ionized) elements with atomic numbers ranging
     from 1 (hydrogen) to 30 (zinc). Including fully ionized ions, this results in a total of 495
@@ -52,10 +52,11 @@
     L\f$_{\beta1}\f$, L\f$_{\alpha2}\f$, L\f$_{\alpha1}\f$, M\f$_{1,2}\f$, M\f$_{1,3}\f$,
     M\f$_{2,4}\f$, M\f$_{3,4}\f$, M\f$_{3,5}\f$ M\f$_{2}\f$N\f$_{1}\f$, M\f$_{3}\f$N\f$_{1}\f$
     These transitions are not all the same as those in the XRayAtomicGasMix class, and even
-	transitions that are the same may yield slightly different results, as the resources are obtained from different sources.
+	transitions that are the same may yield slightly different results, as the resources are obtained
+	from different sources.
 
-	Similar to the XRayAtomicGasMix, certain elements have intrinsic line shape data associated with them.
-	For this class, this is limited to the (K_{\alpha1}) and (K_{\alpha2}) lines for the Fe ions.
+	Similar to the XRayAtomicGasMix, certain elements have intrinsic line shape data associated with
+	them. For this class, this is limited to the (K_{\alpha1}) and (K_{\alpha2}) lines for the Fe ions.
 
     Because fluorescence only occurs as the result of a photo-absorption event, this class
     implements fluorescence as a form of scattering (where the wavelength of the photon being
@@ -76,9 +77,10 @@
     <b>Scattering by bound electrons</b>
 
 	Electrons bound to the atoms or free in the gas scatter incoming X-ray photons. This process can be
-    elastic (Rayleigh scattering) or inelastic (Compton scattering). This class however always uses inelastic (Compton) scattering for this process; elastic (Rayleigh) scattering is
-	inelastic (Compton) scattering, completely ignoring elastic (Rayleigh) scattering. The user can select one
-	of four implementations for electron scattering, these are:
+    elastic (Rayleigh scattering) or inelastic (Compton scattering). This class however always uses
+	inelastic (Compton) scattering for this process; elastic (Rayleigh) scattering is inelastic
+	(Compton) scattering, completely ignoring elastic (Rayleigh) scattering. The user can select one of
+	four implementations for electron scattering, these are:
 
     - \em None: ignore scattering by all electrons.
 
@@ -93,8 +95,9 @@
     ion.
 
 	When using the \em Free or \em FreeWithPolarization implementations, all electrons are treated the 
-	same regardless of ionization state, so that a material mix with Fe+0 has the same electron scattering cross section as a material mix with Fe+26. 
-	For \em FreeBound, on the other hand, the scattering cross section for a given ion depends on the amount of free and bound electrons.
+	same regardless of ionization state, so that a material mix with Fe+0 has the same electron
+	scattering cross section as a material mix with Fe+26. For \em FreeBound, on the other hand, the
+	scattering cross section for a given ion depends on the amount of free and bound electrons.
 
     <b>Resonant scattering</b>
 
@@ -115,8 +118,8 @@
     cascades are incoherent and erase information about the initial photon packet. when a cascade
     occurs, we ignore all intermediate photons produced by radiative decays between excited states, 
     keeping only the final transition to the ground state. This means we can also model the cascade 
-    as a single scattering event. The branching data, determining the probability of an (in)coherent transition,
-    is obtained from the SPEX database Kaastra et al. (2024).
+    as a single scattering event. The branching data, determining the probability of an (in)coherent
+	transition, is obtained from the SPEX database Kaastra et al. (2024).
 
     <b>Configuring the simulation</b>
 
@@ -148,13 +151,14 @@
     importMetallicity, \em importTemperature, and \em importVariableMixParams must be left at
     'false'. For example, if bulk velocities are also imported for this medium component (i.e. \em
     importVelocity is 'true'), the column order would be \f[ ..., n, v_\mathrm{x}, v_\mathrm{y},
-    v_\mathrm{z} \f] When a separate XRayIonicGasMix is required for each spatial cell, refer to the XRayIonicGasMixFamily class.
+    v_\mathrm{z} \f] When a separate XRayIonicGasMix is required for each spatial cell, refer to
+	the XRayIonicGasMixFamily class.
 
     The relative abundances of the present ions and the temperature of the gas are
     configured in the ski file as constant properties. In other words, the abundances and the
-    temperature are considered to be spatially constant (for a given medium component). Because of this all
-	the cross sections per hydrogen atom for this material mix are calculated during setup and the result stored, discretized on a
-	high-resolution wavelength grid for later retrieval.
+    temperature are considered to be spatially constant (for a given medium component). Because of
+	this all the cross sections per hydrogen atom for this material mix are calculated during setup
+	and the result stored, discretized on a high-resolution wavelength grid for later retrieval.
 
     <b>Photo-absorption cross section</b>
 
@@ -183,23 +187,25 @@
     These yields are obtained from Kaastra & Mewe (1993) for all ions up to Z=30, from neutral down
     to B-like.
 
-	As mentioned earlier, the Fe ions have intrinsic line shape data for the K\f$_{\alpha1}\f$ and K\f$_{\alpha2}\f$ lines.
-	The line shape data was obtained from Pinheiro et al. (2023). Consequently, the energies and fluorescence yields for these lines are also taken from this source.
-	Additional line shapes were available for the Fe ions, but the corresponding yields differed significantly from those used for the other lines in Kaastra & Mewe (1993) and were therefore not included.
+	As mentioned earlier, the Fe ions have intrinsic line shape data for the K\f$_{\alpha1}\f$ and
+	K\f$_{\alpha2}\f$ lines. The line shape data was obtained from Pinheiro et al. (2023).
+	Consequently, the energies and fluorescence yields for these lines are also taken from this source.
+	Additional line shapes were available for the Fe ions, but the corresponding yields differed
+	significantly from those used for the other lines in Kaastra & Mewe (1993) and were therefore not included.
 
     <b>Recombination cross section</b>
 
-    The total recombination cross section per hydrogen-like or helium-like ion for this material mix is obtained
-    the exact same was as for fluorescence. The yields are now temperature-dependent however, but
-    since the temperature is assumed to be constant this is simply read during the setup. The
-    temperature-dependent yields are obtained from Mao & Kaastra (2016).
+    The total recombination cross section per hydrogen-like or helium-like ion for this material mix
+	is obtained the exact same was as for fluorescence. The yields are now temperature-dependent
+	however, but since the temperature is assumed to be constant this is simply read during the setup.
+	The temperature-dependent yields are obtained from Mao & Kaastra (2016).
 
     <b>Electron scattering - cross section and phase function</b>
 
     As described above, this class provides several implementations for the scattering of X-ray
-    photons by the electrons bound to the atoms or free in the gas. These implementations involve two types of
-    scattering: free- and bound- electron Compton scattering. Note that, in all cases, the listed
-    cross sections must be multiplied by the abundance of the corresponding ion.
+    photons by the electrons bound to the atoms or free in the gas. These implementations involve
+	two types of scattering: free- and bound- electron Compton scattering. Note that, in all cases,
+	the listed cross sections must be multiplied by the abundance of the corresponding ion.
 
     For free-electron Compton scattering, the cross section for an ion with atomic number
     \f$Z\f$ given by \f$Z\,\sigma_\mathrm{C}\f$, where \f$\sigma_\mathrm{C}\f$ is the

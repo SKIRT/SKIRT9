@@ -19,11 +19,14 @@
 	XRayIonicGasMix class.
 
     The \em ions property defines which ions must be imported. An ion can still have zero
-    abundance in a given cell; as described in the XRayIonicGasMix class, that ion is then simply
+    abundance in a given cell. As described in the XRayIonicGasMix class, that ion is then simply
     left out of the mix constructed for that cell.
 
     This family will also reuse mixes for cells with duplicate import parameters (ion abundances
-	and temperature). */
+	and temperature).
+	
+	This MaterialMixFamily is very memory-heavy 
+	*/
 class XRayIonicGasMixFamily : public MaterialMixFamily
 {
     ENUM_DEF(ElectronScattering, None, Free, FreeWithPolarization, FreeBound)
@@ -56,14 +59,14 @@ public:
     ~XRayIonicGasMixFamily() override;
 
     /** This function calls the setup if not already done. This involves parsing the ions
-	an electronScattering property, and adding a default mix. */
+        and electronScattering property, and adding a default mix. */
     void setupSelfBefore() override;
 
     //====================== Other functions ======================
 
 public:
     /** This function returns the number and type of parameters used by family. For this class,
-	this is all the relative abundances for the user-specified ions. */
+        this is all the relative abundances for the user-specified ions. */
     vector<SnapshotParameter> parameterInfo() const override;
 
     /** This function returns (a pointer to) the XRayIonicGasMix corresponding to the given parameter
@@ -75,12 +78,12 @@ public:
     const MaterialMix* mix(double Z, double T, const Array& parameters) override;
 
     /** This function returns (a pointer to) the default XRayIonicGasMix, corresponding to
-	the parameters all set to zero. */
+        the parameters all set to zero. */
     const MaterialMix* mix() override;
 
 private:
     /** This function performs the setup by parsing the user-configured ions and
-	electronScattering property, and adding a default mix.*/
+        electronScattering property, and adding a default mix.*/
     void setup();
 
     //======================== Data Members ========================

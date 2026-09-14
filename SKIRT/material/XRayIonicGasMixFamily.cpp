@@ -46,7 +46,7 @@ const MaterialMix* XRayIonicGasMixFamily::mix(double /*Z*/, double T, const Arra
     // look for duplicates
     for (const XRayIonicGasMix* mix : _mixes)
     {
-        if (mix->abundances() == abundances) return mix;
+        if (mix->abundances() == abundances && mix->temperature() == T) return mix;
     }
 
     XRayIonicGasMix* mix = new XRayIonicGasMix(this, _ions, abundances, T, _boundElectrons, _resonantScattering, true);
@@ -94,7 +94,7 @@ void XRayIonicGasMixFamily::setup()
     if (!_mixes.size())
     {
         // add empty mix
-        Array abundances(_ionNames.size(), 0.);
+        Array abundances(0., _ionNames.size());
         mix(0., 0., abundances);
     }
 }

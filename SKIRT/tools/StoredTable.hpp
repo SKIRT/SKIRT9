@@ -127,8 +127,18 @@ public:
         undefined behavior (usually a crash). */
     StoredTable() {}
 
-    // hard to find bug if you accidentally copy
+    /** The copy constructor is deleted since the destructor calls the close() function, invalidating
+		the copied stored table instance. */
     StoredTable(const StoredTable&) = delete;
+
+    /** The move constructor transfers ownership of the stored table, leaving the source instance without
+    	any associated resources safe to be destroyed. */
+    StoredTable(StoredTable&& other)
+        : _filePath(std::move(other._filePath)), _axBeg(other._axBeg), _qtyBeg(other._qtyBeg), _axLen(other._axLen),
+          _qtyStep(other._qtyStep), _axLog(other._axLog), _qtyLog(other._qtyLog), _clamp(other._clamp)
+    {
+        other._filePath.clear();
+    }
 
     /** This alternate constructor constructs a stored table instance and immediately associates a
         given stored table resource file with it by calling the open() function. Refer to the
