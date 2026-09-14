@@ -173,7 +173,10 @@ namespace
                 _media[h]->parameters(_positions[n], sample);
                 params += _densities(h, n) * sample;
             }
-            if (nsum > 0.) params /= nsum;
+            if (nsum > 0.)
+                params /= nsum;
+            else
+                params = 0.;
             return;
         }
     };

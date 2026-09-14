@@ -3,14 +3,14 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#ifndef NEBULARCONTINUUMEMISSION_HPP
-#define NEBULARCONTINUUMEMISSION_HPP
+#ifndef GASCONTINUUMEMISSION_HPP
+#define GASCONTINUUMEMISSION_HPP
 
 #include "Basics.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-/** The NebularContinuumEmission class provides functions for computing the nebular continuum
+/** The GasContinuumEmission class provides functions for computing the nebular continuum
     emission spectrum (free-bound, free-free, and two-photon) from ionized hydrogen and helium.
 
     The implementation follows McClymont, Smith & Tacchella (2025), which is based on
@@ -23,7 +23,7 @@
 
     All internal component functions and coefficient tables are file-local to the
     implementation translation unit; only the full-spectrum entry point is exposed. */
-class NebularContinuumEmission final
+class GasContinuumEmission final
 {
 public:
     /** Compute the full nebular continuum emissivity at wavelength lambda [m] for a cell with:

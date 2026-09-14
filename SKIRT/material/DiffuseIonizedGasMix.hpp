@@ -7,6 +7,7 @@
 #define DIFFUSEIONIZEDGASMIX_HPP
 
 #include "EmittingGasMix.hpp"
+#include "GasLineEmission.hpp"
 #include "PhotoIonizationSolver.hpp"
 #include "StoredTable.hpp"
 
@@ -14,7 +15,7 @@
 
 /** An instance of the DiffuseIonizedGasMix class represents diffuse ionized gas regions (HII regions,
     diffuse ionized gas, ionization fronts) for radiative transfer simulations. The module uses a
-    hybrid approach that combines pre-computed Cloudy tables with an inline photoionization solver:
+    hybrid approach that combines pre-computed Cloudy tables with an inline photoionization solver.
 
     <b>Applicability and naming note</b>
 
@@ -49,11 +50,14 @@
       at the STAB-derived temperature, yielding ion fractions for all tracked species (H, He,
       C, N, O, Ne, Mg, Si, S, Fe) and the electron density. Key ion fractions (x_HII, x_NII,
       x_OI, x_OII, x_OIII, x_SII) and n_e are stored as custom state variables for diagnostics.
-    - <b>Emission</b> is computed from the converged radiation field, temperature, and ion fractions:
-      NebularLineEmission computes line luminosities (hydrogen recombination lines from
-      Storey & Hummer 1995 Case B coefficients; metal forbidden lines from CHIANTI collisional
-      excitation rates) and NebularContinuumEmission computes the nebular continuum (free-bound,
-      free-free, two-photon).
+    - <b>Emission</b> is computed from the converged radiation field, temperature, and ion
+      fractions: GasLineEmission (this class) computes the line luminosities, while
+      GasContinuumEmission computes the nebular continuum (free-bound, free-free, two-photon). By
+      default (\em includeExtendedLines=true), H and He recombination lines from Case B are obtained
+      from emissivity tables, and collisional lines from the statistical-equilibrium solver on the
+      atomic data. This obviously requires the corresponding resources to be installed. If \em
+      includeExtendedLines is set to false, the Storey & Hummer 1995 P_B form for H and precomputed
+      CHIANTI q_col tables are used as a fallback.
     - <b>Diffuse reemission</b> of absorbed ionizing photons follows Wood, Mathis & Ercolano (2004),
       with pre-tabulated temperature-dependent spectra for H/He Lyman continuum and He two-photon.
 
@@ -147,13 +151,11 @@
     tabulated T and kappa. PerCell uses the snapshot's abundances in the
     emission calculation via 9 imported columns (8 metals + He); the stab
     T/kappa stay on the Gutkin baseline.
-
 */
-
 class DiffuseIonizedGasMix : public EmittingGasMix
 {
     /** Selects how metal and helium abundances are handed to the analytical
-        emission solver. See the class docstring section "Abundances and
+        emission solver. See the class documentation section "Abundances and
         gas-phase depletion" for the full description. */
     ENUM_DEF(AbundanceMode, SolarScaled, PerCell)
         ENUM_VAL(AbundanceMode, SolarScaled, "solar pattern scaled by metallicity")
@@ -249,6 +251,30 @@ class DiffuseIonizedGasMix : public EmittingGasMix
         PROPERTY_DOUBLE(maxHydrogenDensity, "maximum hydrogen number density ceiling in cm^-3 (0 means no ceiling)")
         ATTRIBUTE_MIN_VALUE(maxHydrogenDensity, "[0")
         ATTRIBUTE_DEFAULT_VALUE(maxHydrogenDensity, "100000")
+
+        PROPERTY_DOUBLE(maxEmissionWavelength, "the upper limit of the gas emission wavelength grid")
+        ATTRIBUTE_QUANTITY(maxEmissionWavelength, "wavelength")
+        ATTRIBUTE_MIN_VALUE(maxEmissionWavelength, "1 micron")
+        ATTRIBUTE_MAX_VALUE(maxEmissionWavelength, "1 m")
+        ATTRIBUTE_DEFAULT_VALUE(maxEmissionWavelength, "1000 micron")
+        ATTRIBUTE_DISPLAYED_IF(maxEmissionWavelength, "Level3")
+
+        PROPERTY_INT(numEmissionWavelengths, "the number of bins in the gas emission wavelength grid")
+        ATTRIBUTE_MIN_VALUE(numEmissionWavelengths, "50")
+        ATTRIBUTE_MAX_VALUE(numEmissionWavelengths, "2000")
+        ATTRIBUTE_DEFAULT_VALUE(numEmissionWavelengths, "250")
+        ATTRIBUTE_DISPLAYED_IF(numEmissionWavelengths, "Level3")
+
+        PROPERTY_BOOL(includeExtendedLines, "use Case B recombination tables and the atomic-model collisional "
+                                            "solver")
+        ATTRIBUTE_DEFAULT_VALUE(includeExtendedLines, "true")
+        ATTRIBUTE_DISPLAYED_IF(includeExtendedLines, "Level3")
+
+        PROPERTY_DOUBLE(lineLuminosityFloor, "the relative luminosity floor for extended-inventory lines")
+        ATTRIBUTE_MIN_VALUE(lineLuminosityFloor, "[0")
+        ATTRIBUTE_MAX_VALUE(lineLuminosityFloor, "1]")
+        ATTRIBUTE_DEFAULT_VALUE(lineLuminosityFloor, "0")
+        ATTRIBUTE_DISPLAYED_IF(lineLuminosityFloor, "Level3")
 
     ITEM_END()
 
@@ -377,34 +403,20 @@ private:
     // Convert Rydberg energy to wavelength in metres
     double rydbergToWavelength(double energy_ryd) const;
 
-    // Reemission probability indices (following CMACIONIZE nomenclature)
-    enum ReemissionChannel {
-        Hydrogen = 0,    // Hydrogen Lyman continuum
-        HeliumLyC = 1,   // Helium Lyman continuum
-        HeliumNpEv = 2,  // He 19.8 eV line
-        HeliumTPC = 3,   // Helium two-photon continuum
-        HeliumLyA = 4,   // Helium Lyman alpha
-    };
-    static constexpr int numReemissionChannels = 5;
-
-    struct ReemissionData
-    {
-        bool valid = false;
-        double probabilities[numReemissionChannels];
-        double cumulativeProbabilities[numReemissionChannels];
-        double pHabs;  // Probability of H absorption vs He
-    };
+    // Per-channel reemission probabilities for a cell/wavelength; defined in the .cpp along with the
+    // channel enumeration and the probabilities array size, none of which is needed outside this
+    // class's own translation unit
+    struct ReemissionData;
 
     // Reemission calculation methods (adapted from CMACIONIZE)
     void calculateReemissionProbabilities(const MaterialState* state, double lambda, ReemissionData& data) const;
     int selectReemissionChannel(const MaterialState* state, double lambda, const PhotonPacket* pp) const;
     double sampleFromTemperatureDependentSpectrum(int spectrumType, double temperature, Random* random) const;
-    void interpolateReemissionSpectrum(int spectrumType, double temperature, std::vector<double>& wavelengths,
-                                       std::vector<double>& cumulativeDist) const;
+    void interpolateReemissionSpectrum(int spectrumType, double temperature, vector<double>& wavelengths,
+                                       vector<double>& cumulativeDist) const;
     double sampleHydrogenLymanContinuum(double temperature) const;
     double sampleHeliumLymanContinuum(double temperature) const;
     double sampleHeliumTwoPhotonContinuum(double temperature) const;
-    const ReemissionData& getReemissionData(const MaterialState* state, double lambda) const;
 
     // Hydrogen and Helium photoionization cross-section using Verner+ 96
     double getHydrogenCrossSection(double frequency) const;
@@ -432,11 +444,11 @@ private:
     double calculateIonizationParameter(const Array& Jv, double nH) const;
 
     // Integration methods
-    double integrate(const std::vector<double>& x, const std::vector<double>& y) const;
-    double integrateLinearSpace(const std::vector<double>& x, const std::vector<double>& y) const;
-    double integrateLogSpace(const std::vector<double>& x, const std::vector<double>& y) const;
-    double simpsonIntegration(const std::vector<double>& x, const std::vector<double>& y) const;
-    double trapezoidalIntegrationKahan(const std::vector<double>& x, const std::vector<double>& y) const;
+    double integrate(const vector<double>& x, const vector<double>& y) const;
+    double integrateLinearSpace(const vector<double>& x, const vector<double>& y) const;
+    double integrateLogSpace(const vector<double>& x, const vector<double>& y) const;
+    double simpsonIntegration(const vector<double>& x, const vector<double>& y) const;
+    double trapezoidalIntegrationKahan(const vector<double>& x, const vector<double>& y) const;
 
     // convert total to Hydrogen number density
     double convertTotalDensityToHydrogenDensity(double n_total, double He_abundance) const;
@@ -455,7 +467,7 @@ private:
     // Bracket a query value on a sorted delta-axis (axis_values, axis_deltaIds). Endpoint-clamps
     // outside the cross. Returns the two delta_id indices into the stab and the linear weight w
     // such that  reconstructed(value) = (1-w)*tab(deltaIdLo) + w*tab(deltaIdHi).
-    void bracketDeltaAxis(double value, const std::vector<double>& axis_values, const std::vector<int>& axis_deltaIds,
+    void bracketDeltaAxis(double value, const vector<double>& axis_values, const vector<int>& axis_deltaIds,
                           int& deltaIdLo, int& deltaIdHi, double& w) const;
 
     // Dual-table system helpers
@@ -476,10 +488,10 @@ private:
     StoredTable<1> _deltaCMapTable;  // 1D map: delta_id -> delta_C (dex)
     // Stab dN/dC cross axes for separable bracket+linterp reconstruction (built at setup).
     // _dNAxisValues is sorted; _dNAxisDeltaIds holds the corresponding delta_id index in the stab.
-    std::vector<double> _dNAxisValues;
-    std::vector<int> _dNAxisDeltaIds;
-    std::vector<double> _dCAxisValues;
-    std::vector<int> _dCAxisDeltaIds;
+    vector<double> _dNAxisValues;
+    vector<int> _dNAxisDeltaIds;
+    vector<double> _dCAxisValues;
+    vector<int> _dCAxisDeltaIds;
     int _deltaIdCentre = -1;  // delta_id of the (dN=0, dC=0) centre slice
     double _stabDNmin = 0.;
     double _stabDNmax = 0.;
@@ -508,10 +520,8 @@ private:
     // Cached density ceiling in m^-3 (0 = disabled), set in setupSelfBefore from maxHydrogenDensity
     double _maxNH_m3 = 0.;
 
-    // Cached logU edges of the transition table's logU axis, set in setupSelfBefore
-    // from _transitionTemperatureTable.axisArray<2>(). Used in the per-cell table-selection
-    // and blending-weight hot path.
-    double _transitionLogUMin = 0.;
+    // Cached upper edge of the transition table's logU axis, where it meets the standard
+    // table, set in setupSelfBefore. Used when selecting between the two tables.
     double _transitionLogUMax = 0.;
 
     // Custom state variable indices
@@ -536,13 +546,29 @@ private:
     // PIO-style emission: solver for computing ion fractions from Jv + T
     PhotoIonizationSolver _emissionSolver;
 
+    // Line inventory, Case B tables and atomic models shared by the line-emission calculations
+    // below; owning this instance (rather than sharing process-global state) means its resources
+    // are released when this DiffuseIonizedGasMix instance is, not at unspecified static
+    // destruction order
+    GasLineEmission _gasLineEmission;
+
     // Line emission data (initialized in setupSelfBefore)
     int _numLines = 0;
     Array _lineCenters;
     Array _lineMasses;
+    // registry indices of the lines this mix emits: all built-in lines plus the
+    // extended-inventory lines that fall inside the emission wavelength grid
+    vector<int> _activeLines;
+    // solve groups: active-line indices per atomic-model slot (one level-population solve per
+    // group per cell), with each line's transition index; lines without a model use the
+    // per-line path
+    vector<int> _groupSlots;
+    vector<vector<int>> _groupLines;
+    vector<int> _lineTransitions;
+    vector<int> _lineGroup;  // group index per active line, -1 = per-line path
 
     // Convergence stability tracking
-    mutable std::vector<double> _convergedFractionHistory;
+    mutable vector<double> _convergedFractionHistory;
     mutable size_t _convergenceHistorySize = 3;
 };
 

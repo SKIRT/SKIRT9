@@ -60,6 +60,111 @@ namespace
     }
 }
 
+namespace
+{
+    // parses a stored table starting at the given memory location, verifying that it has the given
+    // number of axes and matches the given axes and quantity specifications, and storing the results
+    // in the given output parameters; the given label is used only for error messages
+    void parse(const void* start, size_t numAxes, const string& axes, const string& quantity, const string& label,
+               const double** axBeg, const double** qtyBeg, size_t* axLen, size_t* qtyStep, bool* axLog, bool* qtyLog)
+    {
+        const StabItem* currentItem = static_cast<const StabItem*>(start);
+
+        // verify the name tag and the Endianness tag
+        if (memcmp("SKIRT X\n", currentItem++->stringType, itemSize) || currentItem++->sizeType != 0x010203040A0BFEFF)
+            throw FATALERROR("File does not have stored table format: " + label);
+
+        // verify the number of axes
+        if (currentItem++->sizeType != numAxes)
+            throw FATALERROR("Number of axes in stored table file does not match: " + label);
+
+        // split the axes specification into a list
+        auto axesSpecs = StringUtils::split(axes, ",");
+        if (axesSpecs.size() != numAxes)
+            throw FATALERROR("Number of axes in stored table axes specification does not match: " + axes);
+
+        // verify the axes names
+        for (size_t i = 0; i < numAxes; ++i)
+        {
+            if (!matchesName(axesSpecs[i], currentItem++))
+                throw FATALERROR("Axis " + std::to_string(i) + " does not have name " + axesSpecs[i]
+                                 + " in stored table " + label);
+        }
+
+        // verify the axes units
+        for (size_t i = 0; i < numAxes; ++i)
+        {
+            if (!matchesUnit(axesSpecs[i], currentItem++))
+                throw FATALERROR("Axis " + std::to_string(i) + " does not have unit " + axesSpecs[i]
+                                 + " in stored table " + label);
+        }
+
+        // store the interpolation scale for each axis
+        for (size_t i = 0; i < numAxes; ++i)
+        {
+            *axLog++ = (memcmp("log     ", currentItem++->stringType, itemSize) == 0);
+        }
+
+        // store the grid length and a pointer to the first value for each axis
+        for (size_t i = 0; i < numAxes; ++i)
+        {
+            size_t length = currentItem++->sizeType;
+            *axLen++ = length;
+            *axBeg++ = &currentItem->doubleType;
+            currentItem += length;
+        }
+
+        // look for the appropriate quantity
+        size_t numQties = currentItem++->sizeType;
+        size_t qtyIndex = numQties;
+        for (size_t i = 0; i < numQties; ++i)
+        {
+            if (matchesName(quantity, currentItem++)) qtyIndex = i;
+        }
+        if (qtyIndex == numQties)
+            throw FATALERROR("Tabulated quantity " + quantity + " is not in stored table " + label);
+
+        // verify the corresponding unit
+        for (size_t i = 0; i < numQties; ++i)
+        {
+            if (i == qtyIndex)
+            {
+                if (!matchesUnit(quantity, currentItem++))
+                    throw FATALERROR("Tabulated quantity does not have unit " + quantity + " in stored table " + label);
+            }
+            else
+                currentItem++;
+        }
+
+        // store the corresponding interpolation scale
+        for (size_t i = 0; i < numQties; ++i)
+        {
+            if (i == qtyIndex)
+                *qtyLog = (memcmp("log     ", currentItem++->stringType, itemSize) == 0);
+            else
+                currentItem++;
+        }
+
+        // calculate and store the pointer to the first quantity value, and store the number of quantities
+        *qtyBeg = &currentItem->doubleType + qtyIndex;
+        *qtyStep = numQties;
+    }
+
+    // logs that the given item opened the stored table identified by the given label, unless the same
+    // thread already successfully opened the same label for the same item
+    void logOpened(const SimulationItem* item, const string& label)
+    {
+        thread_local const SimulationItem* previousItem = nullptr;
+        thread_local string previousLabel;
+        if (item != previousItem || label != previousLabel)
+        {
+            item->find<Log>()->info(item->type() + " opened stored table " + label);
+            previousItem = item;
+            previousLabel = label;
+        }
+    }
+}
+
 ////////////////////////////////////////////////////////////////////
 
 void StoredTable_Impl::open(size_t numAxes, const SimulationItem* item, string filename, bool resource, string axes,
@@ -83,96 +188,25 @@ void StoredTable_Impl::open(size_t numAxes, const SimulationItem* item, string f
     // acquire a memory map for the file; the function returns zeros if the memory map cannot be created
     auto map = System::acquireMemoryMap(filePath);
     if (!map.first) throw FATALERROR("Cannot acquire memory map for file: " + filePath);
-    const StabItem* currentItem = static_cast<const StabItem*>(map.first);
 
-    // verify the name tag and the Endianness tag
-    if (memcmp("SKIRT X\n", currentItem++->stringType, itemSize) || currentItem++->sizeType != 0x010203040A0BFEFF)
-        throw FATALERROR("File does not have stored table format: " + filePath);
+    parse(map.first, numAxes, axes, quantity, filePath, axBeg, qtyBeg, axLen, qtyStep, axLog, qtyLog);
+    logOpened(item, filePath);
+}
 
-    // verify the number of axes
-    if (currentItem++->sizeType != numAxes)
-        throw FATALERROR("Number of axes in stored table file does not match: " + filePath);
+////////////////////////////////////////////////////////////////////
 
-    // split the axes specification into a list
-    auto axesSpecs = StringUtils::split(axes, ",");
-    if (axesSpecs.size() != numAxes)
-        throw FATALERROR("Number of axes in stored table axes specification does not match: " + axes);
+void StoredTable_Impl::openAt(size_t numAxes, string filePath, size_t byteOffset, string label, string axes,
+                              string quantity, const double** axBeg, const double** qtyBeg, size_t* axLen,
+                              size_t* qtyStep, bool* axLog, bool* qtyLog)
+{
+    // acquire a memory map for the file; the function returns zeros if the memory map cannot be created
+    auto map = System::acquireMemoryMap(filePath);
+    if (!map.first) throw FATALERROR("Cannot acquire memory map for file: " + filePath);
 
-    // verify the axes names
-    for (size_t i = 0; i < numAxes; ++i)
-    {
-        if (!matchesName(axesSpecs[i], currentItem++))
-            throw FATALERROR("Axis " + std::to_string(i) + " does not have name " + axesSpecs[i] + " in stored table "
-                             + filePath);
-    }
-
-    // verify the axes units
-    for (size_t i = 0; i < numAxes; ++i)
-    {
-        if (!matchesUnit(axesSpecs[i], currentItem++))
-            throw FATALERROR("Axis " + std::to_string(i) + " does not have unit " + axesSpecs[i] + " in stored table "
-                             + filePath);
-    }
-
-    // store the interpolation scale for each axis
-    for (size_t i = 0; i < numAxes; ++i)
-    {
-        *axLog++ = (memcmp("log     ", currentItem++->stringType, itemSize) == 0);
-    }
-
-    // store the grid length and a pointer to the first value for each axis
-    for (size_t i = 0; i < numAxes; ++i)
-    {
-        size_t length = currentItem++->sizeType;
-        *axLen++ = length;
-        *axBeg++ = &currentItem->doubleType;
-        currentItem += length;
-    }
-
-    // look for the appropriate quantity
-    size_t numQties = currentItem++->sizeType;
-    size_t qtyIndex = numQties;
-    for (size_t i = 0; i < numQties; ++i)
-    {
-        if (matchesName(quantity, currentItem++)) qtyIndex = i;
-    }
-    if (qtyIndex == numQties)
-        throw FATALERROR("Tabulated quantity " + quantity + " is not in stored table " + filePath);
-
-    // verify the corresponding unit
-    for (size_t i = 0; i < numQties; ++i)
-    {
-        if (i == qtyIndex)
-        {
-            if (!matchesUnit(quantity, currentItem++))
-                throw FATALERROR("Tabulated quantity does not have unit " + quantity + " in stored table " + filePath);
-        }
-        else
-            currentItem++;
-    }
-
-    // store the corresponding interpolation scale
-    for (size_t i = 0; i < numQties; ++i)
-    {
-        if (i == qtyIndex)
-            *qtyLog = (memcmp("log     ", currentItem++->stringType, itemSize) == 0);
-        else
-            currentItem++;
-    }
-
-    // calculate and store the pointer to the first quantity value, and store the number of quantities
-    *qtyBeg = &currentItem->doubleType + qtyIndex;
-    *qtyStep = numQties;
-
-    // log success, unless the same thread already successfully opened the same file for the same item
-    thread_local const SimulationItem* previousItem = nullptr;
-    thread_local string previousFilePath;
-    if (item != previousItem || filePath != previousFilePath)
-    {
-        item->find<Log>()->info(item->type() + " opened stored table " + filePath);
-        previousItem = item;
-        previousFilePath = filePath;
-    }
+    // unlike open(), this function does not log anything on success: the dictionary that spawned
+    // this stored table already logged a single message when it was opened
+    parse(static_cast<const char*>(map.first) + byteOffset, numAxes, axes, quantity, label, axBeg, qtyBeg, axLen,
+          qtyStep, axLog, qtyLog);
 }
 
 ////////////////////////////////////////////////////////////////////

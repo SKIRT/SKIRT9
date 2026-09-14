@@ -127,19 +127,6 @@ public:
         undefined behavior (usually a crash). */
     StoredTable() {}
 
-    /** The copy constructor is deleted since the destructor calls the close() function, invalidating
-		the copied stored table instance. */
-    StoredTable(const StoredTable&) = delete;
-
-    /** The move constructor transfers ownership of the stored table, leaving the source instance without
-    	any associated resources safe to be destroyed. */
-    StoredTable(StoredTable&& other)
-        : _filePath(std::move(other._filePath)), _axBeg(other._axBeg), _qtyBeg(other._qtyBeg), _axLen(other._axLen),
-          _qtyStep(other._qtyStep), _axLog(other._axLog), _qtyLog(other._qtyLog), _clamp(other._clamp)
-    {
-        other._filePath.clear();
-    }
-
     /** This alternate constructor constructs a stored table instance and immediately associates a
         given stored table resource file with it by calling the open() function. Refer to the
         open() function for a description of the arguments and of its operation. */
@@ -147,6 +134,44 @@ public:
                 bool resource = true)
     {
         open(item, filename, axes, quantity, clampFirstAxis, resource);
+    }
+
+    /** The copy constructor and copy assignment operator are deleted because a stored table
+        instance owns a reference on the memory map of its associated resource file (acquired by
+        open() and released by the destructor); a naive member-wise copy would duplicate that
+        reference without incrementing the underlying map's reference count, so the first copy to
+        be destroyed would release a mapping the other copy still depends on. */
+    StoredTable(const StoredTable&) = delete;
+    StoredTable& operator=(const StoredTable&) = delete;
+
+    /** The move constructor transfers the association (if any) with a stored table resource file
+        from another instance to this one, leaving the other instance unassociated. */
+    StoredTable(StoredTable&& from) noexcept
+        : _filePath(std::move(from._filePath)), _axBeg(from._axBeg), _qtyBeg(from._qtyBeg), _axLen(from._axLen),
+          _qtyStep(from._qtyStep), _axLog(from._axLog), _qtyLog(from._qtyLog), _clamp(from._clamp)
+    {
+        from._filePath.clear();
+    }
+
+    /** The move assignment operator releases any association held by this instance and then
+        transfers the association (if any) with a stored table resource file from another instance
+        to this one, leaving the other instance unassociated. */
+    StoredTable& operator=(StoredTable&& from) noexcept
+    {
+        if (this != &from)
+        {
+            StoredTable_Impl::close(_filePath);
+            _filePath = std::move(from._filePath);
+            _axBeg = from._axBeg;
+            _qtyBeg = from._qtyBeg;
+            _axLen = from._axLen;
+            _qtyStep = from._qtyStep;
+            _axLog = from._axLog;
+            _qtyLog = from._qtyLog;
+            _clamp = from._clamp;
+            from._filePath.clear();
+        }
+        return *this;
     }
 
     /** This function associates a given stored table resource or input file with the stored table
@@ -200,10 +225,40 @@ public:
         _clamp = clampFirstAxis;
     }
 
+    /** This function returns true if the stored table instance has been opened, false if not (i.e.
+        the instance was default constructed and open() has not yet been called). */
+    bool isOpen() const { return !_filePath.empty(); }
+
     /** The destructor breaks the association with a stored table resource file established by the
         alternate constructor or the open() function, if there is any. In practice, this simply
         means releasing the memory map on the associated file. */
     ~StoredTable() { StoredTable_Impl::close(_filePath); }
+
+private:
+    // a StoredTableDictionary of matching dimensionality is allowed to construct a stored table
+    // that shares its own memory-mapped bundle file rather than mapping a dedicated file
+    template<size_t M> friend class StoredTableDictionary;
+
+    /** This private constructor is used by StoredTableDictionary to spawn a stored table for one
+        of its members. Rather than resolving and mapping a dedicated file, the resulting instance
+        reads its data starting at \em byteOffset bytes into the file at \em filePath, which must
+        already be open (i.e. \em filePath must be a canonical path previously passed to
+        System::acquireMemoryMap(), typically by the originating dictionary itself). This instance
+        acquires its own reference on that memory map, refcounted jointly with the dictionary's own
+        reference and with every other stored table spawned from it; consequently, it remains valid
+        even after the originating StoredTableDictionary instance has been destroyed, for as long as
+        at least one such reference (held by the dictionary or by any table spawned from it) remains.
+        The \em label argument is used only to identify this table in error messages; unlike the
+        public open() function, this constructor does not log anything on success, since the
+        dictionary itself already logs a single message when it is opened. */
+    StoredTable(const string& filePath, size_t byteOffset, const string& label, const string& axes,
+                const string& quantity, bool clampFirstAxis)
+        : _filePath(filePath)
+    {
+        StoredTable_Impl::openAt(N, filePath, byteOffset, label, axes, quantity, &_axBeg[0], &_qtyBeg, &_axLen[0],
+                                 &_qtyStep, &_axLog[0], &_qtyLog);
+        _clamp = clampFirstAxis;
+    }
 
     // ================== Accessing values ==================
 
@@ -323,9 +378,6 @@ public:
     {
         return operator()(value);
     }
-
-    // hard to find bug if you accidentally copy
-    StoredTable<N>& operator=(const StoredTable<N>& other) = delete;
 
     // ------------------------------------------
 

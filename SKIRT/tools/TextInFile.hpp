@@ -97,12 +97,16 @@ public:
         description describes the contents of the file for use in the log message issued after the
         file is successfully opened; (4) \em resource indicates whether the file is located in the
         resources directory (true) or in the regular user input file directory (false, the default
-        value).
+        value); (5) \em silent, if true, suppresses the log message normally issued when the file is
+        successfully opened. This is intended for callers that open a long, known series of files as
+        part of a single logical operation and that issue their own single summary log message for
+        the operation as a whole, rather than for every individual file.
 
         If the specified file has the \c .scol filename extension, the implementation automatically
         switches to reading the binary SKIRT column file format instead of the regular column text
         format. For more information, see the class header. */
-    TextInFile(const SimulationItem* item, string filename, string description, bool resource = false);
+    TextInFile(const SimulationItem* item, string filename, string description, bool resource = false,
+               bool silent = false);
 
     /** This function closes the file if it was not already closed. It is best to call close() or
         allow the object to go out of scope before logging other messages or starting another

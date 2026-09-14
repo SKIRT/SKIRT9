@@ -59,7 +59,7 @@ namespace
 
 ////////////////////////////////////////////////////////////////////
 
-TextInFile::TextInFile(const SimulationItem* item, string filename, string description, bool resource)
+TextInFile::TextInFile(const SimulationItem* item, string filename, string description, bool resource, bool silent)
 {
     // remember the units system and the logger
     _units = item->find<Units>();
@@ -75,7 +75,8 @@ TextInFile::TextInFile(const SimulationItem* item, string filename, string descr
         _scol.open(filepath);
 
         // log "reading file" message
-        _log->info(item->typeAndName() + " reads " + description + " from binary file " + filepath + "...");
+        if (!silent)
+            _log->info(item->typeAndName() + " reads " + description + " from binary file " + filepath + "...");
 
         // read the header information into a list of ColumnInfo records
         auto columnNames = _scol.columnNames();
@@ -101,7 +102,7 @@ TextInFile::TextInFile(const SimulationItem* item, string filename, string descr
         if (!_in) throw FATALERROR("Could not open the " + description + " text file " + filepath);
 
         // log "reading file" message
-        _log->info(item->typeAndName() + " reads " + description + " from text file " + filepath + "...");
+        if (!silent) _log->info(item->typeAndName() + " reads " + description + " from text file " + filepath + "...");
 
         // read any structured header lines into a list of ColumnInfo records
         int index;  // one-based column index obtained from file info

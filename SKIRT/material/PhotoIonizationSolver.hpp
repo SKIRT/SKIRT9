@@ -168,11 +168,11 @@ private:
 
     //======== Wavelength grid data =======
 
-    int _numBins = 0;                ///< number of wavelength bins
-    std::vector<double> _lambda;     ///< wavelength bin centers [m]
-    std::vector<double> _dlambda;    ///< wavelength bin widths [m]
-    std::vector<double> _energy;     ///< photon energy per bin [eV]
-    std::vector<double> _energyErg;  ///< photon energy per bin [erg]
+    int _numBins = 0;           ///< number of wavelength bins
+    vector<double> _lambda;     ///< wavelength bin centers [m]
+    vector<double> _dlambda;    ///< wavelength bin widths [m]
+    vector<double> _energy;     ///< photon energy per bin [eV]
+    vector<double> _energyErg;  ///< photon energy per bin [erg]
 
     //======== Effective stage counts (may be capped by maxIonizationEnergy) =======
 
@@ -184,13 +184,13 @@ private:
     static constexpr int _metalOffset = 5;                            ///< first metal ionFracs index (CI)
     static constexpr int _numMetalIons = totalStages - _metalOffset;  ///< 55 metal ion stages
 
-    bool _hasCoolingTable = false;    ///< whether a cooling table is loaded
-    int _coolNT = 0;                  ///< number of T grid points
-    int _coolNNe = 0;                 ///< number of ne grid points
-    std::vector<double> _coolLogT;    ///< log10(T/K) grid
-    std::vector<double> _coolLogNe;   ///< log10(ne/cm^-3) grid
-    std::vector<double> _coolData;    ///< cooling[ion][iT][iNe] flattened, [erg/s per ion]
-    std::vector<int> _stabIdxForIon;  ///< maps ionFracs index -> .stab quantity index (-1 if none)
+    bool _hasCoolingTable = false;  ///< whether a cooling table is loaded
+    int _coolNT = 0;                ///< number of T grid points
+    int _coolNNe = 0;               ///< number of ne grid points
+    vector<double> _coolLogT;       ///< log10(T/K) grid
+    vector<double> _coolLogNe;      ///< log10(ne/cm^-3) grid
+    vector<double> _coolData;       ///< cooling[ion][iT][iNe] flattened, [erg/s per ion]
+    vector<int> _stabIdxForIon;     ///< maps ionFracs index -> .stab quantity index (-1 if none)
 
     //======== Cosmic-ray background heating =======
 
