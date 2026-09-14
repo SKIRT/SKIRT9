@@ -50,7 +50,9 @@ double DiscreteWavelengthDistribution::probability(double wavelength) const
 double DiscreteWavelengthDistribution::generateWavelength() const
 {
     int ell = _beginWavelengthIndex + static_cast<int>(random()->uniform() * _numWavelengths);
-    return wavelengthGrid()->wavelength(ell);
+    auto wlg = wavelengthGrid();
+    double wavelength = wlg->leftBorder(ell) + random()->uniform() * wlg->effectiveWidth(ell);
+    return wavelength;
 }
 
 //////////////////////////////////////////////////////////////////////
