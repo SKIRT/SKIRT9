@@ -3,13 +3,15 @@
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
 
-#include "DiscreteWavelengthDistribution.hpp"
+#include "BinnedWavelengthDistribution.hpp"
+#include "Random.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-double DiscreteWavelengthDistribution::wavelengthInBin(int ell) const
+double BinnedWavelengthDistribution::wavelengthInBin(int ell) const
 {
-    return wavelengthGrid()->wavelength(ell);
+    auto wlg = wavelengthGrid();
+    return wlg->leftBorder(ell) + random()->uniform() * wlg->effectiveWidth(ell);
 }
 
 //////////////////////////////////////////////////////////////////////

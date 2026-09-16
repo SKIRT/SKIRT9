@@ -22,6 +22,7 @@
 #include "AxPowerLawRedistributeGeometryDecorator.hpp"
 #include "BandLuminosityNormalization.hpp"
 #include "BegemannPorousAluminaGrainComposition.hpp"
+#include "BinnedWavelengthDistribution.hpp"
 #include "BlackBodySED.hpp"
 #include "BlackBodySEDFamily.hpp"
 #include "BoxClipGeometryDecorator.hpp"
@@ -109,6 +110,7 @@
 #include "GeometricMedium.hpp"
 #include "GeometricSource.hpp"
 #include "GrainPopulation.hpp"
+#include "GridWavelengthDistribution.hpp"
 #include "HEALPixSkyInstrument.hpp"
 #include "HammerAitoffProjection.hpp"
 #include "HirashitaLogNormalGrainSizeDistribution.hpp"
@@ -424,7 +426,9 @@ SimulationItemRegistry::SimulationItemRegistry(string version, string format)
     ItemRegistry::add<TabulatedWavelengthDistribution>();
     ItemRegistry::add<FileWavelengthDistribution>();
     ItemRegistry::add<ListWavelengthDistribution>();
+    ItemRegistry::add<GridWavelengthDistribution>();
     ItemRegistry::add<DiscreteWavelengthDistribution>();
+    ItemRegistry::add<BinnedWavelengthDistribution>();
 
     // bands
     ItemRegistry::add<Band>();
