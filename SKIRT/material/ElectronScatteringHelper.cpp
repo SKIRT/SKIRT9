@@ -624,7 +624,7 @@ namespace ElectronScatteringHelper
 
     ////////////////////////////////////////////////////////////////////
 
-    double AnomalousRayleighHelper::phaseFunctionValue(double x, double costheta, int Z, int /*N*/) const
+    double AnomalousRayleighHelper::phaseFunctionValue(double x, double costheta, int Z) const
     {
         constexpr double norm = 3. / 4. * Constants::sigmaThomson();
         double phase = 1. + costheta * costheta;
@@ -659,7 +659,7 @@ namespace ElectronScatteringHelper
 
     ////////////////////////////////////////////////////////////////////
 
-    void AnomalousRayleighHelper::peeloffScattering(double& I, double& lambda, int Z, int N, Direction bfk,
+    void AnomalousRayleighHelper::peeloffScattering(double& I, double& lambda, int Z, int /*N*/, Direction bfk,
                                                     Direction bfkobs) const
     {
         double x = scaledEnergy(lambda);
@@ -676,7 +676,7 @@ namespace ElectronScatteringHelper
         {
             // calculate the value of the phase function
             double costheta = Vec::dot(bfk, bfkobs);
-            double value = phaseFunctionValue(x, costheta, Z, N);
+            double value = phaseFunctionValue(x, costheta, Z);
 
             // accumulate the weighted sum in the intensity
             I += value;

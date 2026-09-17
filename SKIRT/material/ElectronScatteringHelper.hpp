@@ -15,10 +15,55 @@
 
 ////////////////////////////////////////////////////////////////////
 
+/** This namespace offers a set of helper classes that implement the various treatments of photon
+    scattering by electrons -- bound to an atom or ion, or free -- supported by the XRayAtomicGasMix
+    and XRayIonicGasMix material mix classes. Both classes select one concrete helper for Rayleigh
+    (elastic) scattering and one for Compton (inelastic) scattering, based on their own configured
+    implementation options, and delegate all scattering-related calculations to these two helpers
+    for the remainder of the simulation; see the documentation of those classes for the physics
+    (cross section and phase function formulas, energy shift) implemented by each helper.
+
+    All helpers derive from the abstract base class Helper, which declares the common interface:
+    a scattering cross section per atom or ion, and peel-off and perform-scattering functions with
+    and without support for polarization. A helper that does not (or does) support polarization
+    needs to override only the unpolarized (or only the polarized) pair of functions; Helper
+    provides a default implementation for the other pair (a no-op for the unpolarized functions,
+    and a fall-through to the unpolarized functions for the polarized ones) so that a derived class
+    never needs to implement both. All functions other than the cross section take both the atomic
+    number \f$Z\f$ and the number of bound electrons \f$N\f$ of the scattering species; because
+    XRayAtomicGasMix always represents neutral atoms (\f$N=Z\f$), Helper also offers a convenience
+    overload of each function that takes only \f$Z\f$.
+
+    The concrete helpers are:
+
+    - NoScatteringHelper: a stub with zero cross section, used when a scattering channel (Rayleigh
+    or Compton) is disabled altogether.
+
+    - FreeComptonHelper and FreeComptonWithPolarizationHelper: Compton scattering by free electrons,
+    delegating the cross section, energy shift and phase function to the ComptonPhaseFunction class
+    (using the Thomson limit at low energies, where the Compton formulas become numerically
+    unstable), without or with support for polarization, respectively.
+
+    - BoundComptonHelper: Compton scattering by electrons bound to an atom, using tabulated cross
+    sections, incoherent scattering functions and target-electron momentum distributions.
+
+    - FreeBoundComptonHelper: a weighted combination of free- and bound-electron Compton scattering
+    for an ion with \f$N\f$ out of \f$Z\f$ electrons still bound, used only by XRayIonicGasMix.
+
+    - SmoothRayleighHelper and AnomalousRayleighHelper: two levels of fidelity for Rayleigh
+    (coherent, elastic) scattering, using tabulated cross sections and atomic form factors, with
+    AnomalousRayleighHelper additionally including tabulated anomalous (energy-dependent) scattering
+    corrections; both fall back to \f$Z^2\f$ Thomson scattering below the energy range of the
+    tabulated data.
+
+    Aside from NoScatteringHelper and FreeBoundComptonHelper, all of these helpers load their
+    tabulated data, indexed on atomic number up to \f$Z=30\f$, from resource files during
+    construction. */
 namespace ElectronScatteringHelper
 {
-    // ---- base class for scattering helpers ----
-
+    /** This is the abstract base class for the electron-scattering helpers offered by this
+        namespace; see the namespace documentation for the overall design and the list of concrete
+        helpers. */
     class Helper
     {
     public:
@@ -71,9 +116,8 @@ namespace ElectronScatteringHelper
 
     ////////////////////////////////////////////////////////////////////
 
-    // ---- no scattering helper ----
-
-    // this helper does nothing; it is used as a stub in case there is no scattering of a given type
+    /** This class implements a stub scattering helper with a zero cross section, used when a given
+        type of scattering (Rayleigh or Compton) is disabled altogether. */
     class NoScatteringHelper : public Helper
     {
     public:
@@ -84,10 +128,10 @@ namespace ElectronScatteringHelper
 
     ////////////////////////////////////////////////////////////////////
 
-    // ---- free-electron Compton scattering helper ----
-
-    // this helper forwards all calls to an external helper class for regular Compton scattering
-    // (or Thomson scattering for lower energies, because Compton becomes numerically unstable)
+    /** This class implements Compton scattering by free electrons, without support for
+        polarization. The cross section, phase function and energy shift are delegated to the
+        ComptonPhaseFunction class, except at low energies (below 0.1 keV), where the Compton
+        formulas become numerically unstable and the Thomson limit is used instead. */
     class FreeComptonHelper : public Helper
     {
     private:
@@ -106,10 +150,10 @@ namespace ElectronScatteringHelper
 
     ////////////////////////////////////////////////////////////////////
 
-    // ---- free-electron Compton with polarization scattering helper ----
-
-    // this helper forwards all calls to an external helper class for Compton scattering
-    // (or Thomson scattering for lower energies) with support for polarization
+    /** This class implements Compton scattering by free electrons, with support for polarization.
+        As for FreeComptonHelper, the cross section, phase function and energy shift are delegated
+        to the ComptonPhaseFunction class, except at low energies (below 0.1 keV), where the
+        Thomson limit is used instead. */
     class FreeComptonWithPolarizationHelper : public Helper
     {
     private:
@@ -129,9 +173,10 @@ namespace ElectronScatteringHelper
 
     ////////////////////////////////////////////////////////////////////
 
-    // ---- bound-electron Compton scattering helper ----
-
-    // this helper implements bound-electron Compton scattering
+    /** This class implements Compton scattering by electrons bound to an atom, without support for
+        polarization, using tabulated cross sections, incoherent scattering functions, and
+        target-electron momentum distributions (indexed on atomic number) to calculate the cross
+        section, phase function, and the resulting photon energy shift. */
     class BoundComptonHelper : public Helper
     {
     private:
@@ -178,9 +223,11 @@ namespace ElectronScatteringHelper
 
     ////////////////////////////////////////////////////////////////////
 
-    // ---- free-bound Compton scattering helper ----
-
-    // this helper implements an interpolation of free- and bound-Compton scattering
+    /** This class implements Compton scattering for an ion with \f$N\f$ out of \f$Z\f$ electrons
+        still bound, without support for polarization, as a weighted combination of free-electron
+        (FreeComptonHelper) and bound-electron (BoundComptonHelper) Compton scattering, with weights
+        \f$1-N/Z\f$ and \f$N/Z\f$, respectively. This helper is used only by XRayIonicGasMix, which
+        represents ions rather than neutral atoms. */
     class FreeBoundComptonHelper : public Helper
     {
     private:
@@ -202,10 +249,10 @@ namespace ElectronScatteringHelper
 
     ////////////////////////////////////////////////////////////////////
 
-    // ---- smooth Rayleigh scattering helper ----
-
-    // this helper implements smooth Rayleigh scattering;
-    // below the energy limit of the tabulated data, use Thomson scattering instead
+    /** This class implements Rayleigh (coherent, elastic) scattering, without support for
+        polarization, using tabulated cross sections and atomic form factors (indexed on atomic
+        number) to calculate the cross section and phase function. Below the energy range of the
+        tabulated data, \f$Z^2\f$ Thomson scattering is used instead. */
     class SmoothRayleighHelper : public Helper
     {
     private:
@@ -238,10 +285,13 @@ namespace ElectronScatteringHelper
 
     ////////////////////////////////////////////////////////////////////
 
-    // ---- anomalous Rayleigh scattering helper ----
-
-    // this helper implements anomalous Rayleigh scattering
-    // below the energy limit of the tabulated data, use Thomson scattering instead
+    /** This class implements Rayleigh (coherent, elastic) scattering, without support for
+        polarization, at a higher level of fidelity than SmoothRayleighHelper: in addition to
+        tabulated cross sections and atomic form factors, it uses tabulated real and imaginary
+        anomalous scattering functions (indexed on atomic number) that account for the
+        energy-dependent deviation from the smooth form-factor approximation near absorption edges.
+        Below the energy range of the tabulated data, \f$Z^2\f$ Thomson scattering is used instead.
+        */
     class AnomalousRayleighHelper : public Helper
     {
     private:
@@ -264,7 +314,7 @@ namespace ElectronScatteringHelper
         double sectionSca(double lambda, int Z, int N) const override;
 
     private:
-        double phaseFunctionValue(double x, double costheta, int Z, int N) const;
+        double phaseFunctionValue(double x, double costheta, int Z) const;
 
         double generateCosineFromPhaseFunction(double x, double Z) const;
 
