@@ -172,8 +172,7 @@ void XRayAtomicGasMix::setupSelfBefore()
             _com = new FreeComptonWithPolarizationHelper(this);
             break;
         case BoundElectrons::Good:
-            // _ray = new SmoothRayleighHelper(this);
-            _ray = new NoScatteringHelper(this);
+            _ray = new SmoothRayleighHelper(this);
             _com = new BoundComptonHelper(this);
             break;
         case BoundElectrons::Exact:
