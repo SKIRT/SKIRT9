@@ -12,7 +12,7 @@
 
 double VoigtProfile::value(double a, double x)
 {
-    // Humlíček (1982) w(z = x + i*a) approximation, valid for all x, y>=0
+    // Humlíček (1982) approximation for w(z = x + i*a), valid for all x and a >= 0
     std::complex<double> t(a, -x);
 
     double s = std::fabs(x) + a;
