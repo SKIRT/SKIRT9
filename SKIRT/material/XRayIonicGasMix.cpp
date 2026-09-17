@@ -884,10 +884,12 @@ void XRayIonicGasMix::setScatteringInfoIfNeeded(PhotonPacket* pp, const Material
             // determine whether this scattering event uses the dipole phase function
             scatinfo->dipole = random()->uniform() < dipoleFraction;
 
-            // sample an atom velocity from the Voigt profile
+            // sample an atom velocity from the Voigt profile (the atom-frame frequency it also
+            // returns is not needed here since the dipole choice above already used dipoleFraction)
             scatinfo->velocity =
                 LyUtils::sampleAtomVelocity(lambda, center, M_SQRT2 * vth, a, temperature(), state->numberDensity(),
-                                            pp->direction(), config(), random());
+                                            pp->direction(), config(), random())
+                    .first;
         }
     }
 }

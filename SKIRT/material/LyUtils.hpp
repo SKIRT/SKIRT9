@@ -106,9 +106,14 @@ namespace LyUtils
         transition with rest-frame central wavelength \em center, Doppler width \em vth, and Voigt
         parameter \em a (all as defined in the documentation above), from the appropriate
         probability distributions, reflecting the preference for photons to be scattered by ions to
-        which they appear close to resonance. Unlike a treatment specific to a single transition,
-        this function does not select between the isotropic and dipole phase functions -- that
-        decision, if needed, is left to the caller (see the documentation above).
+        which they appear close to resonance. The return value is a pair: the first item is the
+        atom velocity, and the second item is the dimensionless photon frequency in the rest frame
+        of the interacting ion (see the documentation above), which a caller can use, for example,
+        to select between the isotropic and dipole phase functions for a transition where that
+        choice depends on the core/wing distinction rather than on angular-momentum quantum
+        numbers. Unlike a treatment specific to a single transition, this function does not itself
+        select between the isotropic and dipole phase functions -- that decision, if needed, is
+        left to the caller (see the documentation above).
 
         The \em lambda argument specifies the photon packet wavelength as it is perceived in the
         local gas frame. The \em T and \em nH arguments specify the gas temperature and the number
@@ -136,9 +141,11 @@ namespace LyUtils
         - Transform the dimensionless frequency into the rest frame of the ion as described above.
 
         - Multiply the dimensionless ion velocity by the Doppler width to obtain the actual
-        physical ion velocity, and return it. */
-    Vec sampleAtomVelocity(double lambda, double center, double vth, double a, double T, double nH, Direction kin,
-                           Configuration* config, Random* random);
+        physical ion velocity.
+
+        - Return the physical ion velocity together with the atom-frame dimensionless frequency. */
+    std::pair<Vec, double> sampleAtomVelocity(double lambda, double center, double vth, double a, double T, double nH,
+                                              Direction kin, Configuration* config, Random* random);
 
     /** This function returns the Doppler-shifted wavelength in the gas bulk rest frame after a
         resonant scattering event, given the incoming wavelength in the gas bulk rest frame, the

@@ -28,8 +28,8 @@ double LyUtils::section(double lambda, double center, double vth, double A, doub
 
 ////////////////////////////////////////////////////////////////////
 
-Vec LyUtils::sampleAtomVelocity(double lambda, double center, double vth, double a, double T, double nH, Direction kin,
-                                Configuration* config, Random* random)
+std::pair<Vec, double> LyUtils::sampleAtomVelocity(double lambda, double center, double vth, double a, double T,
+                                                   double nH, Direction kin, Configuration* config, Random* random)
 {
     double x = (center - lambda) / lambda * c / vth;  // dimensionless frequency
 
@@ -75,7 +75,7 @@ Vec LyUtils::sampleAtomVelocity(double lambda, double center, double vth, double
     // scale the atom velocity from dimensionless to regular units
     u *= vth;
 
-    return u;
+    return std::make_pair(u, x);
 }
 
 ////////////////////////////////////////////////////////////////////
