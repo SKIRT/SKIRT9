@@ -645,7 +645,7 @@ private:
     ArrayTable<2> _cumsigmascavv;  // indexed on lambdav, interaction (electron + fluorescence + resonant)
 
     // compton-electron scattering helpers depending on the configured implementation
-    ScatteringHelper* _com{nullptr};  // Compton scattering helper
+    ElectronScatteringHelper::Helper* _com{nullptr};  // Compton scattering helper
     // dipole phase function for resonant scattering
     DipolePhaseFunction* _dpf{nullptr};
 };

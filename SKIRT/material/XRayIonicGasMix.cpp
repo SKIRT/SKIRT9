@@ -300,6 +300,7 @@ void XRayIonicGasMix::setupSelfBefore()
     }
 
     // create scattering helpers depending on the user-configured implementation type
+    using namespace ElectronScatteringHelper;
     switch (electronScattering())
     {
         case ElectronScattering::None: _com = new NoScatteringHelper(this); break;

@@ -490,8 +490,8 @@ private:
     ArrayTable<2> _cumprobscavv;  // indexed on ell, m
 
     // bound-electron scattering helpers depending on the configured implementation
-    ScatteringHelper* _ray{nullptr};  // Rayleigh scattering helper
-    ScatteringHelper* _com{nullptr};  // Compton scattering helper
+    ElectronScatteringHelper::Helper* _ray{nullptr};  // Rayleigh scattering helper
+    ElectronScatteringHelper::Helper* _com{nullptr};  // Compton scattering helper
 };
 
 ////////////////////////////////////////////////////////////////////

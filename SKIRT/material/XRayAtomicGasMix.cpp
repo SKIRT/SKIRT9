@@ -157,6 +157,7 @@ void XRayAtomicGasMix::setupSelfBefore()
 
     // create scattering helpers depending on the user-configured implementation type;
     // the respective helper constructors load the required bound-electron scattering resources
+    using namespace ElectronScatteringHelper;
     switch (scatterBoundElectrons())
     {
         case BoundElectrons::None:
@@ -284,10 +285,10 @@ void XRayAtomicGasMix::setupSelfBefore()
         // bound electron scattering
         for (size_t Z = 1; Z <= numAtoms; ++Z)
         {
-            sigma += (_ray->sectionSca(lambda, Z, Z) + _com->sectionSca(lambda, Z, Z)) * atomv[Z - 1].abund;
+            sigma += (_ray->sectionSca(lambda, Z) + _com->sectionSca(lambda, Z)) * atomv[Z - 1].abund;
         }
         // enhancement due to coherent scattering on molecular H2 w.r.t. Rayleigh scattering on atomic H
-        sigma += _ray->sectionSca(lambda, 1, 1) * atomv[1 - 1].abund * _H2fraction;
+        sigma += _ray->sectionSca(lambda, 1) * atomv[1 - 1].abund * _H2fraction;
 
         // photo-absorption and fluorescence
         int index = 0;
@@ -339,11 +340,11 @@ void XRayAtomicGasMix::setupSelfBefore()
         // bound electron scattering
         for (size_t Z = 1; Z <= numAtoms; ++Z)
         {
-            contribv[Z - 1] = _ray->sectionSca(lambda, Z, Z) * atomv[Z - 1].abund;
-            contribv[numAtoms + Z - 1] = _com->sectionSca(lambda, Z, Z) * atomv[Z - 1].abund;
+            contribv[Z - 1] = _ray->sectionSca(lambda, Z) * atomv[Z - 1].abund;
+            contribv[numAtoms + Z - 1] = _com->sectionSca(lambda, Z) * atomv[Z - 1].abund;
         }
         // enhancement due to coherent scattering on molecular H2 w.r.t. Rayleigh scattering on atomic H
-        contribv[1 - 1] += _ray->sectionSca(lambda, 1, 1) * atomv[1 - 1].abund * _H2fraction;
+        contribv[1 - 1] += _ray->sectionSca(lambda, 1) * atomv[1 - 1].abund * _H2fraction;
 
         // fluorescence: iterate over both cross section and fluorescence parameter sets in sync
         auto flp = fluorescenceParams.begin();
@@ -519,15 +520,14 @@ bool XRayAtomicGasMix::peeloffScattering(double& I, double& Q, double& U, double
     // Rayleigh scattering in electron rest frame; no support for polarization
     if (scatinfo->species < static_cast<int>(numAtoms))
     {
-        int Z = scatinfo->species + 1;
-        _ray->peeloffScattering(I, lambda, Z, Z, pp->direction(), bfkobs);
+        _ray->peeloffScattering(I, lambda, scatinfo->species + 1, pp->direction(), bfkobs);
     }
 
     // Compton scattering in electron rest frame; with support for polarization if enabled
     else if (scatinfo->species < static_cast<int>(2 * numAtoms))
     {
-        int Z = scatinfo->species - numAtoms + 1;
-        _com->peeloffScattering(I, Q, U, V, lambda, Z, Z, pp->direction(), bfkobs, bfky, pp);
+        _com->peeloffScattering(I, Q, U, V, lambda, scatinfo->species - numAtoms + 1, pp->direction(), bfkobs, bfky,
+                                pp);
     }
 
     // fluorescence
@@ -565,16 +565,14 @@ void XRayAtomicGasMix::performScattering(double lambda, const MaterialState* sta
     // Rayleigh scattering, no support for polarization: determine the new propagation direction
     if (scatinfo->species < static_cast<int>(numAtoms))
     {
-        int Z = scatinfo->species + 1;
-        bfknew = _ray->performScattering(lambda, Z, Z, pp->direction());
+        bfknew = _ray->performScattering(lambda, scatinfo->species + 1, pp->direction());
     }
 
     // Compton scattering, with support for polarization if enabled:
     // determine the new propagation direction and wavelength, and if polarized, update the stokes vector
     else if (scatinfo->species < static_cast<int>(2 * numAtoms))
     {
-        int Z = scatinfo->species - numAtoms + 1;
-        bfknew = _com->performScattering(lambda, Z, Z, pp->direction(), pp);
+        bfknew = _com->performScattering(lambda, scatinfo->species - numAtoms + 1, pp->direction(), pp);
     }
 
     // fluorescence, always unpolarized and isotropic
