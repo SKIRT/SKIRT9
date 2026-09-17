@@ -44,10 +44,14 @@ public:
         range. The material mix family retains ownership of the returned material mix, and
         guarantees that it will not be destroyed until the family itself is destroyed.
 
-        The number and type of parameters must match the information returned by the
-        parameterInfo() function; if not the behavior is undefined. */
-    virtual const MaterialMix* mix(double Z, double T, const Array& parameters) = 0;
+        The number and type of the custom parameters must match the information returned by the
+        parameterInfo() function; if not the behavior is undefined. If metallicity and/or
+        temperature are not being imported, this is indicated by a negative value. */
+    virtual const MaterialMix* mix(double metallicity, double temperature, const Array& parameters) = 0;
 
+    /** This function returns (a pointer to) a default material mix for this family. The material
+        mix family retains ownership of the returned material mix, and guarantees that it will not
+        be destroyed until the family itself is destroyed. */
     virtual const MaterialMix* mix() = 0;
 };
 
