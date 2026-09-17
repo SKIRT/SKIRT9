@@ -75,7 +75,6 @@ Vec LyUtils::sampleAtomVelocity(double lambda, double center, double vth, double
     // scale the atom velocity from dimensionless to regular units
     u *= vth;
 
-    // return the atom velocity and the phase function choice
     return u;
 }
 
