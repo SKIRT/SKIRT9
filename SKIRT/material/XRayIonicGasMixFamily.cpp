@@ -72,8 +72,6 @@ void XRayIonicGasMixFamily::setup()
     if (_setupDone) return;
     _setupDone = true;
 
-    // read ions
-    // _numIons = StringUtils::split(ions(), ",").size();
     // parse all required ions from the ions property
     string ionString = StringUtils::squeeze(ions());
     if (ionString.empty()) throw FATALERROR("No ions specified");
@@ -87,7 +85,7 @@ void XRayIonicGasMixFamily::setup()
         case ElectronScattering::FreeWithPolarization:
             _boundElectrons = XRayIonicGasMix::ElectronScattering::FreeWithPolarization;
             break;
-        case ElectronScattering::FreeBound: _boundElectrons = XRayIonicGasMix::ElectronScattering::FreeBound;
+        case ElectronScattering::FreeBound: _boundElectrons = XRayIonicGasMix::ElectronScattering::FreeBound; break;
     }
 
     // create a default mix if none found

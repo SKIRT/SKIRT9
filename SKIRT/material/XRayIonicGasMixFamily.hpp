@@ -16,21 +16,23 @@
     each spatial cell. This way the ion abundances and the temperature can vary across cells. The
     family defines a few properties that are shared by all mixes across all cells: \em ions, \em
     electronScattering, and \em resonantScattering. These properties can be found in the
-	XRayIonicGasMix class.
+    XRayIonicGasMix class.
 
     The \em ions property defines which ions must be imported. An ion can still have zero
     abundance in a given cell. As described in the XRayIonicGasMix class, that ion is then simply
     left out of the mix constructed for that cell.
 
     This family will also reuse mixes for cells with duplicate import parameters (ion abundances
-	and temperature).
-	
-	This MaterialMixFamily is very memory-heavy 
-	*/
+    and temperature).
+
+    Because it retains a separate XRayIonicGasMix instance (with its own precalculated cross
+    section tables) for every distinct combination of import parameters, this MaterialMixFamily
+    can use a large amount of memory when the imported model has many spatial cells with distinct
+    abundances or temperatures. */
 class XRayIonicGasMixFamily : public MaterialMixFamily
 {
     ENUM_DEF(ElectronScattering, None, Free, FreeWithPolarization, FreeBound)
-        ENUM_VAL(ElectronScattering, None, "ignore electron")
+        ENUM_VAL(ElectronScattering, None, "ignore electrons")
         ENUM_VAL(ElectronScattering, Free, "use free-electron Compton scattering for all electrons")
         ENUM_VAL(ElectronScattering, FreeWithPolarization,
                  "use free-electron Compton scattering with support for polarization")
@@ -42,13 +44,13 @@ class XRayIonicGasMixFamily : public MaterialMixFamily
         PROPERTY_STRING(ions, "the names of the ions for each element (e.g. H,He+,Li+1,..)")
 
         PROPERTY_ENUM(electronScattering, ElectronScattering, "implementation of scattering by electrons")
-        ATTRIBUTE_DEFAULT_VALUE(electronScattering, "Good")
+        ATTRIBUTE_DEFAULT_VALUE(electronScattering, "Free")
         ATTRIBUTE_DISPLAYED_IF(electronScattering, "Level3")
 
         PROPERTY_BOOL(resonantScattering, "enable Lyman resonant scattering for all hydrogen-like ions")
         ATTRIBUTE_DEFAULT_VALUE(resonantScattering, "false")
         ATTRIBUTE_DISPLAYED_IF(resonantScattering, "Level2")
-        ATTRIBUTE_RELEVANT_IF(includeThermalDispersion, "Lya")
+        ATTRIBUTE_RELEVANT_IF(resonantScattering, "Lya")
 
     ITEM_END()
 
@@ -90,9 +92,10 @@ private:
 
 private:
     bool _setupDone{false};
-    vector<string> _ionNames;                             // parsed ion names
-    XRayIonicGasMix::ElectronScattering _boundElectrons;  // parsed electronScattering property
-    vector<XRayIonicGasMix*> _mixes;                      // all stored mixes
+    vector<string> _ionNames;  // parsed ion names
+    XRayIonicGasMix::ElectronScattering _boundElectrons{
+        XRayIonicGasMix::ElectronScattering::None};  // parsed electronScattering property
+    vector<XRayIonicGasMix*> _mixes;                 // all stored mixes
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -8,6 +8,7 @@
 #include "Configuration.hpp"
 #include "Constants.hpp"
 #include "DipolePhaseFunction.hpp"
+#include "ElectronScatteringHelper.hpp"
 #include "FatalError.hpp"
 #include "FilePaths.hpp"
 #include "Log.hpp"
@@ -121,8 +122,8 @@ namespace
         double yw;                           // fit parameter (1)
         static constexpr double Emax = 5e5;  // maximum energy for validity of the formula (eV)
 
-        double Es;
-        double sigmamax;
+        double Es{0.};        // thermal energy dispersion at the threshold energy (eV); set after construction
+        double sigmamax{0.};  // cross section at the threshold energy plus 2*Es (m2); set after construction
 
         // return photo-absorption cross section in m2 for given energy in eV and cross section parameters,
         // without taking into account thermal dispersion
@@ -357,7 +358,11 @@ void XRayIonicGasMix::setupSelfBefore()
         double N = lineRes.N;
         double lineIndex = lineRes.lineIndex;
         double E = wavelengthToFromEnergy(lineRes.lam);
-        double omega = recoResources[lineRes.N](Z, lineIndex, temperature());
+
+        auto recoResource = recoResources.find(lineRes.N);
+        if (recoResource == recoResources.end())
+            throw FATALERROR("No recombination resource loaded for N=" + std::to_string(lineRes.N));
+        double omega = recoResource->second(Z, lineIndex, temperature());
 
         if (omega == 0) continue;
 
@@ -873,7 +878,7 @@ void XRayIonicGasMix::setScatteringInfoIfNeeded(PhotonPacket* pp, const Material
 
                 const auto& lres = _resonantParamv[lr];
 
-                // // set parameters to those of the lower branching
+                // set parameters to those of the lower branching
                 vth = lres.vth;
                 a = lres.a;
                 center = lres.lambda;

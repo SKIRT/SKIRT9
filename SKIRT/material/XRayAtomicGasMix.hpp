@@ -7,9 +7,12 @@
 #define XRAYATOMICGASMIX_HPP
 
 #include "ArrayTable.hpp"
-#include "ElectronScatteringHelper.hpp"
 #include "MaterialMix.hpp"
 #include "PhotonPacket.hpp"
+namespace ElectronScatteringHelper
+{
+    class Helper;
+}
 
 ////////////////////////////////////////////////////////////////////
 

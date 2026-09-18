@@ -8,6 +8,7 @@
 #include "Configuration.hpp"
 #include "Constants.hpp"
 #include "DipolePhaseFunction.hpp"
+#include "ElectronScatteringHelper.hpp"
 #include "FatalError.hpp"
 #include "MaterialState.hpp"
 #include "NR.hpp"

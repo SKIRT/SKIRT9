@@ -7,28 +7,32 @@
 #define XRAYIONICGASMIX_HPP
 
 #include "ArrayTable.hpp"
-#include "DipolePhaseFunction.hpp"
-#include "ElectronScatteringHelper.hpp"
 #include "MaterialMix.hpp"
-#include "PhotonPacket.hpp"
+
+class DipolePhaseFunction;
+namespace ElectronScatteringHelper
+{
+    class Helper;
+}
+class PhotonPacket;
 
 ////////////////////////////////////////////////////////////////////
 
 /** The XRayIonicGasMix class describes the material properties of a partially ionised gas in the
     X-ray wavelength range, taking into account the effects of photo-absorption, fluorescence,
     recombination, electron scattering, and resonant scattering. It supports the line production and
-	transfer for the Lyman-series of hydrogen-like ions and the K-series of helium-like ions.　It is
-	largely an extension of the XRayAtomicGasMix class, supporting all ions instead of just the
-	neutral atoms. To avoid the use of this material mix outside of the regime for which it has been
-	designed, all cross sections are forced to zero below 4.3 eV and above 500 keV (corresponding
-	approximately to a wavelength range from 2.5 pm to 290 nm).
+    transfer for the Lyman-series of hydrogen-like ions and the K-series of helium-like ions. It is
+    largely an extension of the XRayAtomicGasMix class, supporting all ions instead of just the
+    neutral atoms. To avoid the use of this material mix outside of the regime for which it has been
+    designed, all cross sections are forced to zero below 4.3 eV and above 500 keV (corresponding
+    approximately to a wavelength range from 2.5 pm to 290 nm).
 
     The class assumes a gas containing a mixture of (ionized) elements with atomic numbers ranging
     from 1 (hydrogen) to 30 (zinc). Including fully ionized ions, this results in a total of 495
     possible ions. Not all ions have to be used, the user can specify what ions are included with
     the \em ions property. The abundances of the ions are specified in the ski file as a constant
-	through the \em abundances property. If an abundance is set to zero, the corresponding ion is
-	not used in the mix. The spatial density distribution of the gas is determined by the product
+    through the \em abundances property. If an abundance is set to zero, the corresponding ion is
+    not used in the mix. The spatial density distribution of the gas is determined by the product
     of the number density and the abundances of the ions in use. The \em temperature of the gas can
     also be configured by the user as a constant property. In other words, the abundances and the
     temperature are considered to be spatially constant (for a given medium component), while the
@@ -52,11 +56,11 @@
     L\f$_{\beta1}\f$, L\f$_{\alpha2}\f$, L\f$_{\alpha1}\f$, M\f$_{1,2}\f$, M\f$_{1,3}\f$,
     M\f$_{2,4}\f$, M\f$_{3,4}\f$, M\f$_{3,5}\f$ M\f$_{2}\f$N\f$_{1}\f$, M\f$_{3}\f$N\f$_{1}\f$
     These transitions are not all the same as those in the XRayAtomicGasMix class, and even
-	transitions that are the same may yield slightly different results, as the resources are obtained
-	from different sources.
+    transitions that are the same may yield slightly different results, as the resources are obtained
+    from different sources.
 
-	Similar to the XRayAtomicGasMix, certain elements have intrinsic line shape data associated with
-	them. For this class, this is limited to the (K_{\alpha1}) and (K_{\alpha2}) lines for the Fe ions.
+    Similar to the XRayAtomicGasMix, certain elements have intrinsic line shape data associated with
+    them. For this class, this is limited to the (K_{\alpha1}) and (K_{\alpha2}) lines for the Fe ions.
 
     Because fluorescence only occurs as the result of a photo-absorption event, this class
     implements fluorescence as a form of scattering (where the wavelength of the photon being
@@ -66,21 +70,20 @@
 
     <b>Recombination</b>
 
-    For hydrogen-like and helium-like ions, photo-absorption cannot be followed by fluorescence 
-    since the ion will have no excited electrons left. Instead it can be followed by a radiative 
-    recombination event either to the ground state or to an excited level, which will then cascade 
-    down to the ground state. This class assumes instantaneous recombination and only implements 
-    the Lyman-series and He-like K-series photons produced from cascades from the level \f$i\f$ to 
-    the ground state. This will thus only result in line emission and no continuum emission. 
+    For hydrogen-like and helium-like ions, photo-absorption cannot be followed by fluorescence
+    since the ion will have no excited electrons left. Instead it can be followed by a radiative
+    recombination event either to the ground state or to an excited level, which will then cascade
+    down to the ground state. This class assumes instantaneous recombination and only implements
+    the Lyman-series and He-like K-series photons produced from cascades from the level \f$i\f$ to
+    the ground state. This will thus only result in line emission and no continuum emission.
     This allows for this process to be modelled the same way as fluorescence.
 
     <b>Scattering by bound electrons</b>
 
-	Electrons bound to the atoms or free in the gas scatter incoming X-ray photons. This process can be
-    elastic (Rayleigh scattering) or inelastic (Compton scattering). This class however always uses
-	inelastic (Compton) scattering for this process; elastic (Rayleigh) scattering is inelastic
-	(Compton) scattering, completely ignoring elastic (Rayleigh) scattering. The user can select one of
-	four implementations for electron scattering, these are:
+    Electrons bound to the atoms or free in the gas scatter incoming X-ray photons. This process can be
+    elastic (Rayleigh scattering) or inelastic (Compton scattering). This class, however, always treats
+    this process as inelastic (Compton) scattering, completely ignoring elastic (Rayleigh) scattering.
+    The user can select one of four implementations for electron scattering, these are:
 
     - \em None: ignore scattering by all electrons.
 
@@ -94,10 +97,10 @@
     scattering cross sections for each ion, based on the number of electrons still bound to that
     ion.
 
-	When using the \em Free or \em FreeWithPolarization implementations, all electrons are treated the 
-	same regardless of ionization state, so that a material mix with Fe+0 has the same electron
-	scattering cross section as a material mix with Fe+26. For \em FreeBound, on the other hand, the
-	scattering cross section for a given ion depends on the amount of free and bound electrons.
+    When using the \em Free or \em FreeWithPolarization implementations, all electrons are treated the
+    same regardless of ionization state, so that a material mix with Fe+0 has the same electron
+    scattering cross section as a material mix with Fe+26. For \em FreeBound, on the other hand, the
+    scattering cross section for a given ion depends on the number of free and bound electrons.
 
     <b>Resonant scattering</b>
 
@@ -105,21 +108,21 @@
     electron in an ion, promoting it from the ground state (\f$n=1\f$) to an excited level (\f$n
     \leq 10\f$) and back again. This class implements these transitions for all hydrogen-like ions
     and helium-like ions up to atomic number 30. For hydrogen-like ions, the 18 prominent electric-dipole
-    transition lines fine-structure levels are included for each ion (e.g., Ly\f$\alpha_1\f$, 
-    Ly\f$\alpha_2\f$, Ly\f$\beta_1\f$, Ly\f$\beta_2\f$, \f$\ldots\f$, Ly\f$\theta_1\f$, Ly\f$\theta_2\f$, 
-    Ly\f$\iota_1\f$, Ly\f$\iota_2\f$). The magnetic-dipole transition lines between the metastable level 
-    (2s \f$^2S_{1/2}\f$) and the ground level for \f$Z\geq14\f$, where these liens are non-negligible, 
+    transition lines fine-structure levels are included for each ion (e.g., Ly\f$\alpha_1\f$,
+    Ly\f$\alpha_2\f$, Ly\f$\beta_1\f$, Ly\f$\beta_2\f$, \f$\ldots\f$, Ly\f$\theta_1\f$, Ly\f$\theta_2\f$,
+    Ly\f$\iota_1\f$, Ly\f$\iota_2\f$). The magnetic-dipole transition lines between the metastable level
+    (2s \f$^2S_{1/2}\f$) and the ground level for \f$Z\geq14\f$, where these liens are non-negligible,
     are also included. For helium-like ions, the He\f$\alpha\f$ \f$w\f$, \f$x\f$, \f$y\f$ and \f$z\f$ lines
     and several prominent higher K-series lines (e.g., He\f$\beta\f$, He\f$\gamma\f$, \f$\ldots\f$, etc.)
-    are included. 
+    are included.
 
     These transitions may occur either as a direct transition from and to the ground state
     or via a radiative cascade. Direct transitions correspond to coherent scattering events, while
     cascades are incoherent and erase information about the initial photon packet. when a cascade
-    occurs, we ignore all intermediate photons produced by radiative decays between excited states, 
-    keeping only the final transition to the ground state. This means we can also model the cascade 
+    occurs, we ignore all intermediate photons produced by radiative decays between excited states,
+    keeping only the final transition to the ground state. This means we can also model the cascade
     as a single scattering event. The branching data, determining the probability of an (in)coherent
-	transition, is obtained from the SPEX database Kaastra et al. (2024).
+    transition, is obtained from the SPEX database Kaastra et al. (2024).
 
     <b>Configuring the simulation</b>
 
@@ -152,13 +155,13 @@
     'false'. For example, if bulk velocities are also imported for this medium component (i.e. \em
     importVelocity is 'true'), the column order would be \f[ ..., n, v_\mathrm{x}, v_\mathrm{y},
     v_\mathrm{z} \f] When a separate XRayIonicGasMix is required for each spatial cell, refer to
-	the XRayIonicGasMixFamily class.
+    the XRayIonicGasMixFamily class.
 
     The relative abundances of the present ions and the temperature of the gas are
     configured in the ski file as constant properties. In other words, the abundances and the
     temperature are considered to be spatially constant (for a given medium component). Because of
-	this all the cross sections per hydrogen atom for this material mix are calculated during setup
-	and the result stored, discretized on a high-resolution wavelength grid for later retrieval.
+    this all the cross sections per hydrogen atom for this material mix are calculated during setup
+    and the result stored, discretized on a high-resolution wavelength grid for later retrieval.
 
     <b>Photo-absorption cross section</b>
 
@@ -187,59 +190,59 @@
     These yields are obtained from Kaastra & Mewe (1993) for all ions up to Z=30, from neutral down
     to B-like.
 
-	As mentioned earlier, the Fe ions have intrinsic line shape data for the K\f$_{\alpha1}\f$ and
-	K\f$_{\alpha2}\f$ lines. The line shape data was obtained from Pinheiro et al. (2023).
-	Consequently, the energies and fluorescence yields for these lines are also taken from this source.
-	Additional line shapes were available for the Fe ions, but the corresponding yields differed
-	significantly from those used for the other lines in Kaastra & Mewe (1993) and were therefore not included.
+    As mentioned earlier, the Fe ions have intrinsic line shape data for the K\f$_{\alpha1}\f$ and
+    K\f$_{\alpha2}\f$ lines. The line shape data was obtained from Pinheiro et al. (2023).
+    Consequently, the energies and fluorescence yields for these lines are also taken from this source.
+    Additional line shapes were available for the Fe ions, but the corresponding yields differed
+    significantly from those used for the other lines in Kaastra & Mewe (1993) and were therefore not included.
 
     <b>Recombination cross section</b>
 
     The total recombination cross section per hydrogen-like or helium-like ion for this material mix
-	is obtained the exact same was as for fluorescence. The yields are now temperature-dependent
-	however, but since the temperature is assumed to be constant this is simply read during the setup.
-	The temperature-dependent yields are obtained from Mao & Kaastra (2016).
+    is obtained the exact same was as for fluorescence. The yields are now temperature-dependent
+    however, but since the temperature is assumed to be constant this is simply read during the setup.
+    The temperature-dependent yields are obtained from Mao & Kaastra (2016).
 
     <b>Electron scattering - cross section and phase function</b>
 
     As described above, this class provides several implementations for the scattering of X-ray
     photons by the electrons bound to the atoms or free in the gas. These implementations involve
-	two types of scattering: free- and bound- electron Compton scattering. Note that, in all cases,
-	the listed cross sections must be multiplied by the abundance of the corresponding ion.
+    two types of scattering: free- and bound- electron Compton scattering. Note that, in all cases,
+    the listed cross sections must be multiplied by the abundance of the corresponding ion.
 
     For free-electron Compton scattering, the cross section for an ion with atomic number
     \f$Z\f$ given by \f$Z\,\sigma_\mathrm{C}\f$, where \f$\sigma_\mathrm{C}\f$ is the
     (wavelength-dependent) Compton cross section for a single free electron. The implementation of
-	the scattering events is delegated to the ComptonPhaseFunction class; see there for more
+    the scattering events is delegated to the ComptonPhaseFunction class; see there for more
     information on the cross section and phase function for free-electron Compton scattering.
 
-	For bound-electron Compton scattering, the cross sections \f$\sigma_{CS, Z}(E)\f$ are available in
-	tabulated form as a function of the incoming photon energy \f$E\f$. The normalised scattering phase
-	function for element \f$Z\f$ is given by \f[ \Phi_{CS, Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}
-	{\sigma_{CS, Z}(E)}\Big[C^3(\theta, E) + C(\theta,E) -C^2(\theta, E)\sin^2\theta\Big] \cdot S_Z(q), \f]
-	where the incoherent scattering functions \f$S_Z(q)\f$ are tabulated as a function of the dimensionless
-	momentum transfer parameter \f$q\f$, \f$q = \frac{E}{12.4,\mathrm{keV}}\sin(\theta/2),\f] with
-	\f$\theta\f$ the scattering angle, and the Compton factor defined as \f[ C(\theta, E) =
-	{\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f]
+    For bound-electron Compton scattering, the cross sections \f$\sigma_{CS, Z}(E)\f$ are available in
+    tabulated form as a function of the incoming photon energy \f$E\f$. The normalised scattering phase
+    function for element \f$Z\f$ is given by \f[ \Phi_{CS, Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}
+    {\sigma_{CS, Z}(E)}\Big[C^3(\theta, E) + C(\theta,E) -C^2(\theta, E)\sin^2\theta\Big] \cdot S_Z(q), \f]
+    where the incoherent scattering functions \f$S_Z(q)\f$ are tabulated as a function of the dimensionless
+    momentum transfer parameter \f$q\f$, \f[q = \frac{E}{12.4\,\mathrm{keV}}\sin(\theta/2),\f] with
+    \f$\theta\f$ the scattering angle, and the Compton factor defined as \f[ C(\theta, E) =
+    {\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f]
 
-	The \em Free and \em FreeWithPolarization implementations use the free-electron Compton scattering cross section
-	for all electrons (bound or free). Whilst the \em FreeBound implementation uses a weighted sum of the free- and
-	bound-electron Compton scattering cross sections for each ion, based on the charge state of that ion. The cross section
-	can be summarized as follows: \f[ \sigma_{FB, Z, N}(E) = (1-\frac{N}{Z}) \sigma_{F, Z}(E) +  \frac{N}{Z} \sigma_{B, Z}(E) \f]
-	where \f$Z\f$ and \f$N\f$ are the atomic number and number of bound electrons and the subscripts \f$FB\f$, \f$F\f$ and \f$B\f$
-	refer to the \em FreeBound, free- and bound- Compton scattering.
+    The \em Free and \em FreeWithPolarization implementations use the free-electron Compton scattering cross section
+    for all electrons (bound or free). Whilst the \em FreeBound implementation uses a weighted sum of the free- and
+    bound-electron Compton scattering cross sections for each ion, based on the charge state of that ion. The cross section
+    can be summarized as follows: \f[ \sigma_{FB, Z, N}(E) = (1-\frac{N}{Z}) \sigma_{F, Z}(E) +  \frac{N}{Z} \sigma_{B, Z}(E) \f]
+    where \f$Z\f$ and \f$N\f$ are the atomic number and number of bound electrons and the subscripts \f$FB\f$, \f$F\f$ and \f$B\f$
+    refer to the \em FreeBound, free- and bound- Compton scattering.
 
     <b>Electron scattering - photon energy shift</b>
 
     Compton scattering is inelastic, meaning that the photon transfers a fraction of its energy to
     the electron involved in the interaction. The energy shift can again be described by free- or
-	bound-electron Compton scattering.
+    bound-electron Compton scattering.
 
-	For free-electron Compton scattering, the energy shift \f$E'/E\f$ is given by the Compton
+    For free-electron Compton scattering, the energy shift \f$E'/E\f$ is given by the Compton
     factor \f$C(\theta, E)\f$ defined above. The implementation is delegated to the
     ComptonPhaseFunction class.
 
-	For bound-electron Compton scattering, the energy shift is mostly determined by the momentum
+    For bound-electron Compton scattering, the energy shift is mostly determined by the momentum
     distribution of the target electrons, which are bound to the atomic nucleus. As a result, the
     final photon energy is no longer uniquely defined by the incoming photon energy and the
     scattering angle, but also depends on the initial momentum of the target electron:
@@ -267,16 +270,16 @@
     the scattering phase function is zero for \f$\theta=0\f$. Following Namito+94, the probability
     density function for \f$p_\text{z}c\f$ should be truncated at \f$p_zc_{max}\f$.
 
-	The \em Free and \em FreeWithPolarization implementations apply free-electron Compton scattering 
-	for all electrons (bound or free). Whilst the \em FreeBound implementation stochastically selects free- or
-	bound-electron Compton scattering for each photon weighted using the cross section of free- and bound-electron
-	Compton scattering.
+    The \em Free and \em FreeWithPolarization implementations apply free-electron Compton scattering
+    for all electrons (bound or free). Whilst the \em FreeBound implementation stochastically selects free- or
+    bound-electron Compton scattering for each photon weighted using the cross section of free- and bound-electron
+    Compton scattering.
 
         <b>Resonant scattering - cross section and phase function</b>
 
     The resonant transitions are broadened both thermally and intrinsically. The resulting
     cross section is described by a Voigt profile, the implementation of this is delegated to the
-\em LyUtils and \em VoigtProfile namespaces. The data for the line energies and Einstein A
+    \em LyUtils and \em VoigtProfile namespaces. The data for the line energies and Einstein A
     coefficients are obtained from the SPEX database Kaastra et al. (2024).
 
     \f[\begin{aligned}
@@ -292,7 +295,7 @@
     Resonant scattering in an electric-dipole transition is described as a linear
     combination of an isotropic and a dipole M\"{u}ller matrix. The relative weights
     of these two components are determined by the total angular momentum of the
-    lower level, \f$J\f$, and by　\f$\Delta J = J_\mathrm{upper}-J_\mathrm{lower}\f$ \citep{H1947}.
+    lower level, \f$J\f$, and by \f$\Delta J = J_\mathrm{upper}-J_\mathrm{lower}\f$ \citep{H1947}.
     With the notation used here, \f$E_1\f$ is the weight of the isotropic component
     and \f$E_2\f$ is the weight of the dipole component.
 
@@ -358,11 +361,11 @@
     these transitions as a function of incoming photon packet wavelength are also calculated during
     setup. The selected transition determines the scattering mechanism. For electrons, the appropriate
     scattering function is used (free- or bound- Compton). For fluorescence, the emission direction is
-	isotropic, and the outgoing wavelength is the fluorescence wavelength. For the resonant lines, the
-	direction can be either isotropic and unpolarized or following a dipole phase function for both
-	direction and polarization. The outcome is determined by the total angular momentum of the lower
-	level \f$J\f$ and the difference in the total angular momentum between the upper and lower levels
-	\f$\Delta J\f$.
+    isotropic, and the outgoing wavelength is the fluorescence wavelength. For the resonant lines, the
+    direction can be either isotropic and unpolarized or following a dipole phase function for both
+    direction and polarization. The outcome is determined by the total angular momentum of the lower
+    level \f$J\f$ and the difference in the total angular momentum between the upper and lower levels
+    \f$\Delta J\f$.
 
     <b>Temperature</b>
 
@@ -376,8 +379,8 @@
     taken from a precalculated table and a velocity vector is sampled from the Maxwell
     distribution.
 
-	Recombination is treated the exact same as fluorescence except that its temperature-dependent
-	yield is obtained from a table during setup.
+    Recombination is treated the exact same as fluorescence except that its temperature-dependent
+    yield is obtained from a table during setup.
 
     For photo-absorption, the situation is much more involved. In principle, the full cross section
     curve for each ionization transition must be convolved with a Gaussian kernel of appropriate
@@ -399,12 +402,12 @@
     The thermal broadening present in the resonant scattering is already built into the Voigt
     profile, its implementation can be found in the \em LyUtils and \em VoigtProfile namespaces.
 
-	For resonant scattering both the cross section and photon energy shift are dependent on the
-	temperature. If branching occurs, i.e. there is a cascade prior to a final transition to the
-	ground state, then the photon energy is simply shifted from its final transition wavelength.
-	When branching does not occur, i.e. the scattering is coherent, then the photon energy is shifted
-	according to the sampled atom velocity. The implementation of this is delegated to the \em LyUtils
-	and \em VoigtProfile namespaces.
+    For resonant scattering both the cross section and photon energy shift are dependent on the
+    temperature. If branching occurs, i.e. there is a cascade prior to a final transition to the
+    ground state, then the photon energy is simply shifted from its final transition wavelength.
+    When branching does not occur, i.e. the scattering is coherent, then the photon energy is shifted
+    according to the sampled atom velocity. The implementation of this is delegated to the \em LyUtils
+    and \em VoigtProfile namespaces.
     */
 class XRayIonicGasMix : public MaterialMix
 {
@@ -448,12 +451,12 @@ class XRayIonicGasMix : public MaterialMix
 
 public:
     /** This function precalculates relevant cross sections and relative contributions over a
-        high-resolution wavelength grid. It also stores presistent data that is used during the
+        high-resolution wavelength grid. It also stores persistent data that is used during the
         simulation to perform scattering. */
     void setupSelfBefore() override;
 
     /** This explicit constructor is used to create a new instance of the class. It is used by the
-		XRayIonicGasMixFamily class to create a new instance for each cell. */
+        XRayIonicGasMixFamily class to create a new instance for each cell. */
     explicit XRayIonicGasMix(SimulationItem* parent, string ions, vector<double> abundances, double temperature,
                              ElectronScattering electronScattering, bool resonantScattering, bool setup);
 
@@ -545,7 +548,7 @@ private:
         information in the photon packet's scattering information record, unless a previous
         peel-off stored this already. For fluorescence transitions that support a nonzero line
         width, the function also draws a random wavelength from the line shape. For a resonant
-        scattering event it determines whether a cascade occrus and if the phase function is
+        scattering event it determines whether a cascade occurs and if the phase function is
         isotropic or a dipole. */
     void setScatteringInfoIfNeeded(PhotonPacket* pp, const MaterialState* state, const double lambda) const;
 
@@ -626,10 +629,10 @@ private:
         Array cumBranchingv;    // normalized cumulative branching
     };
 
-    int _numIons;  // number of ions
-    int _numElec;  // number of ions with electron scattering (either all or none)
-    int _numFluo;  // number of fluorescence (+RR) transitions
-    int _numLine;  // number of resonant scattering transitions
+    int _numIons{0};  // number of ions
+    int _numElec{0};  // number of ions with electron scattering (either all or none)
+    int _numFluo{0};  // number of fluorescence (+RR) transitions
+    int _numLine{0};  // number of resonant scattering transitions
 
     // persistent data for scattering
     vector<IonParam> _ionParamv;
