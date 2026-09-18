@@ -47,7 +47,7 @@ class XRayIonicGasMixFamily : public MaterialMixFamily
         ATTRIBUTE_DEFAULT_VALUE(electronScattering, "Free")
         ATTRIBUTE_DISPLAYED_IF(electronScattering, "Level3")
 
-        PROPERTY_BOOL(resonantScattering, "enable Lyman resonant scattering for all hydrogen-like ions")
+        PROPERTY_BOOL(resonantScattering, "enable resonant line scattering for hydrogen- and helium-like ions")
         ATTRIBUTE_DEFAULT_VALUE(resonantScattering, "false")
         ATTRIBUTE_DISPLAYED_IF(resonantScattering, "Level2")
         ATTRIBUTE_RELEVANT_IF(resonantScattering, "Lya")

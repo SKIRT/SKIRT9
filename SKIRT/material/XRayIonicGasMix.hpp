@@ -18,14 +18,14 @@ class PhotonPacket;
 
 ////////////////////////////////////////////////////////////////////
 
-/** The XRayIonicGasMix class describes the material properties of a partially ionised gas in the
+/** The XRayIonicGasMix class describes the material properties of a partially ionized gas in the
     X-ray wavelength range, taking into account the effects of photo-absorption, fluorescence,
-    recombination, electron scattering, and resonant scattering. It supports the line production and
-    transfer for the Lyman-series of hydrogen-like ions and the K-series of helium-like ions. It is
-    largely an extension of the XRayAtomicGasMix class, supporting all ions instead of just the
-    neutral atoms. To avoid the use of this material mix outside of the regime for which it has been
-    designed, all cross sections are forced to zero below 4.3 eV and above 500 keV (corresponding
-    approximately to a wavelength range from 2.5 pm to 290 nm).
+    recombination, electron scattering, and resonant scattering. It supports the line production
+    and transfer for the Lyman-series of hydrogen-like ions and the K-series of helium-like ions.
+    It is largely an extension of the XRayAtomicGasMix class, supporting all ions instead of just
+    the neutral atoms. To avoid the use of this material mix outside of the regime for which it has
+    been designed, all cross sections are forced to zero below 4.3 eV and above 500 keV
+    (corresponding approximately to a wavelength range from 2.5 pm to 290 nm).
 
     The class assumes a gas containing a mixture of (ionized) elements with atomic numbers ranging
     from 1 (hydrogen) to 30 (zinc). Including fully ionized ions, this results in a total of 495
@@ -49,18 +49,19 @@ class PhotonPacket;
     "falls" into an empty space created by photo-absorption, emitting a new photon with a different
     energy. For each electron shell and for each possible fluorescence transition towards that
     shell, the \em yield defines the probability that such fluorescence event occurs after an
-    electron has been liberated in that shell. This class supports the following fluorescence lines,
-    all with energies above \f$4.3 \, \text{eV}\f$: K\f$_{\alpha_2}\f$, K\f$_{\alpha_1}\f$,
+    electron has been liberated in that shell. This class supports the following fluorescence
+    lines, all with energies above \f$4.3 \, \text{eV}\f$: K\f$_{\alpha_2}\f$, K\f$_{\alpha_1}\f$,
     K\f$_{\beta_3}\f$, K\f$_{\beta_1}\f$, L\f$_{\beta_4}\f$, L\f$_{\beta_3}\f$, L\f$_{1,2}\f$,
     L\f$_{1,3}\f$, L\f$_{\eta}\f$, L\f$_{l}\f$, L\f$_{\gamma_5}\f$, L\f$_{\beta_6}\f$,
     L\f$_{\beta_1}\f$, L\f$_{\alpha_2}\f$, L\f$_{\alpha_1}\f$, M\f$_{1,2}\f$, M\f$_{1,3}\f$,
     M\f$_{2,4}\f$, M\f$_{3,4}\f$, M\f$_{3,5}\f$ M\f$_{2}\f$N\f$_{1}\f$, M\f$_{3}\f$N\f$_{1}\f$
     These transitions are not all the same as those in the XRayAtomicGasMix class, and even
-    transitions that are the same may yield slightly different results, as the resources are obtained
-    from different sources.
+    transitions that are the same may yield slightly different results, as the resources are
+    obtained from different sources.
 
-    Similar to the XRayAtomicGasMix, certain elements have intrinsic line shape data associated with
-    them. For this class, this is limited to the K\f$_{\alpha_1}\f$ and K\f$_{\alpha_2}\f$ lines for the Fe ions.
+    Similar to the XRayAtomicGasMix, certain elements have intrinsic line shape data associated
+    with them. For this class, this is limited to the K\f$_{\alpha_1}\f$ and K\f$_{\alpha_2}\f$
+    lines for the Fe ions.
 
     Because fluorescence only occurs as the result of a photo-absorption event, this class
     implements fluorescence as a form of scattering (where the wavelength of the photon being
@@ -75,15 +76,16 @@ class PhotonPacket;
     recombination event either to the ground state or to an excited level, which will then cascade
     down to the ground state. This class assumes instantaneous recombination and only implements
     the Lyman-series and He-like K-series photons produced from cascades from the level \f$i\f$ to
-    the ground state. This will thus only result in line emission and no continuum emission.
-    This allows for this process to be modelled the same way as fluorescence.
+    the ground state. This will thus only result in line emission and no continuum emission. This
+    allows for this process to be modelled the same way as fluorescence.
 
     <b>Scattering by bound electrons</b>
 
-    Electrons bound to the atoms or free in the gas scatter incoming X-ray photons. This process can be
-    elastic (Rayleigh scattering) or inelastic (Compton scattering). This class, however, always treats
-    this process as inelastic (Compton) scattering, completely ignoring elastic (Rayleigh) scattering.
-    The user can select one of four implementations for electron scattering, these are:
+    Electrons bound to the atoms or free in the gas scatter incoming X-ray photons. This process
+    can be elastic (Rayleigh scattering) or inelastic (Compton scattering). This class, however,
+    always treats this process as inelastic (Compton) scattering, completely ignoring elastic
+    (Rayleigh) scattering. The user can select one of four implementations for electron scattering,
+    these are:
 
     - \em None: ignore scattering by all electrons.
 
@@ -97,31 +99,31 @@ class PhotonPacket;
     scattering cross sections for each ion, based on the number of electrons still bound to that
     ion.
 
-    When using the \em Free or \em FreeWithPolarization implementations, all electrons are treated the
-    same regardless of ionization state, so that a material mix with Fe+0 has the same electron
-    scattering cross section as a material mix with Fe+26. For \em FreeBound, on the other hand, the
-    scattering cross section for a given ion depends on the number of free and bound electrons.
+    When using the \em Free or \em FreeWithPolarization implementations, all electrons are treated
+    the same regardless of ionization state, so that a material mix with Fe+0 has the same electron
+    scattering cross section as a material mix with Fe+26. For \em FreeBound, on the other hand,
+    the scattering cross section for a given ion depends on the number of free and bound electrons.
 
     <b>Resonant scattering</b>
 
     Resonant scattering is the process where a photon is absorbed and re-emitted by a bound
     electron in an ion, promoting it from the ground state (\f$n=1\f$) to an excited level (\f$n
     \leq 10\f$) and back again. This class implements these transitions for all hydrogen-like ions
-    and helium-like ions up to atomic number 30. For hydrogen-like ions, the 18 prominent electric-dipole
-    transition lines fine-structure levels are included for each ion (e.g., Ly\f$\alpha_1\f$,
-    Ly\f$\alpha_2\f$, Ly\f$\beta_1\f$, Ly\f$\beta_2\f$, \f$\ldots\f$, Ly\f$\theta_1\f$, Ly\f$\theta_2\f$,
-    Ly\f$\iota_1\f$, Ly\f$\iota_2\f$). The magnetic-dipole transition lines between the metastable level
-    (2s \f$^2S_{1/2}\f$) and the ground level for \f$Z\geq14\f$, where these liens are non-negligible,
-    are also included. For helium-like ions, the He\f$\alpha\f$ \f$w\f$, \f$x\f$, \f$y\f$ and \f$z\f$ lines
-    and several prominent higher K-series lines (e.g., He\f$\beta\f$, He\f$\gamma\f$, \f$\ldots\f$, etc.)
-    are included.
+    and helium-like ions up to atomic number 30. For hydrogen-like ions, the 18 prominent
+    electric-dipole transition lines fine-structure levels are included for each ion (e.g.,
+    Ly\f$\alpha_1\f$, Ly\f$\alpha_2\f$, Ly\f$\beta_1\f$, Ly\f$\beta_2\f$, \f$\ldots\f$,
+    Ly\f$\theta_1\f$, Ly\f$\theta_2\f$, Ly\f$\iota_1\f$, Ly\f$\iota_2\f$). The magnetic-dipole
+    transition lines between the metastable level (2s \f$^2S_{1/2}\f$) and the ground level for
+    \f$Z\geq14\f$, where these lines are non-negligible, are also included. For helium-like ions,
+    the He\f$\alpha\f$ \f$w\f$, \f$x\f$, \f$y\f$ and \f$z\f$ lines and several prominent higher
+    K-series lines (e.g., He\f$\beta\f$, He\f$\gamma\f$, \f$\ldots\f$, etc.) are included.
 
-    These transitions may occur either as a direct transition from and to the ground state
-    or via a radiative cascade. Direct transitions correspond to coherent scattering events, while
-    cascades are incoherent and erase information about the initial photon packet. when a cascade
-    occurs, we ignore all intermediate photons produced by radiative decays between excited states,
-    keeping only the final transition to the ground state. This means we can also model the cascade
-    as a single scattering event. The branching data, determining the probability of an (in)coherent
+    These transitions may occur either as a direct transition from and to the ground state or via a
+    radiative cascade. Direct transitions correspond to coherent scattering events, while cascades
+    are incoherent and erase information about the initial photon packet. When a cascade occurs, we
+    ignore all intermediate photons produced by radiative decays between excited states, keeping
+    only the final transition to the ground state. This means we can also model the cascade as a
+    single scattering event. The branching data, determining the probability of an (in)coherent
     transition, is obtained from the SPEX database Kaastra et al. (2024).
 
     <b>Configuring the simulation</b>
@@ -135,17 +137,17 @@ class PhotonPacket;
     single instrument configured with a high-resolution wavelength grid, or separate instruments
     can be configured with wavelength grids to resolve specific features of interest.
 
-    Although there is no secondary emission phase, fluorescence emission and lyman recombination,
+    Although there is no secondary emission phase, fluorescence emission and Lyman recombination,
     which are modelled as scattering, do contribute to the secondary emission spectrum. To study
-    these processes seperately from the background continuum, configure the instrument to record
-    flux components seperately and consider the secondary emission component, which includes these
+    these processes separately from the background continuum, configure the instrument to record
+    flux components separately and consider the secondary emission component, which includes these
     lines in addition to any flux scattered from them. To ensure that low-intensity lines are
     properly included in this flux, set the advanced property \em minWeightReduction in the \c
     PhotonPacketOptions section to a value of \c 1e10 or so. With the default value of \c 1e4,
     low-intensity line photon packets are killed before having a chance to register in the
     instruments.
 
-    The input model must define the spatial distribution of the number density. The use can then
+    The input model must define the spatial distribution of the number density. The user can then
     define the abundances of the ions in the gas in this material mix. The spatial density is
     simply the product of the number density and the abundances of the ions in use.
 
@@ -157,11 +159,11 @@ class PhotonPacket;
     v_\mathrm{z} \f] When a separate XRayIonicGasMix is required for each spatial cell, refer to
     the XRayIonicGasMixFamily class.
 
-    The relative abundances of the present ions and the temperature of the gas are
-    configured in the ski file as constant properties. In other words, the abundances and the
-    temperature are considered to be spatially constant (for a given medium component). Because of
-    this all the cross sections per hydrogen atom for this material mix are calculated during setup
-    and the result stored, discretized on a high-resolution wavelength grid for later retrieval.
+    The relative abundances of the present ions and the temperature of the gas are configured in
+    the ski file as constant properties. In other words, the abundances and the temperature are
+    considered to be spatially constant (for a given medium component). Because of this all the
+    cross sections per hydrogen atom for this material mix are calculated during setup and the
+    result stored, discretized on a high-resolution wavelength grid for later retrieval.
 
     <b>Photo-absorption cross section</b>
 
@@ -192,45 +194,50 @@ class PhotonPacket;
 
     As mentioned earlier, the Fe ions have intrinsic line shape data for the K\f$_{\alpha_1}\f$ and
     K\f$_{\alpha_2}\f$ lines. The line shape data was obtained from Pinheiro et al. (2023).
-    Consequently, the energies and fluorescence yields for these lines are also taken from this source.
-    Additional line shapes were available for the Fe ions, but the corresponding yields differed
-    significantly from those used for the other lines in Kaastra & Mewe (1993) and were therefore not included.
+    Consequently, the energies and fluorescence yields for these lines are also taken from this
+    source. Additional line shapes were available for the Fe ions, but the corresponding yields
+    differed significantly from those used for the other lines in Kaastra & Mewe (1993) and were
+    therefore not included.
 
     <b>Recombination cross section</b>
 
-    The total recombination cross section per hydrogen-like or helium-like ion for this material mix
-    is obtained the exact same was as for fluorescence. The yields are now temperature-dependent
-    however, but since the temperature is assumed to be constant this is simply read during the setup.
-    The temperature-dependent yields are obtained from Mao & Kaastra (2016).
+    The total recombination cross section per hydrogen-like or helium-like ion for this material
+    mix is obtained the exact same way as for fluorescence. The yields are now
+    temperature-dependent however, but since the temperature is assumed to be constant this is
+    simply read during the setup. The temperature-dependent yields are obtained from Mao & Kaastra
+    (2016).
 
     <b>Electron scattering - cross section and phase function</b>
 
     As described above, this class provides several implementations for the scattering of X-ray
     photons by the electrons bound to the atoms or free in the gas. These implementations involve
-    two types of scattering: free- and bound- electron Compton scattering. Note that, in all cases,
+    two types of scattering: free- and bound-electron Compton scattering. Note that, in all cases,
     the listed cross sections must be multiplied by the abundance of the corresponding ion.
 
-    For free-electron Compton scattering, the cross section for an ion with atomic number
-    \f$Z\f$ given by \f$Z\,\sigma_\mathrm{C}\f$, where \f$\sigma_\mathrm{C}\f$ is the
+    For free-electron Compton scattering, the cross section for an ion with atomic number \f$Z\f$
+    given by \f$Z\,\sigma_\mathrm{C}\f$, where \f$\sigma_\mathrm{C}\f$ is the
     (wavelength-dependent) Compton cross section for a single free electron. The implementation of
     the scattering events is delegated to the ComptonPhaseFunction class; see there for more
     information on the cross section and phase function for free-electron Compton scattering.
 
-    For bound-electron Compton scattering, the cross sections \f$\sigma_{CS, Z}(E)\f$ are available in
-    tabulated form as a function of the incoming photon energy \f$E\f$. The normalised scattering phase
-    function for element \f$Z\f$ is given by \f[ \Phi_{CS, Z}(\theta, E)= \frac{3}{4}\, \frac{\sigma_T}
-    {\sigma_{CS, Z}(E)}\Big[C^3(\theta, E) + C(\theta,E) -C^2(\theta, E)\sin^2\theta\Big] \cdot S_Z(q), \f]
-    where the incoherent scattering functions \f$S_Z(q)\f$ are tabulated as a function of the dimensionless
-    momentum transfer parameter \f$q\f$, \f[q = \frac{E}{12.4\,\mathrm{keV}}\sin(\theta/2),\f] with
-    \f$\theta\f$ the scattering angle, and the Compton factor defined as \f[ C(\theta, E) =
-    {\Big[{1+\frac{E}{m_ec^2}(1-\cos \theta)\Big]}}^{-1}. \f]
+    For bound-electron Compton scattering, the cross sections \f$\sigma_{CS, Z}(E)\f$ are available
+    in tabulated form as a function of the incoming photon energy \f$E\f$. The normalised
+    scattering phase function for element \f$Z\f$ is given by \f[ \Phi_{CS, Z}(\theta, E)=
+    \frac{3}{4}\, \frac{\sigma_T} {\sigma_{CS, Z}(E)}\Big[C^3(\theta, E) + C(\theta,E) -C^2(\theta,
+    E)\sin^2\theta\Big] \cdot S_Z(q), \f] where the incoherent scattering functions \f$S_Z(q)\f$
+    are tabulated as a function of the dimensionless momentum transfer parameter \f$q\f$, \f[q =
+    \frac{E}{12.4\,\mathrm{keV}}\sin(\theta/2),\f] with \f$\theta\f$ the scattering angle, and the
+    Compton factor defined as \f[ C(\theta, E) = {\Big[{1+\frac{E}{m_ec^2}(1-\cos
+    \theta)\Big]}}^{-1}. \f]
 
-    The \em Free and \em FreeWithPolarization implementations use the free-electron Compton scattering cross section
-    for all electrons (bound or free). Whilst the \em FreeBound implementation uses a weighted sum of the free- and
-    bound-electron Compton scattering cross sections for each ion, based on the charge state of that ion. The cross section
-    can be summarized as follows: \f[ \sigma_{FB, Z, N}(E) = (1-\frac{N}{Z}) \sigma_{F, Z}(E) +  \frac{N}{Z} \sigma_{B, Z}(E) \f]
-    where \f$Z\f$ and \f$N\f$ are the atomic number and number of bound electrons and the subscripts \f$FB\f$, \f$F\f$ and \f$B\f$
-    refer to the \em FreeBound, free- and bound- Compton scattering.
+    The \em Free and \em FreeWithPolarization implementations use the free-electron Compton
+    scattering cross section for all electrons (bound or free). Whilst the \em FreeBound
+    implementation uses a weighted sum of the free- and bound-electron Compton scattering cross
+    sections for each ion, based on the charge state of that ion. The cross section can be
+    summarized as follows: \f[ \sigma_{FB, Z, N}(E) = (1-\frac{N}{Z}) \sigma_{F, Z}(E) +
+    \frac{N}{Z} \sigma_{B, Z}(E) \f] where \f$Z\f$ and \f$N\f$ are the atomic number and number of
+    bound electrons and the subscripts \f$FB\f$, \f$F\f$ and \f$B\f$ refer to the \em FreeBound,
+    free- and bound-electron Compton scattering.
 
     <b>Electron scattering - photon energy shift</b>
 
@@ -259,7 +266,7 @@ class PhotonPacket;
     all atoms in the photo-absorbing gas are tabulated by Biggs+75.
 
     In addition, the energy transfer from the photon to the electron should be large enough to
-    liberate an electron, i.e. larger than the ionisation potential \f$I_b\f$ of the outer
+    liberate an electron, i.e. larger than the ionization potential \f$I_b\f$ of the outer
     electrons of element Z. This condition is fulfilled only when \f$p_\text{z}c < p_zc_{max}\f$,
     with
 
@@ -270,16 +277,16 @@ class PhotonPacket;
     the scattering phase function is zero for \f$\theta=0\f$. Following Namito+94, the probability
     density function for \f$p_\text{z}c\f$ should be truncated at \f$p_zc_{max}\f$.
 
-    The \em Free and \em FreeWithPolarization implementations apply free-electron Compton scattering
-    for all electrons (bound or free). Whilst the \em FreeBound implementation stochastically selects free- or
-    bound-electron Compton scattering for each photon weighted using the cross section of free- and bound-electron
-    Compton scattering.
+    The \em Free and \em FreeWithPolarization implementations apply free-electron Compton
+    scattering for all electrons (bound or free). Whilst the \em FreeBound implementation
+    stochastically selects free- or bound-electron Compton scattering for each photon weighted
+    using the cross section of free- and bound-electron Compton scattering.
 
-        <b>Resonant scattering - cross section and phase function</b>
+    <b>Resonant scattering - cross section and phase function</b>
 
-    The resonant transitions are broadened both thermally and intrinsically. The resulting
-    cross section is described by a Voigt profile, the implementation of this is delegated to the
-    \em LyUtils and \em VoigtProfile namespaces. The data for the line energies and Einstein A
+    The resonant transitions are broadened both thermally and intrinsically. The resulting cross
+    section is described by a Voigt profile, the implementation of this is delegated to the \em
+    LyUtils and \em VoigtProfile namespaces. The data for the line energies and Einstein A
     coefficients are obtained from the SPEX database Kaastra et al. (2024).
 
     \f[\begin{aligned}
@@ -299,9 +306,10 @@ class PhotonPacket;
     With the notation used here, \f$E_1\f$ is the weight of the isotropic component
     and \f$E_2\f$ is the weight of the dipole component.
 
+    <em>Weights of the isotropic (\f$E_1\f$) and dipole (\f$E_2\f$) components in the
+    M\"{u}ller matrix for resonant scattering.</em>
+
     <table>
-    <caption>Weights of the isotropic (\f$E_1\f$) and dipole (\f$E_2\f$)
-    components in the M\"{u}ller matrix for resonant scattering.</caption>
     <tr>
       <th>\f$\Delta J\f$</th>
       <th>\f$E_1\f$</th>
@@ -330,22 +338,18 @@ class PhotonPacket;
     </tr>
     </table>
 
-    For example, the H-like Ly\f$_{\alpha_1}\f$ transition has
-    \f$J=1/2\f$ and \f$\Delta J=1\f$, and therefore
-    \f$E_1=E_2=1/2\f$; the scattered photon is emitted with equal weights
-    for the isotropic and dipole components. The H-like Ly\f$_{\alpha_2}\f$
-    transition has \f$J=1/2\f$ and \f$\Delta J=0\f$, giving
-    \f$E_1=1\f$ and \f$E_2=0\f$; the scattered photon is emitted
-    isotropically. For the He-like He\f$\alpha\f$ \f$w\f$ and \f$y\f$
-    lines, the lower level has \f$J=0\f$ and the upper level has
-    \f$J=1\f$, so that \f$E_1=0\f$ and \f$E_2=1\f$; the scattering is
-    described entirely by the dipole component.
+    For example, the H-like Ly\f$_{\alpha_1}\f$ transition has \f$J=1/2\f$ and \f$\Delta J=1\f$,
+    and therefore \f$E_1=E_2=1/2\f$; the scattered photon is emitted with equal weights for the
+    isotropic and dipole components. The H-like Ly\f$_{\alpha_2}\f$ transition has \f$J=1/2\f$ and
+    \f$\Delta J=0\f$, giving \f$E_1=1\f$ and \f$E_2=0\f$; the scattered photon is emitted
+    isotropically. For the He-like He\f$\alpha\f$ \f$w\f$ and \f$y\f$ lines, the lower level has
+    \f$J=0\f$ and the upper level has \f$J=1\f$, so that \f$E_1=0\f$ and \f$E_2=1\f$; the
+    scattering is described entirely by the dipole component.
 
-    The dipole component always includes polarization. Therefore, the
-    \em ElectronScattering property does not affect this treatment in any way.
-    The implementation of the dipole phase function can be found in the
-    \em DipolePhaseFunction class. If \f$E_2=0\f$, the scattered photon is emitted
-    isotropically.
+    The dipole component always includes polarization. Therefore, the \em ElectronScattering
+    property does not affect this treatment in any way. The implementation of the dipole phase
+    function can be found in the \em DipolePhaseFunction class. If \f$E_2=0\f$, the scattered
+    photon is emitted isotropically.
 
     If the scattering is coherent (no-cascade) the wavelength shift is determined by: \f[ \lambda'
     = \lambda \frac{(1 - \boldsymbol{k}_\mathrm{out} \cdot \boldsymbol{v}_\mathrm{atom} / c)}{(1 -
@@ -357,22 +361,22 @@ class PhotonPacket;
 
     The function performing an actual scattering event randomly selects one of the supported
     scattering channels (i.e. scattering by an electron, fluorescence line emission following a
-    photo-absorption event or scattering by a resonant line). The relative probabilities for
-    these transitions as a function of incoming photon packet wavelength are also calculated during
-    setup. The selected transition determines the scattering mechanism. For electrons, the appropriate
-    scattering function is used (free- or bound- Compton). For fluorescence, the emission direction is
-    isotropic, and the outgoing wavelength is the fluorescence wavelength. For the resonant lines, the
-    direction can be either isotropic and unpolarized or following a dipole phase function for both
-    direction and polarization. The outcome is determined by the total angular momentum of the lower
-    level \f$J\f$ and the difference in the total angular momentum between the upper and lower levels
-    \f$\Delta J\f$.
+    photo-absorption event or scattering by a resonant line). The relative probabilities for these
+    transitions as a function of incoming photon packet wavelength are also calculated during
+    setup. The selected transition determines the scattering mechanism. For electrons, the
+    appropriate scattering function is used (free- or bound-electron Compton). For fluorescence,
+    the emission direction is isotropic, and the outgoing wavelength is the fluorescence
+    wavelength. For the resonant lines, the direction can be either isotropic and unpolarized or
+    following a dipole phase function for both direction and polarization. The outcome is
+    determined by the total angular momentum of the lower level \f$J\f$ and the difference in the
+    total angular momentum between the upper and lower levels \f$\Delta J\f$.
 
     <b>Temperature</b>
 
     As is the case for the XRayAtomicGasMix class, the temperature configured for this material mix
     is a constant value. It does not affect the ionization state of the gas. Instead, the
-    temperature determines the thermal dispersion, or broadening, of the photo-absorption
-    edges, the fluorescence and recombination line emission, and the resonant scattering lines.
+    temperature determines the thermal dispersion, or broadening, of the photo-absorption edges,
+    the fluorescence and recombination line emission, and the resonant scattering lines.
 
     For electron scattering and fluorescence events, the implementation is straightforward. Once a
     channel has been randomly selected, the magnitude of the interacting atom's thermal velocity is
@@ -405,15 +409,15 @@ class PhotonPacket;
     For resonant scattering both the cross section and photon energy shift are dependent on the
     temperature. If branching occurs, i.e. there is a cascade prior to a final transition to the
     ground state, then the photon energy is simply shifted from its final transition wavelength.
-    When branching does not occur, i.e. the scattering is coherent, then the photon energy is shifted
-    according to the sampled atom velocity. The implementation of this is delegated to the \em LyUtils
-    and \em VoigtProfile namespaces.
-    */
+    When branching does not occur, i.e. the scattering is coherent, then the photon energy is
+    shifted according to the sampled atom velocity. The implementation of this is delegated to the
+    \em LyUtils and \em VoigtProfile namespaces.
+*/
 class XRayIonicGasMix : public MaterialMix
 {
     /** The enumeration type indicating the implementation used for scattering by electrons. */
     ENUM_DEF(ElectronScattering, None, Free, FreeWithPolarization, FreeBound)
-        ENUM_VAL(ElectronScattering, None, "ignore electron")
+        ENUM_VAL(ElectronScattering, None, "ignore electrons")
         ENUM_VAL(ElectronScattering, Free, "use free-electron Compton scattering for all electrons")
         ENUM_VAL(ElectronScattering, FreeWithPolarization,
                  "use free-electron Compton scattering with support for polarization")
@@ -421,8 +425,7 @@ class XRayIonicGasMix : public MaterialMix
     ENUM_END()
 
     ITEM_CONCRETE(XRayIonicGasMix, MaterialMix,
-                  "An ionised gas mix supporting photo-absorption, fluorescence and resonant Lyman scattering for "
-                  "X-ray wavelengths")
+                  "A gas mix supporting hydrogen- and helium-like ions at X-ray wavelengths")
         ATTRIBUTE_TYPE_INSERT(XRayIonicGasMix, "GasMix")
 
         PROPERTY_STRING(ions, "the names of the ions for each element (e.g. H,He+,Fe+25,..)")
@@ -440,7 +443,7 @@ class XRayIonicGasMix : public MaterialMix
         ATTRIBUTE_DEFAULT_VALUE(electronScattering, "Free")
         ATTRIBUTE_DISPLAYED_IF(electronScattering, "Level3")
 
-        PROPERTY_BOOL(resonantScattering, "enable Lyman resonant scattering for all hydrogen-like ions")
+        PROPERTY_BOOL(resonantScattering, "enable resonant line scattering for hydrogen- and helium-like ions")
         ATTRIBUTE_DEFAULT_VALUE(resonantScattering, "false")
         ATTRIBUTE_DISPLAYED_IF(resonantScattering, "Level2")
         ATTRIBUTE_RELEVANT_IF(resonantScattering, "simulationModeLyaExtinctionOnly")
@@ -483,8 +486,8 @@ public:
     MaterialType materialType() const override;
 
     /** This function returns true if this material mix supports polarization during scattering
-        events. For this class, the function returns true if the \em scatterBoundElectrons property
-        has been set to \c FreeWithPolarization or is the \em resonantScattering property is set to
+        events. For this class, the function returns true if the \em electronScattering property
+        has been set to \c FreeWithPolarization or if the \em resonantScattering property is set to
         true. */
     bool hasPolarizedScattering() const override;
 
@@ -618,7 +621,7 @@ private:
         double lambda;  // wavelength (m)
         double width;   // width (eV)
     };
-    // Resonant scattering -> ResonaceLineParam
+    // Resonant scattering -> ResonantParam
     struct ResonantParam
     {
         int ionIndex;
