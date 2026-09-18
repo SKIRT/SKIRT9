@@ -50,17 +50,17 @@ class PhotonPacket;
     energy. For each electron shell and for each possible fluorescence transition towards that
     shell, the \em yield defines the probability that such fluorescence event occurs after an
     electron has been liberated in that shell. This class supports the following fluorescence lines,
-    all with energies above \f$4.3 \, \text{eV}\f$: K\f$_{\alpha2}\f$, K\f$_{\alpha1}\f$,
-    K\f$_{\beta3}\f$, K\f$_{\beta1}\f$, L\f$_{\beta4}\f$, L\f$_{\beta3}\f$, L\f$_{1,2}\f$,
-    L\f$_{1,3}\f$, L\f$_{\eta}\f$, L\f$_{l}\f$, L\f$_{\gamma5}\f$, L\f$_{\beta6}\f$,
-    L\f$_{\beta1}\f$, L\f$_{\alpha2}\f$, L\f$_{\alpha1}\f$, M\f$_{1,2}\f$, M\f$_{1,3}\f$,
+    all with energies above \f$4.3 \, \text{eV}\f$: K\f$_{\alpha_2}\f$, K\f$_{\alpha_1}\f$,
+    K\f$_{\beta_3}\f$, K\f$_{\beta_1}\f$, L\f$_{\beta_4}\f$, L\f$_{\beta_3}\f$, L\f$_{1,2}\f$,
+    L\f$_{1,3}\f$, L\f$_{\eta}\f$, L\f$_{l}\f$, L\f$_{\gamma_5}\f$, L\f$_{\beta_6}\f$,
+    L\f$_{\beta_1}\f$, L\f$_{\alpha_2}\f$, L\f$_{\alpha_1}\f$, M\f$_{1,2}\f$, M\f$_{1,3}\f$,
     M\f$_{2,4}\f$, M\f$_{3,4}\f$, M\f$_{3,5}\f$ M\f$_{2}\f$N\f$_{1}\f$, M\f$_{3}\f$N\f$_{1}\f$
     These transitions are not all the same as those in the XRayAtomicGasMix class, and even
     transitions that are the same may yield slightly different results, as the resources are obtained
     from different sources.
 
     Similar to the XRayAtomicGasMix, certain elements have intrinsic line shape data associated with
-    them. For this class, this is limited to the (K_{\alpha1}) and (K_{\alpha2}) lines for the Fe ions.
+    them. For this class, this is limited to the K\f$_{\alpha_1}\f$ and K\f$_{\alpha_2}\f$ lines for the Fe ions.
 
     Because fluorescence only occurs as the result of a photo-absorption event, this class
     implements fluorescence as a form of scattering (where the wavelength of the photon being
@@ -190,8 +190,8 @@ class PhotonPacket;
     These yields are obtained from Kaastra & Mewe (1993) for all ions up to Z=30, from neutral down
     to B-like.
 
-    As mentioned earlier, the Fe ions have intrinsic line shape data for the K\f$_{\alpha1}\f$ and
-    K\f$_{\alpha2}\f$ lines. The line shape data was obtained from Pinheiro et al. (2023).
+    As mentioned earlier, the Fe ions have intrinsic line shape data for the K\f$_{\alpha_1}\f$ and
+    K\f$_{\alpha_2}\f$ lines. The line shape data was obtained from Pinheiro et al. (2023).
     Consequently, the energies and fluorescence yields for these lines are also taken from this source.
     Additional line shapes were available for the Fe ions, but the corresponding yields differed
     significantly from those used for the other lines in Kaastra & Mewe (1993) and were therefore not included.
@@ -295,7 +295,7 @@ class PhotonPacket;
     Resonant scattering in an electric-dipole transition is described as a linear
     combination of an isotropic and a dipole M\"{u}ller matrix. The relative weights
     of these two components are determined by the total angular momentum of the
-    lower level, \f$J\f$, and by \f$\Delta J = J_\mathrm{upper}-J_\mathrm{lower}\f$ \citep{H1947}.
+    lower level, \f$J\f$, and by \f$\Delta J = J_\mathrm{upper}-J_\mathrm{lower}\f$.
     With the notation used here, \f$E_1\f$ is the weight of the isotropic component
     and \f$E_2\f$ is the weight of the dipole component.
 
@@ -330,10 +330,10 @@ class PhotonPacket;
     </tr>
     </table>
 
-    For example, the H-like Ly\f$_{\alpha1}\f$ transition has
+    For example, the H-like Ly\f$_{\alpha_1}\f$ transition has
     \f$J=1/2\f$ and \f$\Delta J=1\f$, and therefore
     \f$E_1=E_2=1/2\f$; the scattered photon is emitted with equal weights
-    for the isotropic and dipole components. The H-like Ly\f$_{\alpha2}\f$
+    for the isotropic and dipole components. The H-like Ly\f$_{\alpha_2}\f$
     transition has \f$J=1/2\f$ and \f$\Delta J=0\f$, giving
     \f$E_1=1\f$ and \f$E_2=0\f$; the scattered photon is emitted
     isotropically. For the He-like He\f$\alpha\f$ \f$w\f$ and \f$y\f$
@@ -602,7 +602,8 @@ public:
     //======================== Data Members ========================
 
 private:
-    // all of the data below is calculated in the setupSelfBefore(), but is persistent for use after setup to perform scattering
+    // all of the data below is calculated in setupSelfBefore(),
+    // and is persistent for use after setup to perform scattering
 
     struct IonParam
     {

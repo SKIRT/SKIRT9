@@ -2,6 +2,7 @@
 ////     The SKIRT project -- advanced radiative transfer       ////
 ////       © Astronomical Observatory, Ghent University         ////
 ///////////////////////////////////////////////////////////////// */
+
 #include "XRayIonicGasMix.hpp"
 #include "AtomUtils.hpp"
 #include "ComptonPhaseFunction.hpp"
