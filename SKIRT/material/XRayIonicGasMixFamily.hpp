@@ -60,8 +60,8 @@ public:
     /** The destructor destructs all the XRayIonicGasMix instances that have been created. */
     ~XRayIonicGasMixFamily() override;
 
-    /** This function calls the setup if not already done. This involves parsing the ions
-        and electronScattering property, and adding a default mix. */
+    /** This function parses the user-configured ions, converts the electronScattering property,
+        and adds a default mix. */
     void setupSelfBefore() override;
 
     //====================== Other functions ======================
@@ -83,18 +83,12 @@ public:
         the parameters all set to zero. */
     const MaterialMix* mix() override;
 
-private:
-    /** This function performs the setup by parsing the user-configured ions and
-        electronScattering property, and adding a default mix.*/
-    void setup();
-
     //======================== Data Members ========================
 
 private:
-    bool _setupDone{false};
     vector<string> _ionNames;  // parsed ion names
     XRayIonicGasMix::ElectronScattering _boundElectrons{
-        XRayIonicGasMix::ElectronScattering::None};  // parsed electronScattering property
+        XRayIonicGasMix::ElectronScattering::None};  // converted electronScattering property
     vector<XRayIonicGasMix*> _mixes;                 // all stored mixes
 };
 
