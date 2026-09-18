@@ -37,9 +37,16 @@ public:
         the configured list of dust mixes specified as the single parameter in the list. The
         floating point parameter value is rounded to the nearest integer and subsequently clipped
         to be in range. If the number of parameters in the specified list is not equal to one, the
-        behavior is undefined. The material mix family retains ownership of the returned dust mix,
-        and guarantees that it will not be destroyed until the family itself is destroyed. */
-    const MaterialMix* mix(const Array& parameters) const override;
+        behavior is undefined. The metallicity and temperature are not used.
+
+        The material mix family retains ownership of the returned dust mix, and guarantees that it
+        will not be destroyed until the family itself is destroyed. */
+    const MaterialMix* mix(double metallicity, double temperature, const Array& parameters) override;
+
+    /** This function returns (a pointer to) a the material mix with index 0. The material mix
+        family retains ownership of the returned material mix, and guarantees that it will not be
+        destroyed until the family itself is destroyed. */
+    const MaterialMix* mix() override;
 };
 
 ////////////////////////////////////////////////////////////////////

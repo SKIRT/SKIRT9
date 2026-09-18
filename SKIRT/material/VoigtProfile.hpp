@@ -27,16 +27,20 @@ namespace VoigtProfile
         |---------|--------------|
         | 0.03    | 0.967029     |
         | 0.01    | 0.988815     |
-        ! 0.001   | 0.998873     |
-        ! 0.0001  | 0.999887     |
+        | 0.001   | 0.998873     |
+        | 0.0001  | 0.999887     |
 
-        We use the approximation provided by Smith et al. 2015 (MNRAS, 449, 4336–4362) in their
-        Appendix A1 and Table A1. According to the authors and as confirmed in the analysis by
-        Michel-Dansac et al. 2020 (A\&A), this approximation is accurate to within 1 per cent for
-        all \f$x\f$ as long as \f$a<0.03\f$, which for the calculation of the Lyman-alpha cross
-        section corresponds to a gas temperature above the cosmic microwave background temperature,
-        i.e. \f$T_\mathrm{gas}>T_\mathrm{CMB}\f$. The accuracy improves substantially for lower
-        values of \f$a\f$, i.e. for higher gas temperatures. */
+        We use the rational-approximation method of Humlíček 1982 (JQSRT, 27, 437-444) for the
+        related complex probability function (Faddeeva function) \f$w(z) = \mathrm{e}^{-z^2}
+        \mathrm{erfc}(-iz)\f$, which relates to \f$H(a,x)\f$ through \f$H(a,x) =
+        \mathrm{Re}\,w(x+ia)\f$. The method evaluates \f$w(z)\f$ using one of four rational
+        approximations, selected depending on the magnitude of \f$x\f$ and \f$a\f$: an inexpensive
+        asymptotic form when \f$z=x+ia\f$ lies far from the origin, and successively higher-order
+        forms as it approaches the origin, with a dedicated approximation for the region close to
+        the real axis (small \f$a\f$) where a single rational approximation is known to lose
+        accuracy. Overall the method is accurate to about four significant digits, substantially
+        better than the approximation of Smith et al. 2015 (MNRAS, 449, 4336–4362) used
+        previously, whose error can reach 1 per cent for \f$a<0.03\f$. */
     double value(double a, double x);
 
     /** This function samples a random value from the probability distribution \f$P(u)\f$ defined

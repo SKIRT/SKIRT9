@@ -6,34 +6,52 @@
 #include "VoigtProfile.hpp"
 #include "FatalError.hpp"
 #include "Random.hpp"
+#include <complex>
 
 ////////////////////////////////////////////////////////////////////
 
 double VoigtProfile::value(double a, double x)
 {
-    // coefficients for the approximation function (Table A1, Smith+15)
-    constexpr double A0 = 15.75328153963877;
-    constexpr double A1 = 286.9341762324778;
-    constexpr double A2 = 19.05706700907019;
-    constexpr double A3 = 28.22644017233441;
-    constexpr double A4 = 9.526399802414186;
-    constexpr double A5 = 35.29217026286130;
-    constexpr double A6 = 0.8681020834678775;
-    constexpr double B0 = 0.0003300469163682737;
-    constexpr double B1 = 0.5403095364583999;
-    constexpr double B2 = 2.676724102580895;
-    constexpr double B3 = 12.82026082606220;
-    constexpr double B4 = 3.21166435627278;
-    constexpr double B5 = 32.032981933420;
-    constexpr double B6 = 9.0328158696;
-    constexpr double B7 = 23.7489999060;
-    constexpr double B8 = 1.82106170570;
+    // Humlíček (1982) approximation for w(z = x + i*a), valid for all x and a >= 0
+    std::complex<double> t(a, -x);
 
-    // calculation of the approximation (Appendix A1, Smith+15)
-    double z = x * x;
-    if (z <= 3.0) return exp(-z) * (1.0 - a * (A0 + A1 / (z - A2 + A3 / (z - A4 + A5 / (z - A6)))));
-    if (z < 25.0) return exp(-z) + a * (B0 + B1 / (z - B2 + B3 / (z + B4 + B5 / (z - B6 + B7 / (z - B8)))));
-    return 0.5 * M_2_SQRTPI * a / (z - 1.5 - 1.5 / (z - 3.5 - 5.0 / (z - 5.5)));
+    double s = std::fabs(x) + a;
+
+    if (s >= 15.0)
+    {
+        // Region I
+        return std::real(t * 0.5641896 / (0.5 + t * t));
+    }
+    else if (s >= 5.5)
+    {
+        // Region II
+        std::complex<double> u = t * t;
+        return std::real(t * (1.410474 + u * 0.5641896) / (0.75 + u * (3.0 + u)));
+    }
+    else if (a >= 0.195 * std::fabs(x) - 0.176)
+    {
+        // Region III
+        return std::real((16.4955 + t * (20.20933 + t * (11.96482 + t * (3.778987 + t * 0.5642236))))
+                         / (16.4955 + t * (38.82363 + t * (39.27121 + t * (21.69274 + t * (6.699398 + t))))));
+    }
+    else
+    {
+        // Region IV
+        std::complex<double> u = t * t;
+        return std::real(
+            std::exp(u)
+            - t
+                  * (36183.31
+                     - u
+                           * (3321.9905
+                              - u * (1540.787 - u * (219.0313 - u * (35.76683 - u * (1.320522 - u * 0.56419))))))
+                  / (32066.6
+                     - u
+                           * (24322.84
+                              - u
+                                    * (9022.228
+                                       - u * (2186.181 - u * (364.2191 - u * (61.57037 - u * (1.841439 - u))))))));
+    }
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -70,7 +88,7 @@ double VoigtProfile::sample(double a, double x, Random* random)
     double p = (theta0 + M_PI_2) / ((1. - exp(-u0 * u0)) * theta0 + (1. + exp(-u0 * u0)) * M_PI_2);
 
     // perform the rejection method loop for a maximum number of attempts
-    int n = 10000;
+    int n = 100000;  // not the most efficient for certain a,x combinations (eg. Zn+29 at T=3K)
     while (n--)
     {
         // determine which one of the two comparison functions to use
