@@ -186,6 +186,9 @@ namespace ElectronScatteringHelper
         vector<Array> _CPv;  // 0: E (keV->1); 1-30: pdf for target electron momentum (1)
         vector<Array> _IBv;  // 0: E (keV->1) ionisation energy of the outer subshell electrons
 
+        // precalculated logarithms of the ratios of successive values, used to interpolate the scattering functions
+        vector<Array> _logRatioSFv;  // same layout as _SFv, with one value less in each array
+
         // precalculated cumulative distributions for target electron momentum
         Range _cumRange;
         vector<Array> _cumCPv;  // 0: E axis; 1-30: cumulative pdf for target electron momentum
@@ -261,6 +264,9 @@ namespace ElectronScatteringHelper
         Random* _random{nullptr};
         DipolePhaseFunction _dpf;
 
+        // precalculated logarithms of the ratios of successive values, used to interpolate the form factors
+        vector<Array> _logRatioFFv;  // same layout as _FFv, with one value less in each array
+
         // precalculated discretizations
         Array _costhetav;
         Array _cos2thetav;
@@ -301,6 +307,9 @@ namespace ElectronScatteringHelper
         vector<Array> _F2v;   // 2*Z: E (keV->1); 2*Z+1: Imaginary anomalous scattering function (1)
         Random* _random{nullptr};
         DipolePhaseFunction _dpf;
+
+        // precalculated logarithms of the ratios of successive values, used to interpolate the form factors
+        vector<Array> _logRatioFFv;  // same layout as _FFv, with one value less in each array
 
         // precalculated discretizations
         Array _costhetav;

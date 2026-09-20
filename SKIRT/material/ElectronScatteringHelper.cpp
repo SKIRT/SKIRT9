@@ -41,18 +41,101 @@ namespace
         return 1. / inverseComptonFactor(x, costheta);
     }
 
+    // returns the logarithms of the ratios of successive values in each of the columns of the specified table,
+    // as a vector with the same layout as the table but with one value less in each array;
+    // these are the terms of NR::interpolateLogLog() that depend on the table only and not on the point being
+    // interpolated, so it saves time to calculate them once when the table is loaded
+    vector<Array> logRatios(const vector<Array>& columns)
+    {
+        vector<Array> result;
+        result.reserve(columns.size());
+        for (const Array& column : columns)
+        {
+            Array ratios(column.size() ? column.size() - 1 : 0);
+            for (size_t i = 0; i != ratios.size(); ++i) ratios[i] = log(column[i + 1] / column[i]);
+            result.push_back(ratios);
+        }
+        return result;
+    }
+
+    // multiplicator to convert scaled energy to energy in units of 12.4 keV
+    constexpr double scaledEnergyTo12keV =
+        (Constants::Melectron() * Constants::c() * Constants::c()) / (12.4e3 * Constants::Qelectron());
+
+    // returns the value at q interpolated between the points i and i+1 of a table with abscissae qv and function values fv,
+    // given the precalculated logarithms of the ratios of successive values in qv and fv (see logRatios());
+    // logarithmic interpolation is used except for q values near zero, with the same result as NR::interpolateLogLog()
+    double interpolateInterval(double q, size_t i, const Array& qv, const Array& fv, const Array& lqv, const Array& lfv)
+    {
+        if (q < 1e-3) return NR::interpolateLinLin(q, qv[i], qv[i + 1], fv[i], fv[i + 1]);
+        double f1 = fv[i];
+        double f2 = fv[i + 1];
+        if (f1 <= 0 || f2 <= 0)
+        {
+            if (q == qv[i]) return f1;
+            if (q == qv[i + 1]) return f2;
+            return 0.;
+        }
+        return f1 * exp(log(q / qv[i]) / lqv[i] * lfv[i]);
+    }
+
     // returns the value interpolated from the specified table as a function of the momentum transfer parameter
     // q = (E/12.4 keV) sin(theta/2), given the scaled energy x and the sine;
-    // logarithmic interpolation is used except for q values near zero
-    double interpolateQ(double x, double sintheta2, const Array& qv, const Array& fv)
+    // the table contains q in column 0 and the function values for atomic number Z in column Z, and logRatiov contains
+    // the precalculated logarithms of the ratios of successive values in each of these columns (see logRatios())
+    double interpolateQ(double x, double sintheta2, const vector<Array>& table, const vector<Array>& logRatiov, int Z)
     {
-        // multiplicator to convert scaled energy to energy in units of 12.4 keV
-        constexpr double scaledEnergyTo12keV =
-            (Constants::Melectron() * Constants::c() * Constants::c()) / (12.4e3 * Constants::Qelectron());
-
+        const Array& qv = table[0];
+        const Array& fv = table[Z];
         double q = scaledEnergyTo12keV * x * sintheta2;
-        if (q < 1e-3) return NR::clampedValue<NR::interpolateLinLin>(q, qv, fv);
-        return NR::clampedValue<NR::interpolateLogLog>(q, qv, fv);
+
+        // clamp outside of the table and locate the interval inside, as NR::clampedValue() does
+        size_t n = qv.size();
+        if (q < qv[0]) return fv[0];
+        if (qv[n - 1] < q) return fv[n - 1];
+        size_t i = static_cast<size_t>(NR::locate(qv, q));
+        return interpolateInterval(q, i, qv, fv, logRatiov[0], logRatiov[Z]);
+    }
+
+    // returns the values interpolated from the specified table for all sines of half the scattering angle in sintheta2v,
+    // given the scaled energy x; see above;
+    // this is much faster than interpolating the values one by one if the sines are ascending, as they are in the loops
+    // over the scattering angle, because the interval containing q is then found by walking forward through the table
+    // from the interval found for the previous value, rather than by a binary search for each value (the results do not
+    // depend on the order of the values)
+    Array interpolateQ(double x, const Array& sintheta2v, const vector<Array>& table, const vector<Array>& logRatiov,
+                       int Z)
+    {
+        const Array& qv = table[0];
+        const Array& fv = table[Z];
+        size_t n = qv.size();
+
+        Array resultv(sintheta2v.size());
+        size_t i = 0;
+        bool found = false;
+        for (size_t k = 0; k != sintheta2v.size(); ++k)
+        {
+            double q = scaledEnergyTo12keV * x * sintheta2v[k];
+
+            // clamp outside of the table, as above
+            if (q < qv[0])
+                resultv[k] = fv[0];
+            else if (qv[n - 1] < q)
+                resultv[k] = fv[n - 1];
+            else
+            {
+                // search for the interval containing q, or walk forward from the interval found for the previous value
+                if (!found || q < qv[i])
+                {
+                    i = static_cast<size_t>(NR::locate(qv, q));
+                    found = true;
+                }
+                else
+                    while (i + 2 < n && qv[i + 1] <= q) ++i;
+                resultv[k] = interpolateInterval(q, i, qv, fv, logRatiov[0], logRatiov[Z]);
+            }
+        }
+        return resultv;
     }
 
     // number of supported atoms; the data provided in the resource files must match this number
@@ -247,8 +330,9 @@ namespace ElectronScatteringHelper
         _CSv[0] *= keVtoScaledEnergy;                            // convert from keV to 1
         for (size_t Z = 1; Z <= numAtoms; ++Z) _CSv[Z] *= 1e-4;  // convert from cm2 to m2
 
-        // load incoherent scattering functions
+        // load incoherent scattering functions and precalculate the logarithms needed to interpolate them
         _SFv = loadColumns(numAtoms + 1, item, "XRay_SF.txt", "bound Compton data");
+        _logRatioSFv = logRatios(_SFv);
 
         // load pdfs for projected momentum of target electron
         _CPv = loadColumns(numAtoms + 1, item, "XRay_CP.txt", "bound Compton data");
@@ -305,7 +389,7 @@ namespace ElectronScatteringHelper
         double phase = C * C * C + C - C * C * sin2theta;
         double section = NR::value<NR::interpolateLogLog>(x, _CSv[0], _CSv[Z]);
         double sintheta2 = sqrt(0.5 * (1 - costheta));
-        double incoherent = interpolateQ(x, sintheta2, _SFv[0], _SFv[Z]);
+        double incoherent = interpolateQ(x, sintheta2, _SFv, _logRatioSFv, Z);
         return norm / section * phase * incoherent;
     }
 
@@ -315,11 +399,12 @@ namespace ElectronScatteringHelper
     {
         // construct the normalized cumulative phase function distribution for this x
         Array thetaXv;
-        NR::cdf(thetaXv, maxTheta, [this, x, Z](int t) {
+        Array incoherentv = interpolateQ(x, _sintheta2v, _SFv, _logRatioSFv, Z);
+        NR::cdf(thetaXv, maxTheta, [this, x, &incoherentv](int t) {
             t += 1;
             double C = comptonFactor(x, _costhetav[t]);
             double phase = C * C * C + C - C * C * _sin2thetav[t];
-            double incoherent = interpolateQ(x, _sintheta2v[t], _SFv[0], _SFv[Z]);
+            double incoherent = incoherentv[t];
             return phase * incoherent * _sinthetav[t];
         });
 
@@ -473,8 +558,9 @@ namespace ElectronScatteringHelper
         _RSSv[0] *= keVtoScaledEnergy;                            // convert from keV to 1
         for (size_t Z = 1; Z <= numAtoms; ++Z) _RSSv[Z] *= 1e-4;  // convert from cm2 to m2
 
-        // load atomic form factors
+        // load atomic form factors and precalculate the logarithms needed to interpolate them
         _FFv = loadColumns(numAtoms + 1, item, "XRay_FF.txt", "smooth Rayleigh data");
+        _logRatioFFv = logRatios(_FFv);
 
         // cache random nr generator and initialize the Thomson helper
         _random = item->find<Random>();
@@ -512,7 +598,7 @@ namespace ElectronScatteringHelper
         double phase = 1. + costheta * costheta;
         double section = NR::value<NR::interpolateLogLog>(x, _RSSv[0], _RSSv[Z]);
         double sintheta2 = sqrt(0.5 * (1 - costheta));
-        double form = interpolateQ(x, sintheta2, _FFv[0], _FFv[Z]);
+        double form = interpolateQ(x, sintheta2, _FFv, _logRatioFFv, Z);
         return norm / section * phase * form * form;
     }
 
@@ -522,10 +608,11 @@ namespace ElectronScatteringHelper
     {
         // construct the normalized cumulative phase function distribution for this x
         Array thetaXv;
-        NR::cdf(thetaXv, maxTheta, [this, x, Z](int t) {
+        Array formv = interpolateQ(x, _sintheta2v, _FFv, _logRatioFFv, Z);
+        NR::cdf(thetaXv, maxTheta, [this, &formv](int t) {
             t += 1;
             double phase = 1. + _cos2thetav[t];
-            double form = interpolateQ(x, _sintheta2v[t], _FFv[0], _FFv[Z]);
+            double form = formv[t];
             return phase * form * form * _sinthetav[t];
         });
 
@@ -585,6 +672,9 @@ namespace ElectronScatteringHelper
         _F1v = loadColumns(2 * numAtoms + 2, item, "XRay_F1.txt", "anomalous Rayleigh data");
         _F2v = loadColumns(2 * numAtoms + 2, item, "XRay_F2.txt", "anomalous Rayleigh data");
 
+        // precalculate the logarithms needed to interpolate the atomic form factors
+        _logRatioFFv = logRatios(_FFv);
+
         // convert units
         for (size_t Z = 1; Z <= numAtoms; ++Z)
         {
@@ -630,7 +720,7 @@ namespace ElectronScatteringHelper
         double phase = 1. + costheta * costheta;
         double section = NR::clampedValue<NR::interpolateLogLog>(x, _RSAv[2 * Z], _RSAv[2 * Z + 1]);
         double sintheta2 = sqrt(0.5 * (1 - costheta));
-        double form = interpolateQ(x, sintheta2, _FFv[0], _FFv[Z]);
+        double form = interpolateQ(x, sintheta2, _FFv, _logRatioFFv, Z);
         double form1 = NR::clampedValue<NR::interpolateLogLin>(x, _F1v[2 * Z], _F1v[2 * Z + 1]);  // negative values
         double form2 = NR::clampedValue<NR::interpolateLogLog>(x, _F2v[2 * Z], _F2v[2 * Z + 1]);
         double formsum = form + form1;
@@ -643,10 +733,11 @@ namespace ElectronScatteringHelper
     {
         // construct the normalized cumulative phase function distribution for this x
         Array thetaXv;
-        NR::cdf(thetaXv, maxTheta, [this, x, Z](int t) {
+        Array formv = interpolateQ(x, _sintheta2v, _FFv, _logRatioFFv, Z);
+        NR::cdf(thetaXv, maxTheta, [this, x, Z, &formv](int t) {
             t += 1;
             double phase = 1. + _cos2thetav[t];
-            double form = interpolateQ(x, _sintheta2v[t], _FFv[0], _FFv[Z]);
+            double form = formv[t];
             double form1 = NR::clampedValue<NR::interpolateLogLin>(x, _F1v[2 * Z], _F1v[2 * Z + 1]);
             double form2 = NR::clampedValue<NR::interpolateLogLog>(x, _F2v[2 * Z], _F2v[2 * Z + 1]);
             double formsum = form + form1;
