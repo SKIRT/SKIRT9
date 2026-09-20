@@ -350,7 +350,7 @@ namespace ElectronScatteringHelper
         _cumCPv.push_back(Pv);
         for (size_t Z = 2; Z <= numAtoms; ++Z)
         {
-            NR::cdf<NR::interpolateLinLin>(xv, pv, Pv, _CPv[0], _CPv[1], _cumRange);
+            NR::cdf<NR::interpolateLinLin>(xv, pv, Pv, _CPv[0], _CPv[Z], _cumRange);
             _cumCPv.push_back(Pv);
         }
 
