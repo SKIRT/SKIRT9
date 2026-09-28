@@ -188,7 +188,7 @@ namespace
         double section(double lambda, double vth) const
         {
             double a = voigtA(lamGamma, vth);
-            double g = 2.0 * upperJ + 1.0;
+            double g = (2.0 * upperJ + 1.0) / (2.0 * lowerJ + 1.0);
             return LyUtils::section(lambda, lam, vth * M_SQRT2, A, a, g);
         }
     };
