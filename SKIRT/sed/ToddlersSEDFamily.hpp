@@ -259,7 +259,7 @@ class ToddlersSEDFamily : public SEDFamily
         ATTRIBUTE_DEFAULT_VALUE(sedMode, "SFRNormalized")
 
         PROPERTY_ENUM(stellarTemplate, StellarTemplate, "the stellar template, IMF, and evolution model to use")
-        ATTRIBUTE_DEFAULT_VALUE(stellarTemplate, "SB99Kroupa100Sin")
+        ATTRIBUTE_DEFAULT_VALUE(stellarTemplate, "sedModeSFRNormalizedVariableDust:BPASSChab100Bin;SB99Kroupa100Sin")
 
         PROPERTY_BOOL(includeDust, "include dust processing in the SED models")
         ATTRIBUTE_DEFAULT_VALUE(includeDust, "true")
