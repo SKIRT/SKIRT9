@@ -5,6 +5,7 @@ TODDLERS 2
 TODDLERS_Cloud_BPASS_chab100 2
 TODDLERS_Cloud_BPASS_chab300 2
 TODDLERS_Cloud_SB99_kroupa100 2
+TODDLERS_VariableDust 1
 ExtraDust 3
 ExtraBands 1
 AtomsMolecules 10
