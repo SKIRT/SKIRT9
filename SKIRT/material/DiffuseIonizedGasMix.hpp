@@ -118,6 +118,18 @@
 
     All threshold properties are specified as fractions (0-1); log output displays percentages.
 
+    <b>Gas density</b>
+
+    The number density of this mix is the number density of hydrogen plus helium nuclei,
+    n = n_H (1 + y_He), with y_He = n_He/n_H the helium abundance of the cell (the imported
+    column in PerCell mode, the value implied by the metallicity in SolarScaled mode). The mix
+    derives the hydrogen density as n_H = n / (1 + y_He), so a snapshot that lists n_H must be
+    multiplied by (1 + y_He) before it is imported as a number density. Accordingly, the mass per
+    particle is the mean mass per nucleus, m_p (1 + 4 y_He) / (1 + y_He). Because it is a property
+    of the mix rather than of a cell, it uses the y_He of the \em defaultMetallicity value; it
+    enters only conversions between number and mass density (for example reported gas masses, or
+    a snapshot that lists mass density), not the gas physics.
+
     <b>Density Ceiling</b>
 
     If maxHydrogenDensity is set to a positive value, the hydrogen number density n_H is clamped
@@ -129,6 +141,18 @@
 
     For opacity, cells below the minimum STAB table density are linearly scaled
     (opacity proportional to n). Cells above the maximum table density use StoredTable clamping.
+    Cells with log U at or below -6.5, the lower edge of the tables, use the Verner bound-free
+    opacity computed from the ion fractions of the ionization balance instead of the table, as all
+    cells do when \em useCloudyOpacity is false.
+
+    <b>Radiation field wavelength grid</b>
+
+    The field averages over the five energy bins (R2-R5) and the ionizing photon flux (log U) are
+    computed from the mean intensity stored per radiation field bin, and are exact when the grid has
+    bin borders at the energy bin boundaries (1, 1.8, 2.58, 3.52, 4 and 6 Ryd). The ionization
+    balance evaluates each bin at its characteristic wavelength, so borders at the ionization edges
+    of the tracked ions, and in particular at the hydrogen edge, avoid counting a bin as wholly above
+    or below an edge. The mix warns during setup about boundaries and edges that fall inside a bin.
 
     <b>Abundances and gas-phase depletion</b>
 
@@ -422,16 +446,20 @@ private:
     double getHydrogenCrossSection(double frequency) const;
     double getHeliumCrossSection(double frequency) const;
 
-    // Starting indices for opacity arrays stored as consecutive custom state variables
-    mutable int _indexFirstOpacityAbs;  // First index for absorption opacity array
-    mutable int _indexFirstOpacitySca;  // First index for scattering opacity array
-    mutable int _indexFirstOpacityExt;  // First index for extinction opacity array
+    // Each cell stores the extinction opacity at the ionizing grid points (all other grid points hold zero opacity by
+    // construction) and the effective re-emission fraction at the grid points of the re-emission range, as
+    // consecutive custom state variables; the absorption and scattering opacities follow from these two
+    mutable int _indexFirstOpacityExt = 0;          // first index of the extinction opacity array
+    mutable int _indexFirstReemissionFraction = 0;  // first index of the effective re-emission fraction array
+    mutable int _numIonizingOpacityPoints = 0;      // grid points 0 .. n-1 have lambda <= _lambdaLow
+    mutable int _firstReemissionOpacityPoint = 0;   // first grid point with _lambdaBin5 <= lambda <= _lambdaH
+    mutable int _numReemissionOpacityPoints = 0;    // zero when reemissionFraction() is zero
 
     // Radiation field wavelength grid caching
     mutable Array _opacityWavelengthGrid;  // Cached wavelength grid for opacity calculations
 
     // Pre-compute opacity arrays for the radiation field wavelength grid
-    void precomputeOpacityArrays(MaterialState* state, const Array& Jv) const;
+    void precomputeOpacityArrays(MaterialState* state, const Array& Jv, const double* solverIonFracs) const;
 
     // Get the interpolated opacity from pre-computed state variables
     // opacityType: 0=absorption, 1=scattering, 2=extinction
@@ -442,13 +470,6 @@ private:
 
     // Radiation field characterization
     double calculateIonizationParameter(const Array& Jv, double nH) const;
-
-    // Integration methods
-    double integrate(const vector<double>& x, const vector<double>& y) const;
-    double integrateLinearSpace(const vector<double>& x, const vector<double>& y) const;
-    double integrateLogSpace(const vector<double>& x, const vector<double>& y) const;
-    double simpsonIntegration(const vector<double>& x, const vector<double>& y) const;
-    double trapezoidalIntegrationKahan(const vector<double>& x, const vector<double>& y) const;
 
     // convert total to Hydrogen number density
     double convertTotalDensityToHydrogenDensity(double n_total, double He_abundance) const;
@@ -509,6 +530,11 @@ private:
     double _lambdaBin4 = 0;  // 3.52 Ryd boundary
     double _lambdaBin5 = 0;  // 4.00 Ryd boundary
     double _lambdaBin6 = 0;  // 6.00 Ryd boundary
+
+    // Radiation field bins assigned to each of the five energy bins (by characteristic wavelength), and the summed
+    // width of those bins, set up once from the radiation field wavelength grid
+    vector<int> _energyBinRFBins[5];
+    double _energyBinRFWidth[5] = {0., 0., 0., 0., 0.};
 
     // Wavelength bounds
     double _lambdaLow = 0;   // Low energy cutoff @ 912 A

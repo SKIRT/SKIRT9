@@ -363,6 +363,90 @@ void DiffuseIonizedGasMix::setupSelfBefore()
         rfDlambdav = rfWavelengthGrid->dlambdav();
         _emissionSolver.initialize(rfLambdav, rfDlambdav);
 
+        // Assign each radiation field bin to the energy bin that holds its characteristic wavelength. The stored
+        // field per bin is the mean intensity over the bin, so the width-weighted mean over the assigned bins is the
+        // exact energy-bin average when the bin borders include the energy-bin boundaries. A radiation field bin
+        // that straddles a boundary counts whole in one energy bin; warn so that the grid can be corrected. A border
+        // within a relative 1e-4 of a boundary or edge counts as on it (an error below 0.01 % in energy).
+        auto straddles = [rfWavelengthGrid](int ell, double lambda) {
+            return rfWavelengthGrid->leftBorder(ell) < lambda * (1. - 1e-4)
+                   && rfWavelengthGrid->rightBorder(ell) > lambda * (1. + 1e-4);
+        };
+        auto binText = [rfWavelengthGrid](int ell) {
+            return "Radiation field wavelength bin "
+                   + StringUtils::toString(rfWavelengthGrid->leftBorder(ell) * 1e6, 'g', 7) + "-"
+                   + StringUtils::toString(rfWavelengthGrid->rightBorder(ell) * 1e6, 'g', 7) + " micron";
+        };
+        const double binLowWl[5] = {_lambdaBin2, _lambdaBin3, _lambdaBin4, _lambdaBin5, _lambdaBin6};
+        const double binHighWl[5] = {_lambdaBin1, _lambdaBin2, _lambdaBin3, _lambdaBin4, _lambdaBin5};
+        const double boundaries[6] = {_lambdaBin1, _lambdaBin2, _lambdaBin3, _lambdaBin4, _lambdaBin5, _lambdaBin6};
+        const double boundariesRyd[6] = {energyBin1Ryd, energyBin2Ryd, energyBin3Ryd,
+                                         energyBin4Ryd, energyBin5Ryd, energyBin6Ryd};
+        for (int ell = 0; ell < rfWavelengthGrid->numBins(); ell++)
+        {
+            double lambda = rfWavelengthGrid->wavelength(ell);
+            for (int bin = 0; bin < 5; bin++)
+            {
+                if (lambda >= binLowWl[bin] && lambda <= binHighWl[bin])
+                {
+                    _energyBinRFBins[bin].push_back(ell);
+                    _energyBinRFWidth[bin] += rfWavelengthGrid->effectiveWidth(ell);
+                    break;
+                }
+            }
+            for (int k = 0; k < 6; k++)
+            {
+                if (straddles(ell, boundaries[k]))
+                    log->warning(binText(ell) + " straddles the " + StringUtils::toString(boundariesRyd[k], 'g', 3)
+                                 + " Ryd boundary of the radiation field ratio bins; place a bin border at "
+                                 + StringUtils::toString(boundaries[k] * 1e6, 'g', 7) + " micron");
+            }
+        }
+
+        // An energy bin without radiation field bins leaves its shape ratio undefined (set to the floor)
+        for (int bin = 0; bin < 5; bin++)
+        {
+            if (_energyBinRFBins[bin].empty())
+                log->warning("No radiation field bin has its characteristic wavelength between "
+                             + StringUtils::toString(boundariesRyd[bin], 'g', 3) + " and "
+                             + StringUtils::toString(boundariesRyd[bin + 1], 'g', 3)
+                             + " Ryd; the shape ratio for that range is undefined. The radiation field wavelength "
+                               "grid should cover 1 to 6 Ryd ("
+                             + StringUtils::toString(_lambdaBin6 * 1e6, 'g', 7) + " to "
+                             + StringUtils::toString(_lambdaBin1 * 1e6, 'g', 7) + " micron)");
+        }
+
+        // The ion solver evaluates each bin at its characteristic wavelength, so a bin that straddles an ionization
+        // edge counts as wholly above or wholly below it. The hydrogen edge matters most: it also decides which bins
+        // enter the ionization parameter, and non-ionizing source light in a straddling bin is counted as ionizing.
+        const double lambdaHI = Constants::h() * Constants::c() / (VernerCrossSections::HI_eV * Constants::Qelectron());
+        const bool sourcesBeyondHI = config->sourceWavelengthRange().max() > lambdaHI;
+        string straddledEdges;
+        for (int ion = 0; ion < VernerCrossSections::numIons; ion++)
+        {
+            double E = VernerCrossSections::ionizationPotential(ion);
+            double lambdaEdge = Constants::h() * Constants::c() / (E * Constants::Qelectron());
+            for (int ell = 0; ell < rfWavelengthGrid->numBins(); ell++)
+            {
+                if (!straddles(ell, lambdaEdge)) continue;
+                if (ion == 0)
+                    log->warning(
+                        binText(ell) + " straddles the ion solver's hydrogen edge ("
+                        + StringUtils::toString(VernerCrossSections::HI_eV, 'g', 4) + " eV); place a bin border at "
+                        + StringUtils::toString(lambdaHI * 1e6, 'g', 7) + " micron"
+                        + (sourcesBeyondHI ? ". The sources emit beyond this edge, so non-ionizing light in this "
+                                             "bin enters the ionization parameter"
+                                           : ""));
+                else
+                    straddledEdges += (straddledEdges.empty() ? "" : ", ") + StringUtils::toString(E, 'g', 4);
+            }
+        }
+        if (!straddledEdges.empty())
+            log->warning("Ion solver ionization edges inside a radiation field bin (eV): " + straddledEdges
+                         + "; the solver treats each such bin as wholly above or wholly below the edge");
+        log->info("DiffuseIonizedGasMix reads the medium number density as total hydrogen plus helium nuclei: "
+                  "n_H = n / (1 + y_He)");
+
         // includeExtendedLines=true requires the full resource set (statistical-equilibrium solver,
         // Case B emissivity tables, extended line registry): a missing resource is a fatal
         // configuration error rather than a silent fallback. includeExtendedLines=false skips all
@@ -585,25 +669,18 @@ vector<StateVariable> DiffuseIonizedGasMix::specificStateVariableInfo() const
         const_cast<DiffuseIonizedGasMix*>(this)->_indexFirstMetalAbund = -1;
     }
 
-    int numWavelengths = _opacityWavelengthGrid.size();
-
-    // Store the starting indices for each opacity array
-    const_cast<DiffuseIonizedGasMix*>(this)->_indexFirstOpacityAbs = index;
-    for (int i = 0; i < numWavelengths; i++)
-    {
-        result.push_back(StateVariable::custom(index++, "absorption opacity at wavelength " + std::to_string(i), ""));
-    }
-
-    const_cast<DiffuseIonizedGasMix*>(this)->_indexFirstOpacitySca = index;
-    for (int i = 0; i < numWavelengths; i++)
-    {
-        result.push_back(StateVariable::custom(index++, "scattering opacity at wavelength " + std::to_string(i), ""));
-    }
-
     const_cast<DiffuseIonizedGasMix*>(this)->_indexFirstOpacityExt = index;
-    for (int i = 0; i < numWavelengths; i++)
+    for (int i = 0; i < _numIonizingOpacityPoints; i++)
     {
         result.push_back(StateVariable::custom(index++, "extinction opacity at wavelength " + std::to_string(i), ""));
+    }
+
+    const_cast<DiffuseIonizedGasMix*>(this)->_indexFirstReemissionFraction = index;
+    for (int i = 0; i < _numReemissionOpacityPoints; i++)
+    {
+        result.push_back(StateVariable::custom(
+            index++, "effective reemission fraction at wavelength " + std::to_string(_firstReemissionOpacityPoint + i),
+            ""));
     }
 
     return result;
@@ -620,9 +697,8 @@ vector<StateVariable> DiffuseIonizedGasMix::specificStateVariableInfo() const
 #define logR3() custom(_indexLogR3)
 #define logR4() custom(_indexLogR4)
 #define logR5() custom(_indexLogR5)
-#define opacityAbsAtIndex(i) custom(_indexFirstOpacityAbs + (i))
-#define opacityScaAtIndex(i) custom(_indexFirstOpacitySca + (i))
 #define opacityExtAtIndex(i) custom(_indexFirstOpacityExt + (i))
+#define reemissionFractionAtIndex(i) custom(_indexFirstReemissionFraction + (i) - _firstReemissionOpacityPoint)
 
 #define setHeliumAbundance(value) setCustom(_indexHeliumAbundance, (value))
 #define setHNeutralFraction(value) setCustom(_indexHNeutralFraction, (value))
@@ -638,9 +714,9 @@ vector<StateVariable> DiffuseIonizedGasMix::specificStateVariableInfo() const
 #define setIonFracDiag(i, value) setCustom(_indexFirstIonFractionDiag + (i), (value))
 #define ionFracAgg(i) custom(_indexFirstIonFractionAgg + (i))
 #define setIonFracAgg(i, value) setCustom(_indexFirstIonFractionAgg + (i), (value))
-#define setOpacityAbsAtIndex(i, value) setCustom(_indexFirstOpacityAbs + (i), (value))
-#define setOpacityScaAtIndex(i, value) setCustom(_indexFirstOpacitySca + (i), (value))
 #define setOpacityExtAtIndex(i, value) setCustom(_indexFirstOpacityExt + (i), (value))
+#define setReemissionFractionAtIndex(i, value) \
+    setCustom(_indexFirstReemissionFraction + (i) - _firstReemissionOpacityPoint, (value))
 
 ////////////////////////////////////////////////////////////////////
 
@@ -728,13 +804,9 @@ void DiffuseIonizedGasMix::initializeSpecificState(MaterialState* state, double 
         for (int i = 0; i < numIonFracAggs; ++i) state->setIonFracAgg(i, 0.0);
 
         // Initialize opacity arrays with zeros
-        int numWavelengths = _opacityWavelengthGrid.size();
-        for (int i = 0; i < numWavelengths; i++)
-        {
-            state->setOpacityAbsAtIndex(i, 0.0);
-            state->setOpacityScaAtIndex(i, 0.0);
-            state->setOpacityExtAtIndex(i, 0.0);
-        }
+        for (int i = 0; i < _numIonizingOpacityPoints; i++) state->setOpacityExtAtIndex(i, 0.0);
+        for (int i = _firstReemissionOpacityPoint; i < _firstReemissionOpacityPoint + _numReemissionOpacityPoints; i++)
+            state->setReemissionFractionAtIndex(i, 0.0);
     }
 }
 
@@ -777,6 +849,8 @@ UpdateStatus DiffuseIonizedGasMix::updateSpecificState(MaterialState* state, con
         constexpr double cm3PerM3 = 1e6;
         double nH_cgs = n_H / cm3PerM3;  // m^-3 -> cm^-3
         double T = state->temperature();
+        double solverIonFracs[PhotoIonizationSolver::totalStages] = {};
+        bool hasSolverIonFracs = false;
 
         if (T > 0.)
         {
@@ -785,6 +859,8 @@ UpdateStatus DiffuseIonizedGasMix::updateSpecificState(MaterialState* state, con
 
             auto result =
                 _emissionSolver.solveIonizationAtFixedT(Jv, nH_cgs, He_abundance, metalAbundances, T, nullptr);
+            for (int s = 0; s < PhotoIonizationSolver::totalStages; ++s) solverIonFracs[s] = result.ionFracs[s];
+            hasSolverIonFracs = true;
 
             // H/He neutral fractions from the full solver
             double h0 = std::max(minNeutralFraction, std::min(result.ionFracs[0], maxNeutralFraction));
@@ -815,7 +891,7 @@ UpdateStatus DiffuseIonizedGasMix::updateSpecificState(MaterialState* state, con
         }
 
         // Pre-compute opacity arrays
-        precomputeOpacityArrays(state, Jv);
+        precomputeOpacityArrays(state, Jv, hasSolverIonFracs ? solverIonFracs : nullptr);
 
         // Update ionized H density for global convergence criterion
         state->setNHIonized(n_H * (1.0 - state->hNeutralFraction()));
@@ -1450,35 +1526,23 @@ double DiffuseIonizedGasMix::calculateIonizationParameter(const Array& Jv, doubl
     auto config = find<Configuration>();
     auto rfwlg = config->radiationFieldWLG();
 
-    // Calculate ionizing photon flux: phi = integ (4pi * J_lamb * lambda) / (h*c) dlambda
-    // Only consider ionizing radiation (> 1 Ryd range)
-
-    vector<double> ionizing_wavelengths;
-    vector<double> photon_flux_integrand;
-
+    // Ionizing photon flux: phi = sum over bins with characteristic wavelength above 1 Ryd of
+    // 4pi * J_lambda * lambda * dlambda / (h*c). Jv holds the mean intensity over each bin, so the sum is exact
+    // when a bin border sits at the ionization edge.
+    double ionizing_photon_flux = 0.;
+    int numIonizingBins = 0;
     for (int i = 0; i < rfwlg->numBins(); i++)
     {
         double lambda = rfwlg->wavelength(i);
-
-        // Ionizing range (> 1 Ryd)
         if (lambda <= _lambdaLow)
         {
-            ionizing_wavelengths.push_back(lambda);
-
-            // Photon flux integrand: (4pi * J_lambda * lambda) / (h*c)
-            double photonFluxContribution = (4 * M_PI * Jv[i] * lambda) / (h * c);
-            photon_flux_integrand.push_back(photonFluxContribution);
+            ionizing_photon_flux += 4. * M_PI * Jv[i] * lambda * rfwlg->effectiveWidth(i) / (h * c);
+            numIonizingBins++;
         }
     }
 
     // If no ionizing radiation, return the sentinel value
-    if (ionizing_wavelengths.size() < 2)
-    {
-        return _logFloor;
-    }
-
-    // Integrate to get total ionizing photon flux
-    double ionizing_photon_flux = integrate(ionizing_wavelengths, photon_flux_integrand);
+    if (numIonizingBins == 0) return _logFloor;
 
     // Calculate ionization parameter: U = phi / (n_H * c)
     if (nH < 1e-20) nH = 1e-20;  // Prevent division by zero
@@ -1923,302 +1987,17 @@ void DiffuseIonizedGasMix::calculateBinAverages(const Array& Jv, double* binAver
      * Bin 5: 4.00 - 6.00 Ryd
      */
 
-    // Initialize bin averages to zero
-    for (int i = 0; i < 5; i++)
-    {
-        binAverages[i] = 0.0;
-    }
-
-    // Get radiation field wavelength grid
-    auto config = find<Configuration>();
-    auto rfwlg = config->radiationFieldWLG();
-
-    // For each bin, calculate the average intensity.
-    // Wavelength bounds per bin (binLow = shorter lambda = higher Ryd, binHigh = longer lambda = lower Ryd).
-    const double binLowWl[5] = {_lambdaBin2, _lambdaBin3, _lambdaBin4, _lambdaBin5, _lambdaBin6};
-    const double binHighWl[5] = {_lambdaBin1, _lambdaBin2, _lambdaBin3, _lambdaBin4, _lambdaBin5};
+    // Jv holds the mean intensity over each radiation field bin, so the average over an energy bin is the
+    // width-weighted mean over the radiation field bins assigned to it during setup.
+    // An energy bin without radiation field bins gets the minimal value.
+    auto rfwlg = find<Configuration>()->radiationFieldWLG();
     for (int bin = 0; bin < 5; bin++)
     {
-        const double binLowWavelength = binLowWl[bin];
-        const double binHighWavelength = binHighWl[bin];
-
-        // Collect wavelengths and intensities in this bin
-        vector<double> binWavelengths;
-        vector<double> binIntensities;
-
-        for (int i = 0; i < rfwlg->numBins(); i++)
-        {
-            double lambda = rfwlg->wavelength(i);
-
-            // Check if wavelength is in this bin
-            if (lambda >= binLowWavelength && lambda <= binHighWavelength)
-            {
-                binWavelengths.push_back(lambda);
-                binIntensities.push_back(Jv[i]);
-            }
-        }
-
-        // Calculate bin average using integration
-        if (binWavelengths.size() >= 2)
-        {
-            // Calculate weighted average: <J> = integrate J(lambda) dlambda / integrate dlambda
-            double totalIntensity = integrate(binWavelengths, binIntensities);
-            double totalWidth = binHighWavelength - binLowWavelength;
-
-            if (totalWidth > 0)
-            {
-                binAverages[bin] = totalIntensity / totalWidth;
-            }
-        }
-        else if (binWavelengths.size() == 1)
-        {
-            // Only one wavelength point in bin
-            binAverages[bin] = binIntensities[0];
-        }
-        else
-        {
-            // No wavelength points in bin - use minimal value
-            binAverages[bin] = 1e-99;
-        }
-
-        // Ensure positive values
-        binAverages[bin] = std::max(binAverages[bin], 1e-99);
+        double sum = 0.;
+        for (int ell : _energyBinRFBins[bin]) sum += Jv[ell] * rfwlg->effectiveWidth(ell);
+        double average = _energyBinRFWidth[bin] > 0. ? sum / _energyBinRFWidth[bin] : 0.;
+        binAverages[bin] = std::max(average, 1e-99);
     }
-}
-
-////////////////////////////////////////////////////////////////////
-// Integration
-
-double DiffuseIonizedGasMix::integrate(const vector<double>& x, const vector<double>& y) const
-{
-    // Input validation
-    if (x.size() != y.size() || x.size() < 2)
-    {
-        return 0.0;
-    }
-
-    const size_t n = x.size();
-
-    // Check for large dynamic range that would benefit from log-space integration
-    bool useLogSpace = false;
-    if (n >= 3)
-    {
-        // Find min and max positive values in y
-        double yMin = std::numeric_limits<double>::max();
-        double yMax = 0.0;
-        size_t positiveCount = 0;
-
-        for (size_t i = 0; i < n; ++i)
-        {
-            if (y[i] > 0.0)
-            {
-                yMin = std::min(yMin, y[i]);
-                yMax = std::max(yMax, y[i]);
-                positiveCount++;
-            }
-        }
-
-        // Use log-space when the data are mostly positive and span a large dynamic range.
-        if (positiveCount > n / 2 && yMax > 0.0 && yMin > 0.0 && yMax / yMin > 1e6)
-        {
-            useLogSpace = true;
-        }
-    }
-
-    if (useLogSpace)
-    {
-        return integrateLogSpace(x, y);
-    }
-    else
-    {
-        return integrateLinearSpace(x, y);
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
-double DiffuseIonizedGasMix::integrateLinearSpace(const vector<double>& x, const vector<double>& y) const
-{
-    const size_t n = x.size();
-
-    // Use Simpson's rule when possible, fall back to trapezoidal for irregular grids
-    bool canUseSimpson = true;
-
-    // Check that there are enough points and that the spacing is reasonably regular.
-    if (n < 3 || (n % 2) == 0)
-    {
-        canUseSimpson = false;
-    }
-    else
-    {
-        // Check for roughly uniform spacing (within 10% tolerance)
-        double avgSpacing = (x[n - 1] - x[0]) / (n - 1);
-        for (size_t i = 1; i < n; ++i)
-        {
-            double spacing = x[i] - x[i - 1];
-            if (std::abs(spacing - avgSpacing) > 0.1 * avgSpacing)
-            {
-                canUseSimpson = false;
-                break;
-            }
-        }
-    }
-
-    if (canUseSimpson)
-    {
-        return simpsonIntegration(x, y);
-    }
-    else
-    {
-        return trapezoidalIntegrationKahan(x, y);
-    }
-}
-
-////////////////////////////////////////////////////////////////////
-
-double DiffuseIonizedGasMix::integrateLogSpace(const vector<double>& x, const vector<double>& y) const
-{
-    const size_t n = x.size();
-    vector<double> logY(n);
-    vector<bool> validPoints(n);
-
-    // Convert to log space, handling zeros and negative values
-    for (size_t i = 0; i < n; ++i)
-    {
-        if (y[i] > 0.0)
-        {
-            logY[i] = std::log(y[i]);
-            validPoints[i] = true;
-        }
-        else
-        {
-            // Zero or negative values are excluded from log-space integration.
-            // and handle them separately if needed
-            validPoints[i] = false;
-        }
-    }
-
-    // Integrate in log space using trapezoidal rule with Kahan summation
-    double integral = 0.0;
-    double compensation = 0.0;  // Kahan summation compensation
-
-    for (size_t i = 1; i < n; ++i)
-    {
-        if (validPoints[i - 1] && validPoints[i])
-        {
-            double dx = x[i] - x[i - 1];
-
-            // Skip if interval is too small
-            if (dx < 1e-20) continue;
-
-            // For log-space integration: integral of exp(log_y) dx is approx dx * exp((log_y1 + log_y2)/2)
-            // This is more stable than (y1 + y2)/2 when y values have large dynamic range
-            double avgLogY = 0.5 * (logY[i - 1] + logY[i]);
-            double contribution = dx * std::exp(avgLogY);
-
-            // Kahan summation
-            double correctedContribution = contribution - compensation;
-            double newIntegral = integral + correctedContribution;
-            compensation = (newIntegral - integral) - correctedContribution;
-            integral = newIntegral;
-        }
-        else if (validPoints[i - 1] || validPoints[i])
-        {
-            // One endpoint is positive, one is not - use linear interpolation to boundary
-            double dx = x[i] - x[i - 1];
-            if (dx < 1e-20) continue;
-
-            double contribution;
-            if (validPoints[i - 1] && !validPoints[i])
-            {
-                // Only left endpoint is valid - approximate as triangle
-                contribution = 0.5 * dx * y[i - 1];
-            }
-            else
-            {
-                // Only right endpoint is valid - approximate as triangle
-                contribution = 0.5 * dx * y[i];
-            }
-
-            // Kahan summation
-            double correctedContribution = contribution - compensation;
-            double newIntegral = integral + correctedContribution;
-            compensation = (newIntegral - integral) - correctedContribution;
-            integral = newIntegral;
-        }
-    }
-
-    return integral;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double DiffuseIonizedGasMix::simpsonIntegration(const vector<double>& x, const vector<double>& y) const
-{
-    const size_t n = x.size();
-
-    // Simpson's rule requires odd number of points
-    if (n < 3 || (n % 2) == 0)
-    {
-        return trapezoidalIntegrationKahan(x, y);
-    }
-
-    double integral = 0.0;
-    double compensation = 0.0;  // Kahan summation compensation
-
-    // Apply Simpson's rule: integral is approx (h/3) * [y0 + 4*y1 + 2*y2 + 4*y3 + ... + 4*y_{n-2} + y_{n-1}]
-    // For non-uniform grids, apply composite Simpson's rule on each pair of intervals
-
-    for (size_t i = 0; i < n - 2; i += 2)
-    {
-        double h1 = x[i + 1] - x[i];
-        double h2 = x[i + 2] - x[i + 1];
-
-        // Skip if intervals are too small
-        if (h1 < 1e-20 || h2 < 1e-20) continue;
-
-        // For non-uniform spacing, use the composite Simpson's rule formula
-        double contribution = (h1 + h2) / 6.0
-                              * (y[i] * (2.0 * h1 - h2) / h1 + y[i + 1] * (h1 + h2) * (h1 + h2) / (h1 * h2)
-                                 + y[i + 2] * (2.0 * h2 - h1) / h2);
-
-        // Kahan summation
-        double correctedContribution = contribution - compensation;
-        double newIntegral = integral + correctedContribution;
-        compensation = (newIntegral - integral) - correctedContribution;
-        integral = newIntegral;
-    }
-
-    return integral;
-}
-
-////////////////////////////////////////////////////////////////////
-
-double DiffuseIonizedGasMix::trapezoidalIntegrationKahan(const vector<double>& x, const vector<double>& y) const
-{
-    const size_t n = x.size();
-
-    double integral = 0.0;
-    double compensation = 0.0;  // Kahan summation compensation
-
-    for (size_t i = 1; i < n; ++i)
-    {
-        double dx = x[i] - x[i - 1];
-
-        // Skip if interval is too small to avoid numerical issues
-        if (dx < 1e-20) continue;
-
-        // Trapezoidal rule
-        double contribution = 0.5 * dx * (y[i - 1] + y[i]);
-
-        // Kahan summation to reduce floating-point errors
-        double correctedContribution = contribution - compensation;
-        double newIntegral = integral + correctedContribution;
-        compensation = (newIntegral - integral) - correctedContribution;
-        integral = newIntegral;
-    }
-
-    return integral;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -2254,36 +2033,39 @@ double DiffuseIonizedGasMix::getHeliumCrossSection(double frequency) const
 
 double DiffuseIonizedGasMix::interpolateOpacityFromState(double lambda, MaterialState* state, int opacityType) const
 {
-    // Check if wavelength is outside the grid range
-    if (lambda < _opacityWavelengthGrid[0] || lambda > _opacityWavelengthGrid[_opacityWavelengthGrid.size() - 1])
-    {
-        return 0.0;  // No opacity outside the grid range
-    }
-
-    // Create temporary arrays for interpolation
     const int numWavelengths = _opacityWavelengthGrid.size();
-    Array opacityValues(numWavelengths);
+    if (lambda < _opacityWavelengthGrid[0] || lambda > _opacityWavelengthGrid[numWavelengths - 1]) return 0.;
+    if (opacityType < 0 || opacityType > 2) return 0.;
 
-    // Fill the opacity values
-    for (int i = 0; i < numWavelengths; i++)
-    {
-        switch (opacityType)
-        {
-            case 0:  // Absorption
-                opacityValues[i] = state->opacityAbsAtIndex(i);
-                break;
-            case 1:  // Scattering
-                opacityValues[i] = state->opacityScaAtIndex(i);
-                break;
-            case 2:  // Extinction
-                opacityValues[i] = state->opacityExtAtIndex(i);
-                break;
-            default: return 0.0;
-        }
-    }
+    // stored opacity of the requested type at a given grid index; the absorption and scattering parts are rebuilt
+    // from the extinction opacity and the effective re-emission fraction with the same arithmetic that split them
+    auto stored = [this, state, opacityType](int k) {
+        if (k >= _numIonizingOpacityPoints) return 0.;
+        double ext = state->opacityExtAtIndex(k);
+        if (opacityType == 2) return ext;
+        bool inReemission =
+            k >= _firstReemissionOpacityPoint && k < _firstReemissionOpacityPoint + _numReemissionOpacityPoints;
+        if (opacityType == 0) return inReemission ? ext * (1.0 - state->reemissionFractionAtIndex(k)) : ext;
+        return inReemission ? ext * state->reemissionFractionAtIndex(k) : 0.;
+    };
 
-    // Use NR::interpolateLogLog for fast interpolation
-    return NR::clampedValue<NR::interpolateLogLog>(lambda, _opacityWavelengthGrid, opacityValues);
+    // only the two grid points bracketing lambda are read, with the same bracketing as NR::clampedValue
+    int i = NR::locate(_opacityWavelengthGrid, lambda);
+    if (i < 0) return stored(0);
+    if (i >= numWavelengths - 1) return stored(numWavelengths - 1);
+    double x1 = _opacityWavelengthGrid[i];
+    double x2 = _opacityWavelengthGrid[i + 1];
+    double y1 = stored(i);
+    double y2 = stored(i + 1);
+
+    // grid points beyond the ionization edge hold zero opacity by construction; a log-log interpolation towards
+    // such a point returns zero, which would let ionizing photons between the last ionizing grid point and the
+    // H I edge (13.598434 eV, NIST) cross the gas unabsorbed, so these photons get the opacity of the last
+    // ionizing grid point instead
+    constexpr double lambdaEdgeHI = Constants::h() * Constants::c() / (13.598434 * Constants::Qelectron());
+    if (y2 <= 0. && y1 > 0. && x2 > _lambdaLow && lambda <= lambdaEdgeHI) return y1;
+
+    return NR::interpolateLogLog(lambda, x1, x2, y1, y2);
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -2322,13 +2104,37 @@ void DiffuseIonizedGasMix::initializeOpacityWavelengthGrid() const
         log->warning("DiffuseIonizedGasMix: No radiation field grid available, using fallback opacity grid ("
                      + std::to_string(numPoints) + " points)");
     }
+
+    // Grid points that can hold nonzero opacity (ionizing) and those in the re-emission range; the grid is sorted
+    // by increasing wavelength, so each set is a contiguous range of indices
+    const int numWavelengths = _opacityWavelengthGrid.size();
+    _numIonizingOpacityPoints = 0;
+    while (_numIonizingOpacityPoints < numWavelengths
+           && _opacityWavelengthGrid[_numIonizingOpacityPoints] <= _lambdaLow)
+        _numIonizingOpacityPoints++;
+    _firstReemissionOpacityPoint = 0;
+    _numReemissionOpacityPoints = 0;
+    if (reemissionFraction() > 0.0)
+    {
+        while (_firstReemissionOpacityPoint < numWavelengths
+               && _opacityWavelengthGrid[_firstReemissionOpacityPoint] < _lambdaBin5)
+            _firstReemissionOpacityPoint++;
+        while (_firstReemissionOpacityPoint + _numReemissionOpacityPoints < numWavelengths
+               && _opacityWavelengthGrid[_firstReemissionOpacityPoint + _numReemissionOpacityPoints] <= _lambdaH)
+            _numReemissionOpacityPoints++;
+    }
+    find<Log>()->info("DiffuseIonizedGasMix: opacities stored at " + std::to_string(_numIonizingOpacityPoints)
+                      + " ionizing grid points, re-emission fractions at " + std::to_string(_numReemissionOpacityPoints)
+                      + " points (" + std::to_string(numWavelengths) + " radiation field grid points)");
 }
 
 ////////////////////////////////////////////////////////////////////
 
-void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const Array& Jv) const
+void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const Array& Jv,
+                                                   const double* solverIonFracs) const
 {
-    const int numWavelengths = _opacityWavelengthGrid.size();
+    // grid points beyond the ionizing range hold zero opacity and are not stored
+    const int numWavelengths = _numIonizingOpacityPoints;
 
     // Get actual density
     double n_total = state->numberDensity();
@@ -2345,12 +2151,19 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
         densityScalingFactor = n_H / _nHMinOpacity;
     }
 
-    // Solve ion fractions once for analytical opacity (used across all wavelengths)
+    // Below the logU range of the Cloudy opacity tables (the emission floor, where the temperature is set to the
+    // floor value and the lines are switched off), the table lookup would clamp to the edge of the table, which
+    // describes partly ionized gas. These cells use the analytical opacity from the ion fractions of the
+    // ionization-balance solver instead, as do all cells when the Cloudy opacity is not used.
+    const bool useAnalyticalOpacity = !useCloudyOpacity() || logU <= _minLogUEmit;
+
+    // Ion fractions for the analytical opacity (used across all wavelengths): taken from the ionization-balance
+    // solution of this state update when available, otherwise solved here
     double analyticalIonFracs[PhotoIonizationSolver::totalStages] = {};
     double analyticalAbundances[8] = {};
     double nH_cgs_opacity = 0.;
     bool analyticalOpacityReady = false;
-    if (!useCloudyOpacity())
+    if (useAnalyticalOpacity)
     {
         double T = state->temperature();
         double yHe = state->heliumAbundance();
@@ -2358,7 +2171,12 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
         // Per-cell abundances per abundanceMode (SolarScaled: solar * Zfrac * g; PerCell: snapshot).
         buildPerCellAbundances(state, analyticalAbundances);
 
-        if (T > 0. && logU > -98.)
+        if (solverIonFracs)
+        {
+            for (int s = 0; s < PhotoIonizationSolver::totalStages; ++s) analyticalIonFracs[s] = solverIonFracs[s];
+            analyticalOpacityReady = true;
+        }
+        else if (T > 0. && logU > -98.)
         {
             auto result =
                 _emissionSolver.solveIonizationAtFixedT(Jv, nH_cgs_opacity, yHe, analyticalAbundances, T, nullptr);
@@ -2374,7 +2192,7 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
     int dNlo = _deltaIdCentre, dNhi = _deltaIdCentre;
     int dClo = _deltaIdCentre, dChi = _deltaIdCentre;
     double wN = 0., wC = 0.;
-    if (useCloudyOpacity())
+    if (!useAnalyticalOpacity)
     {
         double dN, dC;
         computeCellDeltas(state, dN, dC);
@@ -2388,8 +2206,6 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
     {
         double lambda = _opacityWavelengthGrid[i];
         double totalOpacity = 0.0;
-        double absorbedOpacity = 0.0;
-        double scatteringOpacity = 0.0;
 
         // Calculate reemission probability once (used by both STAB and non-STAB paths)
         double probReemission = 0.0;
@@ -2429,7 +2245,7 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
             }
         }
 
-        if (useCloudyOpacity())
+        if (!useAnalyticalOpacity)
         {
             if (lambda <= _lambdaLow)
             {
@@ -2486,32 +2302,9 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
 
                 // Apply density scaling if outside table bounds (linear scaling)
                 totalOpacity *= densityScalingFactor;
-
-                // Split opacity into absorption and scattering
-                if (inReemissionRange)
-                {
-                    // Apply reemission fraction to modulate effective reemission
-                    double effectiveReemission = probReemission * reemissionFraction();
-
-                    // Split total opacity based on effective reemission probability
-                    absorbedOpacity = totalOpacity * (1.0 - effectiveReemission);
-                    scatteringOpacity = totalOpacity * effectiveReemission;
-                }
-                else
-                {
-                    // Outside reemission range: all opacity is absorption
-                    absorbedOpacity = totalOpacity;
-                    scatteringOpacity = 0.0;
-                }
-            }
-            else
-            {
-                totalOpacity = 0.0;
-                absorbedOpacity = 0.0;
-                scatteringOpacity = 0.0;
             }
         }
-        else if (!useCloudyOpacity())  // analytical opacity from ion-balance solver
+        else  // analytical opacity from the ion fractions of the ionization-balance solver
         {
             if (lambda <= _lambdaLow && analyticalOpacityReady)
             {
@@ -2519,25 +2312,14 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
                 totalOpacity = _emissionSolver.opacityAbs(lambda, analyticalIonFracs, nH_cgs_opacity, He_abundance,
                                                           analyticalAbundances)
                                * 100.0;
-
-                // Split into absorption and scattering (same logic as STAB path)
-                if (inReemissionRange)
-                {
-                    double effectiveReemission = probReemission * reemissionFraction();
-                    absorbedOpacity = totalOpacity * (1.0 - effectiveReemission);
-                    scatteringOpacity = totalOpacity * effectiveReemission;
-                }
-                else
-                {
-                    absorbedOpacity = totalOpacity;
-                    scatteringOpacity = 0.0;
-                }
             }
         }
 
-        state->setOpacityAbsAtIndex(i, absorbedOpacity);
-        state->setOpacityScaAtIndex(i, scatteringOpacity);
+        // the absorption part is totalOpacity * (1 - f) and the scattering part totalOpacity * f, with f the
+        // effective re-emission fraction (interpolateOpacityFromState)
         state->setOpacityExtAtIndex(i, totalOpacity);
+        if (i >= _firstReemissionOpacityPoint && i < _firstReemissionOpacityPoint + _numReemissionOpacityPoints)
+            state->setReemissionFractionAtIndex(i, probReemission * reemissionFraction());
     }
 }
 
