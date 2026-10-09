@@ -118,6 +118,16 @@
 
     All threshold properties are specified as fractions (0-1); log output displays percentages.
 
+    <b>Gas density</b>
+
+    The number density of this mix is the number density of hydrogen plus helium nuclei,
+    n = n_H (1 + y_He), with y_He = n_He/n_H the helium abundance of the cell (the imported
+    column in PerCell mode, the value implied by the metallicity in SolarScaled mode). The mix
+    derives the hydrogen density as n_H = n / (1 + y_He), so a snapshot that lists n_H must be
+    multiplied by (1 + y_He) before it is imported as a number density. Accordingly, the mass per
+    particle is the mean mass per nucleus, m_p (1 + 4 y_He) / (1 + y_He), evaluated at the default
+    metallicity.
+
     <b>Density Ceiling</b>
 
     If maxHydrogenDensity is set to a positive value, the hydrogen number density n_H is clamped
