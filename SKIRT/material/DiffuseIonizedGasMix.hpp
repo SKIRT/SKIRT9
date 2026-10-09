@@ -125,8 +125,10 @@
     column in PerCell mode, the value implied by the metallicity in SolarScaled mode). The mix
     derives the hydrogen density as n_H = n / (1 + y_He), so a snapshot that lists n_H must be
     multiplied by (1 + y_He) before it is imported as a number density. Accordingly, the mass per
-    particle is the mean mass per nucleus, m_p (1 + 4 y_He) / (1 + y_He), evaluated at the default
-    metallicity.
+    particle is the mean mass per nucleus, m_p (1 + 4 y_He) / (1 + y_He). Because it is a property
+    of the mix rather than of a cell, it uses the y_He of the \em defaultMetallicity value; it
+    enters only conversions between number and mass density (for example reported gas masses, or
+    a snapshot that lists mass density), not the gas physics.
 
     <b>Density Ceiling</b>
 
