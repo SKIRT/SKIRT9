@@ -10,6 +10,7 @@
 #include "GasLineEmission.hpp"
 #include "PhotoIonizationSolver.hpp"
 #include "StoredTable.hpp"
+#include <array>
 
 //////////////////////////////////////////////////////////////////////
 
@@ -118,6 +119,18 @@
 
     All threshold properties are specified as fractions (0-1); log output displays percentages.
 
+    <b>Gas density</b>
+
+    The number density of this mix is the number density of hydrogen plus helium nuclei,
+    n = n_H (1 + y_He), with y_He = n_He/n_H the helium abundance of the cell (the imported
+    column in PerCell mode, the value implied by the metallicity in SolarScaled mode). The mix
+    derives the hydrogen density as n_H = n / (1 + y_He), so a snapshot that lists n_H must be
+    multiplied by (1 + y_He) before it is imported as a number density. Accordingly, the mass per
+    particle is the mean mass per nucleus, m_p (1 + 4 y_He) / (1 + y_He). Because it is a property
+    of the mix rather than of a cell, it uses the y_He of the \em defaultMetallicity value; it
+    enters only conversions between number and mass density (for example reported gas masses, or
+    a snapshot that lists mass density), not the gas physics.
+
     <b>Density Ceiling</b>
 
     If maxHydrogenDensity is set to a positive value, the hydrogen number density n_H is clamped
@@ -129,6 +142,205 @@
 
     For opacity, cells below the minimum STAB table density are linearly scaled
     (opacity proportional to n). Cells above the maximum table density use StoredTable clamping.
+    Cells with log U at or below -6.5, the lower edge of the tables, use the Verner bound-free
+    opacity computed from the ion fractions of the ionization balance instead of the table, as all
+    cells do when \em useCloudyOpacity is false.
+
+    <b>Radiation field wavelength grid</b>
+
+    The field averages over the five energy bins (R2-R5) and the ionizing photon flux (log U) are
+    computed from the mean intensity stored per radiation field bin, and are exact when the grid has
+    bin borders at the energy bin boundaries (1, 1.8, 2.58, 3.52, 4 and 6 Ryd). The ionization
+    balance evaluates each bin at its characteristic wavelength, so borders at the ionization edges
+    of the tracked ions, and in particular at the hydrogen edge, avoid counting a bin as wholly
+    above or below an edge. During setup, the mix warns when an energy bin boundary or the hydrogen
+    edge falls inside a bin, and lists the other ionization edges that do.
+
+    Two radiation field wavelength grids are recommended for this mix. Both have borders at the six
+    energy bin boundaries and at ionization edges of the tracked ions, as specified below, and
+    enough bins in between that the photoionization rates, the hydrogen and helium photoheating and
+    the absorption in the transport are within 2 %, and the power absorbed by dust within 1 %, of a
+    fine reference grid, for blackbody fields of 30 to 50 kK behind H I columns up to
+    \f$10^{18}\,\mathrm{cm}^{-2}\f$. The medium grid (70 bins) has borders at the edges of H, He, C,
+    N, O, Ne and S and is the default choice. The fine grid (83 bins) adds the edges of Mg, Si and
+    Fe, so that every ionization edge of the tracked ions that falls within the grid has a border;
+    use it when the lines of these elements matter. Both grids start at 0.0092 micron, so edges
+    above 135 eV lie outside them and have no border. Save the borders of the chosen grid as a text
+    file and use it as:
+
+    \verbatim
+    <radiationFieldWLG type="DisjointWavelengthGrid">
+        <FileBorderWavelengthGrid filename="dig_rf_grid_medium.txt" characteristic="Logarithmic"/>
+    </radiationFieldWLG>
+    \endverbatim
+
+    The borders match the band boundaries and edge energies used in this class; the setup check
+    reports any border that no longer matches them.
+
+    Medium grid (71 borders, micron):
+
+    \verbatim
+    0.0091882500
+    0.0098244214
+    0.0103412919
+    0.0106098368
+    0.0108853554
+    0.0117418171
+    0.0121949959
+    0.0126656653
+    0.0127660830
+    0.0139243820
+    0.0151877764
+    0.0155906237
+    0.0160041562
+    0.0160165609
+    0.0175477571
+    0.0183674044
+    0.0192253370
+    0.0195373776
+    0.0202543879
+    0.0209977120
+    0.0217683158
+    0.0221641589
+    0.0225672002
+    0.0227816647
+    0.0242853361
+    0.0250739902
+    0.0258882553
+    0.0261294411
+    0.0262067635
+    0.0302695796
+    0.0353030177
+    0.0353204103
+    0.0355969561
+    0.0386139068
+    0.0418865534
+    0.0438740698
+    0.0459558938
+    0.0481365004
+    0.0492653033
+    0.0498395927
+    0.0504205767
+    0.0506259215
+    0.0508548802
+    0.0531436768
+    0.0575065853
+    0.0634692500
+    0.0700501632
+    0.0773134293
+    0.0853297990
+    0.0910309824
+    0.0911266587
+    0.0911648515
+    0.1101103002
+    0.1196758668
+    0.1587769964
+    0.1828849982
+    0.2106534530
+    0.2426381481
+    0.2794792589
+    0.3707921945
+    0.4919393735
+    0.6526683970
+    1.1488268704
+    1.5241776371
+    2.0221649835
+    3.5594146741
+    6.2652814808
+    7.2165743031
+    8.3123072493
+    9.5744114736
+    11.0281480600
+    \endverbatim
+
+    Fine grid (84 borders, micron):
+
+    \verbatim
+    0.0091882500
+    0.0098244214
+    0.0099187358
+    0.0103908116
+    0.0106352093
+    0.0108853554
+    0.0113434765
+    0.0119153580
+    0.0125160709
+    0.0126656653
+    0.0127660830
+    0.0139243820
+    0.0151877764
+    0.0154709506
+    0.0160041562
+    0.0160165609
+    0.0165290225
+    0.0178262735
+    0.0185125934
+    0.0192253370
+    0.0195373776
+    0.0202543879
+    0.0209977120
+    0.0217683158
+    0.0221641589
+    0.0225672002
+    0.0226248536
+    0.0227816647
+    0.0242853361
+    0.0250739902
+    0.0258882553
+    0.0261294411
+    0.0262067635
+    0.0274665924
+    0.0302695796
+    0.0353030177
+    0.0353204103
+    0.0355969561
+    0.0370212595
+    0.0386984459
+    0.0404516144
+    0.0418865534
+    0.0459558938
+    0.0481365004
+    0.0492653033
+    0.0498395927
+    0.0504205767
+    0.0506259215
+    0.0508548802
+    0.0531436768
+    0.0575065853
+    0.0660363530
+    0.0707645632
+    0.0758313138
+    0.0765807276
+    0.0824363019
+    0.0853297990
+    0.0910309824
+    0.0911266587
+    0.0911648515
+    0.1101103002
+    0.1196758668
+    0.1349131784
+    0.1432446036
+    0.1520905275
+    0.1569023007
+    0.1621556343
+    0.1850119894
+    0.2110900207
+    0.2408438339
+    0.2747915422
+    0.3577165393
+    0.4656661608
+    0.6061921927
+    0.7891253550
+    1.3372645004
+    1.7408164215
+    2.2661498997
+    3.8402540158
+    6.5077561320
+    7.4250451627
+    8.4716290147
+    9.6657322063
+    11.0281480600
+    \endverbatim
 
     <b>Abundances and gas-phase depletion</b>
 
@@ -422,33 +634,31 @@ private:
     double getHydrogenCrossSection(double frequency) const;
     double getHeliumCrossSection(double frequency) const;
 
-    // Starting indices for opacity arrays stored as consecutive custom state variables
-    mutable int _indexFirstOpacityAbs;  // First index for absorption opacity array
-    mutable int _indexFirstOpacitySca;  // First index for scattering opacity array
-    mutable int _indexFirstOpacityExt;  // First index for extinction opacity array
+    // Each cell stores the extinction opacity at the ionizing grid points (all other grid points hold zero opacity by
+    // construction) and the effective re-emission fraction at the grid points of the re-emission range, as
+    // consecutive custom state variables; the absorption and scattering opacities follow from these two
+    int _indexFirstOpacityExt = 0;          // first index of the extinction opacity array
+    int _indexFirstReemissionFraction = 0;  // first index of the effective re-emission fraction array
+    int _numIonizingOpacityPoints = 0;      // grid points 0 .. n-1 have lambda <= _lambdaLow
+    int _firstReemissionOpacityPoint = 0;   // first grid point with _lambdaBin5 <= lambda <= _lambdaH
+    int _numReemissionOpacityPoints = 0;    // zero when reemissionFraction() is zero
 
     // Radiation field wavelength grid caching
-    mutable Array _opacityWavelengthGrid;  // Cached wavelength grid for opacity calculations
+    Array _opacityWavelengthGrid;       // Cached wavelength grid for opacity calculations
+    double _opacityMinWavelength = 0.;  // left border of the first radiation field bin
 
     // Pre-compute opacity arrays for the radiation field wavelength grid
-    void precomputeOpacityArrays(MaterialState* state, const Array& Jv) const;
+    void precomputeOpacityArrays(MaterialState* state, const double* solverIonFracs) const;
 
     // Get the interpolated opacity from pre-computed state variables
     // opacityType: 0=absorption, 1=scattering, 2=extinction
     double interpolateOpacityFromState(double lambda, MaterialState* state, int opacityType) const;
 
-    // Initialize the opacity wavelength grid from the radiation field
-    void initializeOpacityWavelengthGrid() const;
+    // Initialize the opacity wavelength grid from the radiation field (called during setup)
+    void initializeOpacityWavelengthGrid();
 
     // Radiation field characterization
     double calculateIonizationParameter(const Array& Jv, double nH) const;
-
-    // Integration methods
-    double integrate(const vector<double>& x, const vector<double>& y) const;
-    double integrateLinearSpace(const vector<double>& x, const vector<double>& y) const;
-    double integrateLogSpace(const vector<double>& x, const vector<double>& y) const;
-    double simpsonIntegration(const vector<double>& x, const vector<double>& y) const;
-    double trapezoidalIntegrationKahan(const vector<double>& x, const vector<double>& y) const;
 
     // convert total to Hydrogen number density
     double convertTotalDensityToHydrogenDensity(double n_total, double He_abundance) const;
@@ -509,6 +719,11 @@ private:
     double _lambdaBin4 = 0;  // 3.52 Ryd boundary
     double _lambdaBin5 = 0;  // 4.00 Ryd boundary
     double _lambdaBin6 = 0;  // 6.00 Ryd boundary
+
+    // Radiation field bins assigned to each of the five energy bins (by characteristic wavelength), and the summed
+    // width of those bins, set up once from the radiation field wavelength grid
+    std::array<vector<int>, 5> _energyBinRFBins;
+    std::array<double, 5> _energyBinRFWidth{};
 
     // Wavelength bounds
     double _lambdaLow = 0;   // Low energy cutoff @ 912 A
