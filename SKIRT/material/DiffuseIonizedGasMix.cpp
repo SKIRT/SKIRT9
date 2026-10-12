@@ -74,6 +74,10 @@ namespace
     // Define Rydberg energy (1 Rydberg = 13.6057 eV)
     constexpr double rydbergEnergyEv = 13.6057;
 
+    // Wavelength of the H I ionization edge as used by the ion solver
+    constexpr double lambdaEdgeHI =
+        Constants::h() * Constants::c() / (VernerCrossSections::HI_eV * Constants::Qelectron());
+
     // Numerical safety thresholds
     constexpr double minDivisionSafe = 1.e-12;
 
@@ -419,8 +423,7 @@ void DiffuseIonizedGasMix::setupSelfBefore()
         // The ion solver evaluates each bin at its characteristic wavelength, so a bin that straddles an ionization
         // edge counts as wholly above or wholly below it. The hydrogen edge matters most: it also decides which bins
         // enter the ionization parameter, and non-ionizing source light in a straddling bin is counted as ionizing.
-        const double lambdaHI = Constants::h() * Constants::c() / (VernerCrossSections::HI_eV * Constants::Qelectron());
-        const bool sourcesBeyondHI = config->sourceWavelengthRange().max() > lambdaHI;
+        const bool sourcesBeyondHI = config->sourceWavelengthRange().max() > lambdaEdgeHI;
         string straddledEdges;
         for (int ion = 0; ion < VernerCrossSections::numIons; ion++)
         {
@@ -433,7 +436,7 @@ void DiffuseIonizedGasMix::setupSelfBefore()
                     log->warning(
                         binText(ell) + " straddles the ion solver's hydrogen edge ("
                         + StringUtils::toString(VernerCrossSections::HI_eV, 'g', 4) + " eV); place a bin border at "
-                        + StringUtils::toString(lambdaHI * 1e6, 'g', 7) + " micron"
+                        + StringUtils::toString(lambdaEdgeHI * 1e6, 'g', 7) + " micron"
                         + (sourcesBeyondHI ? ". The sources emit beyond this edge, so non-ionizing light in this "
                                              "bin enters the ionization parameter"
                                            : ""));
@@ -442,8 +445,8 @@ void DiffuseIonizedGasMix::setupSelfBefore()
             }
         }
         if (!straddledEdges.empty())
-            log->warning("Ion solver ionization edges inside a radiation field bin (eV): " + straddledEdges
-                         + "; the solver treats each such bin as wholly above or wholly below the edge");
+            log->info("Ion solver ionization edges inside a radiation field bin (eV): " + straddledEdges
+                      + "; the solver treats each such bin as wholly above or wholly below the edge");
         log->info("DiffuseIonizedGasMix reads the medium number density as total hydrogen plus helium nuclei: "
                   "n_H = n / (1 + y_He)");
 
@@ -891,7 +894,7 @@ UpdateStatus DiffuseIonizedGasMix::updateSpecificState(MaterialState* state, con
         }
 
         // Pre-compute opacity arrays
-        precomputeOpacityArrays(state, Jv, hasSolverIonFracs ? solverIonFracs : nullptr);
+        precomputeOpacityArrays(state, hasSolverIonFracs ? solverIonFracs : nullptr);
 
         // Update ionized H density for global convergence criterion
         state->setNHIonized(n_H * (1.0 - state->hNeutralFraction()));
@@ -2033,8 +2036,11 @@ double DiffuseIonizedGasMix::getHeliumCrossSection(double frequency) const
 
 double DiffuseIonizedGasMix::interpolateOpacityFromState(double lambda, MaterialState* state, int opacityType) const
 {
+    // no opacity outside the range covered by the grid; at the blue end that range starts at the left border of the
+    // first radiation field bin rather than at its characteristic wavelength, because a photon in the lower half of
+    // that bin is recorded in the bin and counted as ionizing
     const int numWavelengths = _opacityWavelengthGrid.size();
-    if (lambda < _opacityWavelengthGrid[0] || lambda > _opacityWavelengthGrid[numWavelengths - 1]) return 0.;
+    if (lambda < _opacityMinWavelength || lambda > _opacityWavelengthGrid[numWavelengths - 1]) return 0.;
     if (opacityType < 0 || opacityType > 2) return 0.;
 
     // stored opacity of the requested type at a given grid index; the absorption and scattering parts are rebuilt
@@ -2049,7 +2055,8 @@ double DiffuseIonizedGasMix::interpolateOpacityFromState(double lambda, Material
         return inReemission ? ext * state->reemissionFractionAtIndex(k) : 0.;
     };
 
-    // only the two grid points bracketing lambda are read, with the same bracketing as NR::clampedValue
+    // only the two grid points bracketing lambda are read, with the same bracketing as NR::clampedValue; a photon
+    // below the first characteristic wavelength gets the opacity of the first grid point
     int i = NR::locate(_opacityWavelengthGrid, lambda);
     if (i < 0) return stored(0);
     if (i >= numWavelengths - 1) return stored(numWavelengths - 1);
@@ -2060,9 +2067,8 @@ double DiffuseIonizedGasMix::interpolateOpacityFromState(double lambda, Material
 
     // grid points beyond the ionization edge hold zero opacity by construction; a log-log interpolation towards
     // such a point returns zero, which would let ionizing photons between the last ionizing grid point and the
-    // H I edge (13.598434 eV, NIST) cross the gas unabsorbed, so these photons get the opacity of the last
+    // H I edge of the ion solver cross the gas unabsorbed, so these photons get the opacity of the last
     // ionizing grid point instead
-    constexpr double lambdaEdgeHI = Constants::h() * Constants::c() / (13.598434 * Constants::Qelectron());
     if (y2 <= 0. && y1 > 0. && x2 > _lambdaLow && lambda <= lambdaEdgeHI) return y1;
 
     return NR::interpolateLogLog(lambda, x1, x2, y1, y2);
@@ -2070,7 +2076,7 @@ double DiffuseIonizedGasMix::interpolateOpacityFromState(double lambda, Material
 
 ////////////////////////////////////////////////////////////////////
 
-void DiffuseIonizedGasMix::initializeOpacityWavelengthGrid() const
+void DiffuseIonizedGasMix::initializeOpacityWavelengthGrid()
 {
     // Only initialize once
     if (_opacityWavelengthGrid.size() > 0) return;
@@ -2083,6 +2089,7 @@ void DiffuseIonizedGasMix::initializeOpacityWavelengthGrid() const
     {
         // Use the radiation field wavelength grid
         _opacityWavelengthGrid = rfwlg->lambdav();
+        _opacityMinWavelength = rfwlg->leftBorder(0);
     }
     else
     {
@@ -2099,6 +2106,7 @@ void DiffuseIonizedGasMix::initializeOpacityWavelengthGrid() const
         {
             _opacityWavelengthGrid[i] = std::pow(10.0, logLambdaMin + i * deltaLogLambda);
         }
+        _opacityMinWavelength = _opacityWavelengthGrid[0];
 
         auto log = find<Log>();
         log->warning("DiffuseIonizedGasMix: No radiation field grid available, using fallback opacity grid ("
@@ -2130,8 +2138,7 @@ void DiffuseIonizedGasMix::initializeOpacityWavelengthGrid() const
 
 ////////////////////////////////////////////////////////////////////
 
-void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const Array& Jv,
-                                                   const double* solverIonFracs) const
+void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const double* solverIonFracs) const
 {
     // grid points beyond the ionizing range hold zero opacity and are not stored
     const int numWavelengths = _numIonizingOpacityPoints;
@@ -2157,32 +2164,16 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
     // ionization-balance solver instead, as do all cells when the Cloudy opacity is not used.
     const bool useAnalyticalOpacity = !useCloudyOpacity() || logU <= _minLogUEmit;
 
-    // Ion fractions for the analytical opacity (used across all wavelengths): taken from the ionization-balance
-    // solution of this state update when available, otherwise solved here
-    double analyticalIonFracs[PhotoIonizationSolver::totalStages] = {};
+    // The analytical opacity uses the ion fractions of the ionization-balance solution of this state update;
+    // without a solution (zero temperature) the opacity stays zero
     double analyticalAbundances[8] = {};
     double nH_cgs_opacity = 0.;
-    bool analyticalOpacityReady = false;
-    if (useAnalyticalOpacity)
+    const bool analyticalOpacityReady = useAnalyticalOpacity && solverIonFracs;
+    if (analyticalOpacityReady)
     {
-        double T = state->temperature();
-        double yHe = state->heliumAbundance();
         nH_cgs_opacity = n_H / 1e6;  // m^-3 to cm^-3
         // Per-cell abundances per abundanceMode (SolarScaled: solar * Zfrac * g; PerCell: snapshot).
         buildPerCellAbundances(state, analyticalAbundances);
-
-        if (solverIonFracs)
-        {
-            for (int s = 0; s < PhotoIonizationSolver::totalStages; ++s) analyticalIonFracs[s] = solverIonFracs[s];
-            analyticalOpacityReady = true;
-        }
-        else if (T > 0. && logU > -98.)
-        {
-            auto result =
-                _emissionSolver.solveIonizationAtFixedT(Jv, nH_cgs_opacity, yHe, analyticalAbundances, T, nullptr);
-            for (int s = 0; s < PhotoIonizationSolver::totalStages; ++s) analyticalIonFracs[s] = result.ionFracs[s];
-            analyticalOpacityReady = true;
-        }
     }
 
     // dN/dC bracket+weights for the Standard opacity reconstruction. Cell-level (independent
@@ -2309,7 +2300,7 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const A
             if (lambda <= _lambdaLow && analyticalOpacityReady)
             {
                 // opacityAbs returns cm^-1; convert to m^-1
-                totalOpacity = _emissionSolver.opacityAbs(lambda, analyticalIonFracs, nH_cgs_opacity, He_abundance,
+                totalOpacity = _emissionSolver.opacityAbs(lambda, solverIonFracs, nH_cgs_opacity, He_abundance,
                                                           analyticalAbundances)
                                * 100.0;
             }
