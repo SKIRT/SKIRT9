@@ -855,20 +855,20 @@ void XRayIonicGasMix::setScatteringInfoIfNeeded(PhotonPacket* pp, const Material
 
             if (lower == -1) throw FATALERROR("Sampling from resonant branching probability has failed");
 
-            double center;
-            double a;
-            double vth;
-            double dipoleFraction;
-
             // if coherent (no branching)
             if (lower == upper)
             {
-                vth = res.vth;
-                a = res.a;
-                center = res.lambda;
-                dipoleFraction = res.dipoleFraction;
-
                 scatinfo->lambda = 0.;  // inform scatter is coherent
+
+                // determine whether this scattering event uses the dipole phase function
+                scatinfo->dipole = random()->uniform() < res.dipoleFraction;
+
+                // sample an atom velocity from the Voigt profile (the atom-frame frequency it also
+                // returns is not needed here since the dipole choice above already used dipoleFraction)
+                scatinfo->velocity =
+                    LyUtils::sampleAtomVelocity(lambda, res.lambda, M_SQRT2 * res.vth, res.a, temperature(),
+                                                state->numberDensity(), pp->direction(), config(), random())
+                        .first;
             }
             // if incoherent (branching)
             else
@@ -879,24 +879,13 @@ void XRayIonicGasMix::setScatteringInfoIfNeeded(PhotonPacket* pp, const Material
 
                 const auto& lres = _resonantParamv[lr];
 
-                // set parameters to those of the lower branching
-                vth = lres.vth;
-                a = lres.a;
-                center = lres.lambda;
-                dipoleFraction = 0.0;  // branching is isotropic
-
+                // a cascade erases all information about the incoming photon packet, so the photon is
+                // emitted isotropically at the wavelength of the lower transition, Doppler shifted by
+                // an atom velocity sampled from the Maxwell distribution (i.e. thermal broadening)
                 scatinfo->lambda = lres.lambda;
+                scatinfo->dipole = false;
+                scatinfo->velocity = lres.vth * random()->maxwell();
             }
-
-            // determine whether this scattering event uses the dipole phase function
-            scatinfo->dipole = random()->uniform() < dipoleFraction;
-
-            // sample an atom velocity from the Voigt profile (the atom-frame frequency it also
-            // returns is not needed here since the dipole choice above already used dipoleFraction)
-            scatinfo->velocity =
-                LyUtils::sampleAtomVelocity(lambda, center, M_SQRT2 * vth, a, temperature(), state->numberDensity(),
-                                            pp->direction(), config(), random())
-                    .first;
         }
     }
 }
