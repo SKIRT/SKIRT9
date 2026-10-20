@@ -44,42 +44,73 @@ namespace VoigtProfile
     double value(double a, double x);
 
     /** This function samples a random value from the probability distribution \f$P(u)\f$ defined
-        by \f[ P(u) \propto \frac{\mathrm{e}^{-u^2}}{(u-x)^2+a^2} \f] where \f$a\f$ and \f$x\f$ are
+        by \f[ P(u) \propto \frac{\mathrm{e}^{-u^2}}{(u-x)^2+a^2} \f] where \f$a>0\f$ and \f$x\f$ are
         parameters given as arguments and the proportionality factor is determined by
         normalization. The third argument specifies the random generator to be used by the
-        function.
+        function. Because the distribution is symmetric under \f$(x,u)\to(-x,-u)\f$, we sample for
+        \f$|x|\f$ and restore the sign afterwards. The function uses one of two exact rejection
+        methods, depending on the values of \f$a\f$ and \f$x\f$.
 
-        We use the method described by Zheng et al. 2002 (ApJ, 578, 33-42, appendix), a variation
-        of which is also used by many other authors including Tasitsiomi 2006 (ApJ, 645, 792-813),
-        Laursen et al. 2009 (ApJ, 696, 853-869), Smith et al. 2015 (MNRAS, 449, 4336–4362) and
-        Michel-Dansac et al. 2020 (A\&A). The method is based on the rejection technique for
-        sampling from a probability distribution. One could use the comparison function
-        \f$g(u)\propto \left[ (u-x)^2 + a^2 \right]^{-1}\f$ which can be integrated and inverted
-        analytically so that it can be sampled using \f$u= x + a \tan \left[ \frac{\pi}{2}
-        (2\mathcal{X}-1) \right] \f$, with \f$\mathcal{X}\f$ a uniform deviate.
+        <b>Piecewise Lorentzian comparison function</b>
 
-        Because of the peculiar shape of \f$P(u)\f$, however, the comparison function \f$g(u)\f$ is
-        better defined as \f[ g(u) \propto \begin{cases} \left[ (u-x)^2 + a^2 \right]^{-1} & u \le
-        u_0 \\ \mathrm{e}^{-u_0^2}\left[ (u-x)^2 + a^2 \right]^{-1} & u > u_0 \end{cases} \f] where
-        \f$u_0\f$ is determined following Michel-Dansac et al. 2020 (A\&A) by \f{align*} u_0 = &\;
-        2.648963+2.014446 \zeta+0.351479\zeta^2 \\ &+ x (-4.058673-3.675859\zeta-0.640003\zeta^2 \\
-        &+ x (3.017395+2.117133\zeta+0.370294\zeta^2 \\ &+ x
-        (-0.869789-0.565886\zeta-0.096312\zeta^2 \\ &+ x (0.110987+0.070103\zeta+0.011557\zeta^2 \\
-        &+ x (-0.005200-0.003240\zeta-0.000519\zeta^2))))) \f} where \f$\zeta = \log_{10}(a)\f$.
+        The first method, used close to the line core, follows Zheng et al. 2002 (ApJ, 578, 33-42,
+        appendix), a variation of which is also used by many other authors including Tasitsiomi 2006
+        (ApJ, 645, 792-813), Laursen et al. 2009 (ApJ, 696, 853-869), Smith et al. 2015 (MNRAS, 449,
+        4336–4362) and Michel-Dansac et al. 2020 (A\&A). The comparison function is \f[ g(u) \propto
+        \begin{cases} \left[ (u-x)^2 + a^2 \right]^{-1} & u \le u_0 \\ \mathrm{e}^{-u_0^2}\left[
+        (u-x)^2 + a^2 \right]^{-1} & u > u_0 \end{cases} \f] which can be sampled by inverting the
+        Lorentzian cumulative distribution on either side of \f$u_0\f$. The acceptance fractions
+        are \f$\mathrm{e}^{-u^2}\f$ and \f$\mathrm{e}^{u_0^2-u^2}\f$ for \f$u\le u_0\f$ and
+        \f$u>u_0\f$, respectively. The second fraction exceeds unity for \f$|u|<|u_0|\f$ when
+        \f$u_0<0\f$, so the method is exact only if \f$u_0 \ge 0\f$. With the Lorentzian weights
+        \f$w_\mathrm{l} = \arctan\left[a/(x-u_0)\right]\f$ and \f$w_\mathrm{r} = \pi -
+        w_\mathrm{l}\f$ on either side of \f$u_0\f$ (evaluated with \f$\mathrm{atan2}\f$ to remain
+        accurate for very small \f$a\f$), the left side is selected with probability \f$p =
+        w_\mathrm{l} / C(u_0)\f$, where \f$C(u_0) = w_\mathrm{l} + \mathrm{e}^{-u_0^2}
+        w_\mathrm{r}\f$ is the normalization of the comparison function.
 
-        The acceptance fractions are required to be \f$\mathrm{e}^{-u^2}\f$ and
-        \f$\mathrm{e}^{-u^2} / \mathrm{e}^{-u_0^2}\f$ in the regions \f$u\le u_0\f$ and
-        \f$u>u_0\f$, respectively. A first random number uniformly distributed between 0 and 1
-        determines which region we use by comparing it with p, where \f[ p =
-        \frac{\int_{-\infty}^{u_0} g(u)\,\mathrm{d}u} {\int_{-\infty}^{+\infty} g(u)\,\mathrm{d}u}
-        = \left( \theta_0 + \frac{\pi}{2} \right) \left[ \left( 1-\mathrm{e}^{-u_0^2} \right)
-        \theta_0 + \left( 1+\mathrm{e}^{-u_0^2} \right) \frac{\pi}{2} \right]^{-1}, \quad \theta_0
-        = \arctan \frac{u_0 -x}{a} . \f]
+        Any \f$u_0 \ge 0\f$ yields an exact procedure, but the acceptance rate is inversely
+        proportional to \f$C(u_0)\f$. Previous versions of this function used a fitting formula for
+        \f$u_0\f$ (Michel-Dansac et al. 2020) that was calibrated for neutral hydrogen. That formula
+        produces \f$u_0<0\f$ for \f$3\times10^{-4} \lesssim a \lesssim 6\times10^{-3}\f$ near
+        \f$x=0\f$, causing a bias of up to five per cent in the sampled distribution, and it
+        produces acceptance rates below \f$10^{-7}\f$ for \f$a \lesssim 10^{-6}\f$ (as occurs, for
+        example, for forbidden or intercombination lines of ions), causing the sampling procedure to
+        fail. Instead, we now use a value of \f$u_0\ge0\f$ that approximately minimizes
+        \f$C(u_0)\f$. Setting the derivative of \f$C(u_0)\f$ to zero and neglecting terms that are
+        small for \f$a \ll 1\f$ shows that the distance \f$d=x-u_0\f$ satisfies \f$d^2\,
+        \mathrm{e}^{2xd} = a\,\mathrm{e}^{x^2}/(2\pi x)\f$, with solution \f$d = W(y)/x\f$ where
+        \f$W\f$ is the Lambert function and \f$y = x\sqrt{a\,\mathrm{e}^{x^2}/(2\pi x)}\f$.
+        Because high accuracy is not needed, we use the approximation \f$W(y) \approx L\,[1 -
+        \ln(1+L)/(2+L)]\f$ with \f$L=\ln(1+y)\f$ (Winitzki 2003, LNCS 2667, 780-789). The
+        resulting value \f$u_0 = x - d\f$ is limited to the interval \f$[0, x[\f$. For most
+        parameter values, the acceptance rate is within a few per cent of the rate obtained with the
+        exact optimum, and it is never below about 55 per cent of that rate. The mean number of
+        attempts per sample is below 25 for \f$a \ge 10^{-6}\f$, below 90 for \f$a \ge
+        10^{-20}\f$, and below 150 for \f$a \ge 10^{-30}\f$.
 
-        Finally, for larger values of \f$x\f$, the distribution \f$P(u)\f$ can successfully be
-        approximated by a Gaussian distribution centered on \f$1/x\f$. Following Smith et al. 2015
-        (MNRAS, 449, 4336–4362) and Michel-Dansac et al. 2020 (A\&A), we use this approximation
-        for \f$x \ge 8\f$. */
+        <b>Gaussian comparison function</b>
+
+        Far from the line core, i.e. for \f$\rho = \sqrt{x^2+a^2} \ge 8\f$, the distribution is
+        close to a Gaussian. Expanding the logarithm of the Lorentzian factor to second order in
+        \f$u\f$ yields the comparison function \f[ q(u) \propto \exp\left( -\alpha u^2 + \beta u
+        \right), \quad \alpha = 1 + \frac{a^2-x^2}{\rho^4}, \quad \beta = \frac{2x}{\rho^2}, \f] a
+        Gaussian with mean \f$\beta/2\alpha\f$ (approximately \f$1/x\f$ for \f$a \ll x\f$) and
+        variance \f$1/2\alpha\f$. A sample drawn from \f$q(u)\f$ is accepted with probability
+        \f$r(u)/M\f$, where \f$r(u) = P(u)/q(u)\f$ normalized to \f$r(0)=1\f$, and \f$M = 1.1
+        \max[r(-5.5), r(5.5)]\f$ is an upper bound for \f$r(u)\f$ over the range \f$|u| \le 5.5\f$
+        (verified numerically). Outside of this range the comparison function has a negligible
+        weight (below \f$10^{-14}\f$), so that the method is exact for all practical purposes. The
+        mean number of attempts per sample is at most 1.8. This method ignores the narrow peak of
+        \f$P(u)\f$ at \f$u=x\f$, which has relative weight \f$\approx \sqrt{\pi}\,\rho^2
+        \mathrm{e}^{-x^2}/a\f$. Therefore it is used only if \f$a\ge x\f$ or if this weight is
+        below \f$10^{-15}\f$; otherwise the first method is used.
+
+        Previous versions of this function approximated the distribution for \f$x \ge 8\f$ by a
+        Gaussian with mean \f$1/x\f$ and variance \f$1/2\f$. That approximation ignores the
+        dependence on \f$a\f$; its cumulative distribution differs from the actual one by about
+        0.3 per cent for small \f$a\f$ and by several per cent for \f$a \gtrsim 10\f$ (as occurs,
+        for example, for some ions at low temperatures). */
     double sample(double a, double x, Random* random);
 }
 
