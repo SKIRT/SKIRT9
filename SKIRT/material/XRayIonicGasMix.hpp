@@ -407,13 +407,15 @@ class PhotonPacket;
     profile, its implementation can be found in the \em LyUtils and \em VoigtProfile namespaces.
 
     For resonant scattering both the cross section and photon energy shift are dependent on the
-    temperature. If branching occurs, i.e. there is a cascade prior to a final transition to the
-    ground state, then the photon energy is simply shifted from its final transition wavelength,
-    using an atom velocity sampled from the Maxwell distribution, as for fluorescence. In other
-    words, the emitted line is thermally broadened. When branching does not occur, i.e. the
-    scattering is coherent, then the photon energy is shifted according to the atom velocity
-    sampled from the Voigt profile. The implementation of this is delegated to the \em LyUtils and
-    \em VoigtProfile namespaces.
+    temperature. When branching does not occur, i.e. the scattering is coherent, the photon energy
+    is shifted according to the atom velocity sampled from the Voigt profile. If branching occurs,
+    i.e. there is a cascade prior to a final transition to the ground state, the photon is emitted
+    isotropically at the wavelength of that final transition, Doppler shifted by the velocity of
+    the atom. A cascade erases the incoming direction and the frequency in the atom's rest frame,
+    but not the velocity of the absorbing atom. This velocity is therefore sampled as for coherent
+    scattering, using the parameters of the absorbing transition, except that the acceleration
+    scheme for scattering in the line core is not applied. The implementation of this is delegated
+    to the \em LyUtils and \em VoigtProfile namespaces.
 */
 class XRayIonicGasMix : public MaterialMix
 {

@@ -22,6 +22,7 @@
 #include "StoredTable.hpp"
 #include "StringUtils.hpp"
 #include "TextInFile.hpp"
+#include "VoigtProfile.hpp"
 #include <cmath>
 #include <map>
 #include <set>
@@ -879,12 +880,23 @@ void XRayIonicGasMix::setScatteringInfoIfNeeded(PhotonPacket* pp, const Material
 
                 const auto& lres = _resonantParamv[lr];
 
-                // a cascade erases all information about the incoming photon packet, so the photon is
-                // emitted isotropically at the wavelength of the lower transition, Doppler shifted by
-                // an atom velocity sampled from the Maxwell distribution (i.e. thermal broadening)
+                // a cascade erases the incoming direction and the atom-frame frequency, but not the velocity
+                // of the absorbing atom, which also emits the photon; so we sample this velocity for the
+                // absorbing (upper) transition as for coherent scattering, i.e. with the component along the
+                // incoming direction drawn from the Voigt profile and the perpendicular components drawn from
+                // the Maxwell distribution, but without the acceleration scheme, which is intended for coherent
+                // scattering in the line core; the photon is then emitted isotropically at the wavelength of
+                // the lower transition, Doppler shifted by this velocity
+                Direction kin = pp->direction();
+                double vD = M_SQRT2 * res.vth;
+                double x = (res.lambda - lambda) / lambda * Constants::c() / vD;
+                double upar = VoigtProfile::sample(res.a, x, random());
+                Vec velocity = res.vth * random()->maxwell();
+                velocity += (upar * vD - Vec::dot(velocity, kin)) * kin;
+
                 scatinfo->lambda = lres.lambda;
                 scatinfo->dipole = false;
-                scatinfo->velocity = lres.vth * random()->maxwell();
+                scatinfo->velocity = velocity;
             }
         }
     }
