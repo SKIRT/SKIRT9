@@ -22,6 +22,7 @@
 #include "StoredTable.hpp"
 #include "StringUtils.hpp"
 #include "TextInFile.hpp"
+#include "VoigtProfile.hpp"
 #include <cmath>
 #include <map>
 #include <set>
@@ -855,20 +856,20 @@ void XRayIonicGasMix::setScatteringInfoIfNeeded(PhotonPacket* pp, const Material
 
             if (lower == -1) throw FATALERROR("Sampling from resonant branching probability has failed");
 
-            double center;
-            double a;
-            double vth;
-            double dipoleFraction;
-
             // if coherent (no branching)
             if (lower == upper)
             {
-                vth = res.vth;
-                a = res.a;
-                center = res.lambda;
-                dipoleFraction = res.dipoleFraction;
-
                 scatinfo->lambda = 0.;  // inform scatter is coherent
+
+                // determine whether this scattering event uses the dipole phase function
+                scatinfo->dipole = random()->uniform() < res.dipoleFraction;
+
+                // sample an atom velocity from the Voigt profile (the atom-frame frequency it also
+                // returns is not needed here since the dipole choice above already used dipoleFraction)
+                scatinfo->velocity =
+                    LyUtils::sampleAtomVelocity(lambda, res.lambda, M_SQRT2 * res.vth, res.a, temperature(),
+                                                state->numberDensity(), pp->direction(), config(), random())
+                        .first;
             }
             // if incoherent (branching)
             else
@@ -879,24 +880,24 @@ void XRayIonicGasMix::setScatteringInfoIfNeeded(PhotonPacket* pp, const Material
 
                 const auto& lres = _resonantParamv[lr];
 
-                // set parameters to those of the lower branching
-                vth = lres.vth;
-                a = lres.a;
-                center = lres.lambda;
-                dipoleFraction = 0.0;  // branching is isotropic
+                // a cascade erases the incoming direction and the atom-frame frequency, but not the velocity
+                // of the absorbing atom, which also emits the photon; so we sample this velocity for the
+                // absorbing (upper) transition as for coherent scattering, i.e. with the component along the
+                // incoming direction drawn from the Voigt profile and the perpendicular components drawn from
+                // the Maxwell distribution, but without the acceleration scheme, which is intended for coherent
+                // scattering in the line core; the photon is then emitted isotropically at the wavelength of
+                // the lower transition, Doppler shifted by this velocity
+                Direction kin = pp->direction();
+                double vD = M_SQRT2 * res.vth;
+                double x = (res.lambda - lambda) / lambda * Constants::c() / vD;
+                double upar = VoigtProfile::sample(res.a, x, random());
+                Vec velocity = res.vth * random()->maxwell();
+                velocity += (upar * vD - Vec::dot(velocity, kin)) * kin;
 
                 scatinfo->lambda = lres.lambda;
+                scatinfo->dipole = false;
+                scatinfo->velocity = velocity;
             }
-
-            // determine whether this scattering event uses the dipole phase function
-            scatinfo->dipole = random()->uniform() < dipoleFraction;
-
-            // sample an atom velocity from the Voigt profile (the atom-frame frequency it also
-            // returns is not needed here since the dipole choice above already used dipoleFraction)
-            scatinfo->velocity =
-                LyUtils::sampleAtomVelocity(lambda, center, M_SQRT2 * vth, a, temperature(), state->numberDensity(),
-                                            pp->direction(), config(), random())
-                    .first;
         }
     }
 }

@@ -56,67 +56,111 @@ double VoigtProfile::value(double a, double x)
 
 ////////////////////////////////////////////////////////////////////
 
+namespace
+{
+    // the maximum number of attempts in the rejection method loops
+    constexpr int maxAttempts = 100000;
+
+    // sample from the distribution for x >= 0 using a piecewise Lorentzian comparison function
+    double sampleLorentzian(double a, double x, Random* random)
+    {
+        // determine the separation u0 that (approximately) maximizes the acceptance rate; any u0 >= 0
+        // yields an exact sampling procedure, the choice merely affects the efficiency; minimizing the
+        // normalization of the comparison function shows that the distance d = x - u0 approximately
+        // satisfies d^2 exp(2xd) = a exp(x^2) / (2 pi x), so that xd = W(y) with W the Lambert function
+        // and y = x sqrt(a exp(x^2) / (2 pi x)); because high accuracy is not needed, we use the
+        // approximation W(y) = L (1 - ln(1+L) / (2+L)) with L = ln(1+y) (Winitzki 2003), evaluated
+        // from ln(y) to avoid overflow; the result is kept strictly below x because for extremely small
+        // a the distance may be smaller than the spacing between floating point numbers near x
+        double u0 = 0.;
+        if (x > 0.)
+        {
+            double lny = 0.5 * (log(a * x / (2. * M_PI)) + x * x);
+            double L = lny > 0. ? lny + log1p(exp(-lny)) : log1p(exp(lny));
+            double W = L * (1. - log1p(L) / (2. + L));
+            u0 = max(0., min(x - W / x, nextafter(x, 0.)));
+        }
+
+        // the weights of the Lorentzian to the left and right of u0, and the probability for the left side
+        double wl = atan2(a, x - u0);
+        double wr = atan2(a, u0 - x);
+        double p = wl / (wl + exp(-u0 * u0) * wr);
+
+        // perform the rejection method loop for a maximum number of attempts
+        int n = maxAttempts;
+        while (n--)
+        {
+            // generate a random sample from the selected part of the comparison function,
+            // inverting the Lorentzian cumulative distribution in a numerically stable form
+            double u;
+            if (random->uniform() <= p)
+                u = x - a / tan(wl * random->uniform());
+            else
+                u = x + a / tan(wr * random->uniform());
+
+            // determine the acceptance fraction, which never exceeds unity because u0 >= 0
+            double fraction = u > u0 ? exp((u0 - u) * (u0 + u)) : exp(-u * u);
+
+            // accept or reject the sample
+            if (random->uniform() < fraction) return u;
+        }
+
+        // if none of the attempts were accepted, abort
+        throw FATALERROR("Sampling from Voigt profile has failed");
+    }
+
+    // sample from the distribution for x >= 0 and rho = sqrt(x^2+a^2) >= 8 using a Gaussian
+    // comparison function; the caller must verify that the narrow peak at u = x (if any) is negligible
+    double sampleGaussian(double a, double x, double rho, Random* random)
+    {
+        // the Gaussian proposal matching the distribution to second order in u, expressed in
+        // scaled quantities so that nothing overflows for extremely large x or a
+        double xs = x / rho;
+        double as = a / rho;
+        double alpha = 1. + (as - xs) * (as + xs) / (rho * rho);
+        double beta = 2. * xs / rho;
+        double mean = 0.5 * beta / alpha;
+        double sigma = 1. / sqrt(2. * alpha);
+
+        // the ratio of the target distribution and the proposal, normalized to unity at u = 0
+        auto ratio = [=](double u) {
+            double us = u / rho - xs;
+            return exp((alpha - 1.) * u * u - beta * u) / (us * us + as * as);
+        };
+
+        // an upper bound for the ratio over the range |u| <= 5.5, outside of which the proposal has a
+        // negligible weight (below 1e-14); the maximum is attained at or very close to the edges of
+        // this range, and the factor 1.1 provides a safety margin (verified numerically for all a, x)
+        double bound = 1.1 * max(ratio(-5.5), ratio(5.5));
+
+        // perform the rejection method loop for a maximum number of attempts
+        int n = maxAttempts;
+        while (n--)
+        {
+            double u = mean + sigma * random->gauss();
+            if (random->uniform() * bound < ratio(u)) return u;
+        }
+
+        // if none of the attempts were accepted, abort
+        throw FATALERROR("Sampling from Voigt profile has failed");
+    }
+}
+
+////////////////////////////////////////////////////////////////////
+
 double VoigtProfile::sample(double a, double x, Random* random)
 {
-    // make x positive and remember the orginal sign
-    double sign = 1.;
-    if (x < 0.)
-    {
-        sign = -1.;
-        x = -x;
-    }
+    // the distribution is symmetric in x, so sample for |x| and restore the sign
+    double ax = abs(x);
 
-    // when x is large, the distribution is essentially a Gaussian centered on 1/x
-    if (x >= 8.) return sign / x + M_SQRT1_2 * random->gauss();
+    // far from the line core, use the Gaussian comparison function unless the narrow peak at u = x,
+    // which it ignores, carries a non-negligible weight (relative weight below 1e-15); this
+    // exception only occurs for extremely small values of a (below about 1e-10)
+    double rho = hypot(ax, a);
+    bool gaussian = rho >= 8. && (a >= ax || ax * ax - log(rho * rho / a) > 35.);
 
-    // determine the comparison function separation corresponding to a and x
-    double z = log10(a);
-    double z2 = z * z;
-    double u0 = 2.648963 + 2.014446 * z + 0.351479 * z2
-                + x
-                      * (-4.058673 - 3.675859 * z - 0.640003 * z2
-                         + x
-                               * (3.017395 + 2.117133 * z + 0.370294 * z2
-                                  + x
-                                        * (-0.869789 - 0.565886 * z - 0.096312 * z2
-                                           + x
-                                                 * (0.110987 + 0.070103 * z + 0.011557 * z2
-                                                    + x * (-0.005200 - 0.003240 * z - 0.000519 * z2)))));
-
-    // calculate the cumulative separation point
-    double theta0 = atan((u0 - x) / a);
-    double p = (theta0 + M_PI_2) / ((1. - exp(-u0 * u0)) * theta0 + (1. + exp(-u0 * u0)) * M_PI_2);
-
-    // perform the rejection method loop for a maximum number of attempts
-    int n = 100000;  // not the most efficient for certain a,x combinations (eg. Zn+29 at T=3K)
-    while (n--)
-    {
-        // determine which one of the two comparison functions to use
-        double left, right;
-        if (random->uniform() <= p)
-        {
-            left = -M_PI_2;
-            right = theta0;
-        }
-        else
-        {
-            left = theta0;
-            right = M_PI_2;
-        }
-
-        // generate a random sample from the selected comparison function
-        double u = x + a * tan((right - left) * random->uniform() + left);
-
-        // determine the acceptance/rejection fraction
-        double fraction = exp(-u * u);
-        if (u > u0) fraction /= exp(-u0 * u0);
-
-        // accept or reject the sample
-        if (random->uniform() < fraction) return u * sign;
-    }
-
-    // if none of the attempts were accepted, abort
-    throw FATALERROR("Sampling from Voigt profile has failed");
+    double u = gaussian ? sampleGaussian(a, ax, rho, random) : sampleLorentzian(a, ax, random);
+    return x < 0. ? -u : u;
 }
 
 ////////////////////////////////////////////////////////////////////
