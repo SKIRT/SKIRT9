@@ -623,6 +623,7 @@ private:
     // Reemission calculation methods (adapted from CMACIONIZE)
     void calculateReemissionProbabilities(const MaterialState* state, double lambda, ReemissionData& data) const;
     int selectReemissionChannel(const MaterialState* state, double lambda, const PhotonPacket* pp) const;
+    double reemissionChannelWeights(const MaterialState* state, const ReemissionData& data, double weights[]) const;
     double sampleFromTemperatureDependentSpectrum(int spectrumType, double temperature, Random* random) const;
     void interpolateReemissionSpectrum(int spectrumType, double temperature, vector<double>& wavelengths,
                                        vector<double>& cumulativeDist) const;

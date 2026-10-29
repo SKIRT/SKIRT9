@@ -1247,6 +1247,7 @@ void DiffuseIonizedGasMix::performScattering(double lambda, const MaterialState*
     else
     {
         // Absorption: terminate photon
+        pp->applyBias(0.);
     }
 }
 
@@ -1776,92 +1777,62 @@ int DiffuseIonizedGasMix::selectReemissionChannel(const MaterialState* state, do
         return -1;  // Absorption (no reemission)
     }
 
-    // First decide if absorbed by H or He
-    double x = random()->uniform();
-
-    if (x <= data.pHabs)
+    double weights[numReemissionChannels];
+    double total = reemissionChannelWeights(state, data, weights);
+    if (total <= 0.)
     {
-        // Absorbed by hydrogen
-        x = random()->uniform();
-        if (x <= data.probabilities[ReemissionChannel::Hydrogen])
+        return -1;  // Absorption (no reemission)
+    }
+
+    // select a channel with probability proportional to its weight
+    double target = random()->uniform() * total;
+    double cumulative = 0.;
+    int last = -1;
+    for (int i = 0; i < numReemissionChannels; ++i)
+    {
+        if (weights[i] > 0.)
         {
-            return ReemissionChannel::Hydrogen;
-        }
-        else
-        {
-            return -1;  // Absorbed, no reemission
+            last = i;
+            cumulative += weights[i];
+            if (target < cumulative) return i;
         }
     }
-    else
+    return last;
+}
+
+////////////////////////////////////////////////////////////////////
+
+double DiffuseIonizedGasMix::reemissionChannelWeights(const MaterialState* state, const ReemissionData& data,
+                                                      double weights[]) const
+{
+    // calculate on-the-spot absorption probability
+    const double sqrtT_nH0 = std::sqrt(state->temperature()) * state->hNeutralFraction();
+    const double denominator = sqrtT_nH0 + heliumLyaOtsCoeff * state->heNeutralFraction();
+    const double pHots = denominator > 0. ? sqrtT_nH0 / denominator : 0.;
+
+    // limit hydrogen probability to 1 (the fit exceeds it at very high temperatures)
+    const double pH = min(1., data.probabilities[ReemissionChannel::Hydrogen]);
+    const double pHe = 1. - data.pHabs;
+    const double pLya = data.probabilities[ReemissionChannel::HeliumLyA];
+
+    // weight of each channel (helium Lyman alpha photons are converted to hydrogen or two-photon reemission)
+    weights[ReemissionChannel::Hydrogen] = data.pHabs * pH + pHe * pLya * pHots * pH;
+    weights[ReemissionChannel::HeliumLyC] = pHe * data.probabilities[ReemissionChannel::HeliumLyC];
+    weights[ReemissionChannel::HeliumNpEv] = pHe * data.probabilities[ReemissionChannel::HeliumNpEv];
+    weights[ReemissionChannel::HeliumTPC] =
+        pHe * (data.probabilities[ReemissionChannel::HeliumTPC] + pLya * (1. - pHots)) * heliumTpcHIonizingFraction;
+    weights[ReemissionChannel::HeliumLyA] = 0.;
+
+    double total = 0.;
+    for (int i = 0; i < numReemissionChannels; ++i) total += weights[i];
+
+    // normalize if roundoff pushes the total above 1
+    if (total > 1.)
     {
-        // Absorbed by helium - select reemission channel
-        x = random()->uniform();
-
-        for (int i = ReemissionChannel::HeliumLyC; i <= ReemissionChannel::HeliumLyA; ++i)
-        {
-            if (x <= data.cumulativeProbabilities[i])
-            {
-                // Special handling for two-photon continuum
-                if (i == ReemissionChannel::HeliumTPC)
-                {
-                    // Only 56% of two-photon events produce H-ionizing radiation
-                    x = random()->uniform();
-                    if (x < heliumTpcHIonizingFraction)
-                    {
-                        return ReemissionChannel::HeliumTPC;
-                    }
-                    else
-                    {
-                        return -1;  // Absorbed
-                    }
-                }
-
-                // Special handling for Helium Lyman alpha (on-the-spot absorption)
-                if (i == ReemissionChannel::HeliumLyA)
-                {
-                    const double h0 = state->hNeutralFraction();
-                    const double he0 = state->heNeutralFraction();
-                    const double T = state->temperature();
-
-                    // Calculate on-the-spot absorption probability
-                    const double sqrtT_nH0 = std::sqrt(T) * h0;
-                    const double pHots = sqrtT_nH0 / (sqrtT_nH0 + heliumLyaOtsCoeff * he0);
-
-                    x = random()->uniform();
-                    if (x < pHots)
-                    {
-                        // Absorbed on-the-spot by hydrogen
-                        x = random()->uniform();
-                        if (x <= data.probabilities[ReemissionChannel::Hydrogen])
-                        {
-                            return ReemissionChannel::Hydrogen;
-                        }
-                        else
-                        {
-                            return -1;  // Absorbed
-                        }
-                    }
-                    else
-                    {
-                        // Converted to helium two-photon continuum
-                        x = random()->uniform();
-                        if (x < heliumTpcHIonizingFraction)
-                        {
-                            return ReemissionChannel::HeliumTPC;
-                        }
-                        else
-                        {
-                            return -1;  // Absorbed
-                        }
-                    }
-                }
-
-                return i;
-            }
-        }
-
-        return -1;  // Should not reach here, but return absorption as fallback
+        for (int i = 0; i < numReemissionChannels; ++i) weights[i] /= total;
+        total = 1.;
     }
+    return total;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -2211,28 +2182,8 @@ void DiffuseIonizedGasMix::precomputeOpacityArrays(MaterialState* state, const d
             // if data is invalid, leave probReemission at its 0 default
             if (data.valid)
             {
-                // Calculate hydrogen reemission probability
-                double hydrogenScatProb = data.probabilities[ReemissionChannel::Hydrogen];
-
-                // Calculate helium reemission probability (if wavelength can ionize helium)
-                double heliumScatProb = 0.0;
-                if (lambda <= _lambdaHe)
-                {
-                    heliumScatProb += data.probabilities[ReemissionChannel::HeliumLyC];
-                    heliumScatProb += data.probabilities[ReemissionChannel::HeliumNpEv];
-                    heliumScatProb += data.probabilities[ReemissionChannel::HeliumTPC] * heliumTpcHIonizingFraction;
-
-                    // Handle Helium Lyman alpha on-the-spot absorption
-                    const double h0 = state->hNeutralFraction();
-                    const double he0 = state->heNeutralFraction();
-                    const double T = state->temperature();
-                    const double sqrtT_nH0 = std::sqrt(T) * h0;
-                    const double pHots = sqrtT_nH0 / (sqrtT_nH0 + heliumLyaOtsCoeff * he0);
-                    heliumScatProb += data.probabilities[ReemissionChannel::HeliumLyA] * (1.0 - pHots);
-                }
-
-                // Weighted average reemission probability based on which species absorbs
-                probReemission = data.pHabs * hydrogenScatProb + (1.0 - data.pHabs) * heliumScatProb;
+                double weights[numReemissionChannels];
+                probReemission = reemissionChannelWeights(state, data, weights);
             }
         }
 
