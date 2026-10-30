@@ -1581,11 +1581,20 @@ void DiffuseIonizedGasMix::interpolateReemissionSpectrum(int spectrumType, doubl
         wavelengths[i] = lambdaArray[i];
     }
 
-    // Interpolate cumulative distribution for each wavelength bin
+    // bracket the temperature for logarithmic interpolation, clamped to the table range
+    const double* temperatures = _reemissionSpectraTable.axisData<1>();
+    size_t numTemperatures = _reemissionSpectraTable.axisSize<1>();
+    double T = max(temperatures[0], min(temperature, temperatures[numTemperatures - 1]));
+    size_t right = std::lower_bound(temperatures, temperatures + numTemperatures, T) - temperatures;
+    right = max(static_cast<size_t>(1), right);
+    double w = (log(T) - log(temperatures[right - 1])) / (log(temperatures[right]) - log(temperatures[right - 1]));
+
+    // interpolate cumulative distribution for each wavelength bin by index
+    // (the wavelength axis of the table is in decreasing order)
     for (size_t i = 0; i < wavelengths.size(); ++i)
     {
-        // Interpolate: table(spectrum_type, temperature, wavelength) -> cumulative_probability
-        cumulativeDist[i] = _reemissionSpectraTable(static_cast<double>(spectrumType), temperature, wavelengths[i]);
+        cumulativeDist[i] = (1. - w) * _reemissionSpectraTable.valueAtIndices(spectrumType, right - 1, i)
+                            + w * _reemissionSpectraTable.valueAtIndices(spectrumType, right, i);
     }
 
     // Ensure monotonicity and proper normalization
