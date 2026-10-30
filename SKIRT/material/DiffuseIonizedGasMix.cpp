@@ -182,7 +182,6 @@ struct DiffuseIonizedGasMix::ReemissionData
 {
     bool valid = false;
     double probabilities[numReemissionChannels];
-    double cumulativeProbabilities[numReemissionChannels];
     double pHabs;  // Probability of H absorption vs He
 };
 
@@ -1172,7 +1171,7 @@ bool DiffuseIonizedGasMix::peeloffScattering(double& I, double& Q, double& U, do
             case ReemissionChannel::HeliumNpEv: newLambda = Constants::c() / helium19p8EvFreq; break;
             case ReemissionChannel::HeliumTPC: newLambda = sampleHeliumTwoPhotonContinuum(state->temperature()); break;
             case ReemissionChannel::HeliumLyA:
-                // This should not happen as selectReemissionChannel turns this into absorbed or TPC
+                // This should not happen as selectReemissionChannel turns this into hydrogen or TPC
                 scatinfo->lambda = 0.;
                 return false;
             default:
@@ -1224,7 +1223,7 @@ void DiffuseIonizedGasMix::performScattering(double lambda, const MaterialState*
             case ReemissionChannel::HeliumNpEv: newLambda = Constants::c() / helium19p8EvFreq; break;
             case ReemissionChannel::HeliumTPC: newLambda = sampleHeliumTwoPhotonContinuum(state->temperature()); break;
             case ReemissionChannel::HeliumLyA:
-                // This should not happen as selectReemissionChannel turns this into absorbed or TPC
+                // This should not happen as selectReemissionChannel turns this into hydrogen or TPC
                 newLambda = 0.;
                 break;
             default:
@@ -1706,14 +1705,6 @@ void DiffuseIonizedGasMix::calculateReemissionProbabilities(const MaterialState*
     data.probabilities[ReemissionChannel::HeliumNpEv] = alpha_e_2tS / alphaHe_total;
     data.probabilities[ReemissionChannel::HeliumTPC] = alpha_e_2sS / alphaHe_total;
     data.probabilities[ReemissionChannel::HeliumLyA] = alpha_e_2sP / alphaHe_total;
-
-    // Create cumulative probabilities for helium channels
-    data.cumulativeProbabilities[ReemissionChannel::HeliumLyC] = data.probabilities[ReemissionChannel::HeliumLyC];
-    data.cumulativeProbabilities[ReemissionChannel::HeliumNpEv] =
-        data.cumulativeProbabilities[ReemissionChannel::HeliumLyC] + data.probabilities[ReemissionChannel::HeliumNpEv];
-    data.cumulativeProbabilities[ReemissionChannel::HeliumTPC] =
-        data.cumulativeProbabilities[ReemissionChannel::HeliumNpEv] + data.probabilities[ReemissionChannel::HeliumTPC];
-    data.cumulativeProbabilities[ReemissionChannel::HeliumLyA] = 1.0;  // Ensures total probability = 1
 
     // Calculate H vs He absorption probability using wavelength-dependent cross-sections
     const double h0 = state->hNeutralFraction();
