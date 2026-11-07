@@ -20,13 +20,11 @@ class SimulationItem;
       initializeExtendedLineRegistry().
     - Recombination lines (Case B): L = eps(T, n_e) n_e n_ion V from emissivity tables (Storey &
       Sochi 2015 for H I, Porter et al. 2012 for He I, Storey & Hummer 1995 for He II) loaded by
-      initializeRecombinationTables(); without tables the H lines use the legacy P_B form (Storey
-      & Hummer 1995; Hui & Gnedin 1997; McClymont, Smith & Tacchella 2025) and the He lines are
-      zero. Lyman-alpha always uses the legacy form (the Case B tables exclude the Lyman series).
+      initializeRecombinationTables(). Lyman-alpha, which the Case B tables exclude, uses the P_B
+      form (Storey & Hummer 1995; Hui & Gnedin 1997; McClymont, Smith & Tacchella 2025).
     - Collisional lines in the nebular limit (level populations set by electron collisions at the
       local T and n_e, no radiative pumping): the statistical-equilibrium solver on atomic models
-      loaded by initializeAtomicModels(), or the legacy precomputed q_col(T, n_e) tables if this
-      function has not been called.
+      loaded by initializeAtomicModels().
     - Statistical equilibrium: the general level-population solver (collisions with any set of
       partners, spontaneous decay, optional radiative pumping) on atomic models read from the
       NonLTELineGasMix species files. The solver follows Kosei Matsumoto's NonLTELineGasMix
@@ -171,7 +169,8 @@ public:
     void initializeRecombinationTables();
 
     /** Loads the atomic models of the built-in collisional lines' carrier species and maps each
-        line to its transition by nearest wavelength. Does nothing after being called once. */
+        line to its transition by nearest wavelength. Throws FatalError if a carrier model has no
+        radiative transition. Does nothing after being called once. */
     void initializeAtomicModels();
 
     /** Calls initializeRecombinationTables() and initializeAtomicModels() and then appends every
@@ -187,29 +186,24 @@ public:
         (LineIndex order), followed by any lines added by initializeExtendedLineRegistry(). */
     const vector<LineDef>& lineRegistry() const;
 
-    /** Returns legacy H line luminosity [W] (Lya through Bra): h nu P_B(T, n_e) gammaHI nHI V,
-        with P_B the Case B probability that a recombination emits the line. Densities in cm^-3,
-        volume in cm^3. */
-    double hydrogenLineLuminosity(int lineIdx, double T, double ne, double gammaHI, double nHI, double V_cm3) const;
-
-    /** Returns H or He recombination line luminosity [W] (Lya through HeII4686): eps(T, ne) ne
-        nIon V from the emissivity tables when loaded, else the legacy form for H (which uses
-        gammaHI, nHI) and zero for He. nIon is the recombining ion density (H II, He II or He III).
+    /** Returns the Lyman-alpha luminosity [W] in the P_B form: h nu P_B(T, n_e) gammaHI nHI V,
+        with P_B the Case B probability that a recombination emits a Lyman-alpha photon.
         Densities in cm^-3, volume in cm^3. */
+    double hydrogenLineLuminosity(double T, double ne, double gammaHI, double nHI, double V_cm3) const;
+
+    /** Returns H or He recombination line luminosity [W] for a recombination line of the
+        registry: eps(T, ne) ne nIon V from the emissivity tables, with nIon the recombining ion
+        density (H II, He II or He III), and hydrogenLineLuminosity() for Lyman-alpha (which uses
+        gammaHI and nHI). Requires initializeRecombinationTables(). Densities in cm^-3, volume in
+        cm^3. */
     double recombinationLineLuminosity(int lineIdx, double T, double ne, double nIon, double gammaHI, double nHI,
                                        double V_cm3) const;
 
     // ============== Collisionally excited lines -- thread-safe after initialization ==============
 
 public:
-    /** Returns nebular-limit line luminosity [W] for a collisional line (NII6548 through SII6731,
-        or an extended-inventory line): level populations from electron collisions at (T, ne)
-        without radiative pumping, times nIon V. Uses the atomic models when loaded, else the
-        legacy q_col tables. Densities in cm^-3, volume in cm^3. */
-    double collisionalLineLuminosity(int lineIdx, double T, double ne, double nIon, double V_cm3) const;
-
-    /** Returns the model slot of the species carrying the given registry line, or -1 if the line
-        is not served by a loaded atomic model. Lines with the same slot share one solve. */
+    /** Returns the model slot of the species carrying the given registry line, or -1 for a
+        recombination line. Lines with the same slot share one solve. */
     int lineModelSlot(int lineIdx) const;
 
     /** Returns the transition index of the given registry line within its model (valid when
@@ -278,8 +272,6 @@ private:
             int lineIdx = 0;
         };
         vector<Ref> table;
-
-        bool loaded(int idx) const { return table[idx].cubeId >= 0; }
     };
     RecombRegistry _recombRegistry;
 
