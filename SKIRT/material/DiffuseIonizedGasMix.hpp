@@ -52,13 +52,16 @@
       C, N, O, Ne, Mg, Si, S, Fe) and the electron density. Key ion fractions (x_HII, x_NII,
       x_OI, x_OII, x_OIII, x_SII) and n_e are stored as custom state variables for diagnostics.
     - <b>Emission</b> is computed from the converged radiation field, temperature, and ion
-      fractions: GasLineEmission (this class) computes the line luminosities, while
-      GasContinuumEmission computes the nebular continuum (free-bound, free-free, two-photon). By
-      default (\em includeExtendedLines=true), H and He recombination lines from Case B are obtained
-      from emissivity tables, and collisional lines from the statistical-equilibrium solver on the
-      atomic data. This obviously requires the corresponding resources to be installed. If \em
-      includeExtendedLines is set to false, the Storey & Hummer 1995 P_B form for H and precomputed
-      CHIANTI q_col tables are used as a fallback.
+      fractions. GasLineEmission computes the line luminosities, while GasContinuumEmission computes
+      the nebular continuum (free-bound, free-free, two-photon). H and He recombination lines are
+      obtained from Case B emissivity tables, and collisional lines from the statistical-equilibrium
+      solver on the atomic data; Lyman-alpha, which has no table, uses the Storey & Hummer 1995 P_B
+      form. The 26 built-in lines (the main H and He recombination lines and the optical forbidden
+      lines of [N II], [O I], [O II], [O III] and [S II]) are a subset of the full line inventory. By
+      default (\em includeExtendedLines=true), the built-in lines and all other lines of the inventory
+      that fall inside the emission wavelength grid are emitted; if \em includeExtendedLines is set to
+      false, only the 26 built-in lines are emitted. Both settings of \em includeExtendedLines require
+      the AtomsMolecules resources, and a simulation without them stops with a fatal error.
     - <b>Diffuse reemission</b> of absorbed ionizing photons follows Wood, Mathis & Ercolano (2004),
       with pre-tabulated temperature-dependent spectra for H/He Lyman continuum and He two-photon.
 
@@ -477,8 +480,7 @@ class DiffuseIonizedGasMix : public EmittingGasMix
         ATTRIBUTE_DEFAULT_VALUE(numEmissionWavelengths, "250")
         ATTRIBUTE_DISPLAYED_IF(numEmissionWavelengths, "Level3")
 
-        PROPERTY_BOOL(includeExtendedLines, "use Case B recombination tables and the atomic-model collisional "
-                                            "solver")
+        PROPERTY_BOOL(includeExtendedLines, "add the extended line inventory to the built-in lines")
         ATTRIBUTE_DEFAULT_VALUE(includeExtendedLines, "true")
         ATTRIBUTE_DISPLAYED_IF(includeExtendedLines, "Level3")
 

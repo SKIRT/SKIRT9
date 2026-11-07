@@ -449,21 +449,17 @@ void DiffuseIonizedGasMix::setupSelfBefore()
         log->info("DiffuseIonizedGasMix reads the medium number density as total hydrogen plus helium nuclei: "
                   "n_H = n / (1 + y_He)");
 
-        // includeExtendedLines=true requires the full resource set (statistical-equilibrium solver,
-        // Case B emissivity tables, extended line registry): a missing resource is a fatal
-        // configuration error rather than a silent fallback. includeExtendedLines=false skips all
-        // three unconditionally, regardless of whether the resources happen to be installed, so
-        // that the fallback lines (legacy P_B recombination, precomputed q_col collisional rates,
-        // built-in registry only) stay reachable and testable on their own.
+        // the built-in lines are a subset of the line inventory; a missing AtomsMolecules resource is a
+        // fatal error in both settings, and includeExtendedLines adds the remaining lines of the inventory
         _gasLineEmission.initialize(this);
+        _gasLineEmission.initializeAtomicModels();
+        find<Log>()->info("Collisional line emission uses the statistical-equilibrium solver");
+
+        _gasLineEmission.initializeRecombinationTables();
+        find<Log>()->info("Recombination line emission uses the Case B emissivity tables");
+
         if (includeExtendedLines())
         {
-            _gasLineEmission.initializeAtomicModels();
-            find<Log>()->info("Collisional line emission uses the statistical-equilibrium solver");
-
-            _gasLineEmission.initializeRecombinationTables();
-            find<Log>()->info("Recombination line emission uses the Case B emissivity tables");
-
             static const char* romans[] = {"I", "II", "III", "IV",   "V",   "VI", "VII", "VIII", "IX",
                                            "X", "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII"};
             static const char* metals[] = {"C", "N", "O", "Ne", "Mg", "Si", "S", "Fe"};
@@ -476,11 +472,6 @@ void DiffuseIonizedGasMix::setupSelfBefore()
                         {string(metals[e]) + "_" + romans[s - 1], PhotoIonizationSolver::stageOffset[elem] + s - 1, e});
             }
             _gasLineEmission.initializeExtendedLineRegistry(species);
-        }
-        else
-        {
-            find<Log>()->info(
-                "Using the built-in fallback lines (legacy P_B recombination, precomputed q_col collisional rates)");
         }
 
         // select the active lines from the registry (see _activeLines)
@@ -1372,7 +1363,7 @@ Array DiffuseIonizedGasMix::lineEmissionSpectrum(const MaterialState* state, con
     double nHeII = nH * yHe * result.ionFracs[PhotoIonizationSolver::stageOffset[1] + 1];
     double nHeIII = nH * yHe * result.ionFracs[PhotoIonizationSolver::stageOffset[1] + 2];
 
-    // Gamma_HI for the legacy P_B path, from the same Jv the solver was called with so that it
+    // Gamma_HI for the Lyman-alpha P_B form, from the same Jv the solver was called with so that it
     // is consistent with the ion fractions just computed
     double gamma[PhotoIonizationSolver::totalStages];
     _emissionSolver.computePhotoionizationRates(Jv, gamma);
@@ -1394,23 +1385,14 @@ Array DiffuseIonizedGasMix::lineEmissionSpectrum(const MaterialState* state, con
         for (int i : _groupLines[g]) luminosities[i] = eps[_lineTransitions[i]] * V_cm3 * 1e-6;  // W m^-3 x m^3
     }
 
-    // remaining lines: recombination lines (Case B tables, legacy P_B fallback for H) and
-    // collisional lines on the legacy table path
+    // remaining lines, all recombination lines: Case B tables, and the P_B form for Lyman-alpha
     for (int i = 0; i < _numLines; ++i)
     {
         if (_lineGroup[i] >= 0) continue;
         int k = _activeLines[i];
         const auto& line = registry[k];
-        if (line.carrierIonIndex >= 0)
-        {
-            double nIon = nH * metalAbundances[line.elementIndex] * result.ionFracs[line.carrierIonIndex];
-            luminosities[i] = _gasLineEmission.collisionalLineLuminosity(k, T, ne, nIon, V_cm3);
-        }
-        else
-        {
-            double nIon = line.isHeIRecomb ? nHeII : (line.isHeIIRecomb ? nHeIII : nHII);
-            luminosities[i] = _gasLineEmission.recombinationLineLuminosity(k, T, ne, nIon, gammaHI, nHI, V_cm3);
-        }
+        double nIon = line.isHeIRecomb ? nHeII : (line.isHeIIRecomb ? nHeIII : nHII);
+        luminosities[i] = _gasLineEmission.recombinationLineLuminosity(k, T, ne, nIon, gammaHI, nHI, V_cm3);
     }
 
     // optional per-cell relative floor on the extended-inventory lines
