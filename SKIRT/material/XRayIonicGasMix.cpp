@@ -872,6 +872,11 @@ void XRayIonicGasMix::setupSelfBefore()
     // Store each PI event with line re-emission and its explicit output-line positions
     // in the common catalog. The cumulative distribution is conditional on line
     // re-emission; scatterProb retains the absolute total branching probability.
+    using IiEventKey = std::tuple<int, int, int, int>;
+    std::map<IiEventKey, vector<const InnerShellBranchResource*>> iiBranchesByEvent;
+    for (const auto& branch : iiBranchResources)
+        iiBranchesByEvent[{branch.Z, branch.parentN, branch.targetN, branch.eventIndex}].push_back(&branch);
+
     size_t storedIiBranches = 0;
     for (auto& piRes : piResources)
     {
@@ -879,11 +884,11 @@ void XRayIonicGasMix::setupSelfBefore()
         vector<int> branchLinePositions;
         std::set<int> outputPositions;
 
-        for (const auto& branchRes : iiBranchResources)
+        const auto branches = iiBranchesByEvent.find({piRes.Z, piRes.parentN, piRes.targetN, piRes.eventIndex});
+        if (branches == iiBranchesByEvent.end()) continue;
+        for (const auto* branch : branches->second)
         {
-            if (branchRes.Z != piRes.Z || branchRes.parentN != piRes.parentN
-                || branchRes.targetN != piRes.targetN || branchRes.eventIndex != piRes.eventIndex)
-                continue;
+            const auto& branchRes = *branch;
 
             auto output =
                 linePosition.find(std::make_tuple(branchRes.Z, branchRes.targetN, branchRes.outputLineIndex));
@@ -1002,6 +1007,12 @@ void XRayIonicGasMix::setupSelfBefore()
     for (double lambda : config->simulationWavelengths())
         if (range.contains(lambda)) lambdav.push_back(lambda);
 
+    // Ignore PI events from weakly populated levels without renormalizing the retained populations.
+    constexpr double minPiLevelFraction = 1e-4;
+    vector<const PhotoIonizationResource*> activePiResources;
+    for (const auto& piRes : piResources)
+        if (piRes.levelFraction >= minPiLevelFraction) activePiResources.push_back(&piRes);
+
     // add wavelength points around the threshold energies for all transitions
     for (const auto& paRes : paResources)
     {
@@ -1012,8 +1023,9 @@ void XRayIonicGasMix::setupSelfBefore()
             if (range.contains(lambda)) lambdav.push_back(lambda);
         }
     }
-    for (const auto& piRes : piResources)
+    for (const auto* event : activePiResources)
     {
+        const auto& piRes = *event;
         double Es = piRes.Es;
         for (double delta : {-2., -4. / 3., -2. / 3., 0., 2. / 3., 4. / 3., 2.})
         {
@@ -1071,8 +1083,9 @@ void XRayIonicGasMix::setupSelfBefore()
             double E = wavelengthToFromEnergy(lambda);
             sigma += paRes.photoAbsorbThermalSection(E) * abundances[paRes.ionIndex];
         }
-        for (const auto& piRes : piResources)
+        for (const auto* event : activePiResources)
         {
+            const auto& piRes = *event;
             double E = wavelengthToFromEnergy(lambda);
             sigma += piRes.photoIonizationThermalSection(E) * abundances[piRes.ionIndex]
                      * piRes.levelFraction;
@@ -1140,8 +1153,9 @@ void XRayIonicGasMix::setupSelfBefore()
         }
 
         // FAC inner-shell ionization
-        for (const auto& piRes : piResources)
+        for (const auto* event : activePiResources)
         {
+            const auto& piRes = *event;
             if (piRes.iiParamIndex < 0) continue;
 
             const auto& ii = _innerShellIonizationParamv[piRes.iiParamIndex];
