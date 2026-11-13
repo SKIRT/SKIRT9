@@ -436,6 +436,12 @@ class XRayIonicGasMix : public MaterialMix
 
         PROPERTY_DOUBLE_LIST(abundances, "the abundances of the ions in the same order as the ions property")
 
+        PROPERTY_STRING(levelFractionsFilename,
+                        "the optional file with ground-configuration level populations for resonant scattering and "
+                        "FAC photoionization; default is unit population in FAC level zero")
+        ATTRIBUTE_REQUIRED_IF(levelFractionsFilename, "false")
+        ATTRIBUTE_DISPLAYED_IF(levelFractionsFilename, "Level2")
+
         PROPERTY_DOUBLE(temperature, "the temperature of the gas in K")
         ATTRIBUTE_QUANTITY(temperature, "temperature")
         ATTRIBUTE_MIN_VALUE(temperature, "[3")
@@ -556,7 +562,10 @@ private:
         peel-off stored this already. For fluorescence transitions that support a nonzero line
         width, the function also draws a random wavelength from the line shape. For a resonant
         scattering event it determines whether a cascade occurs and if the phase function is
-        isotropic or a dipole. */
+        isotropic or a dipole. For FAC inner-shell ionization, both direct and cascade-fed output
+        lines are sampled from the selected transition's natural Lorentzian in energy, retaining
+        only positive finite energies. The stored atom-frame wavelength is shared by all peel-offs
+        and the actual scattering event, before applying the sampled thermal velocity. */
     void setScatteringInfoIfNeeded(PhotonPacket* pp, const MaterialState* state, const double lambda) const;
 
 public:
@@ -625,27 +634,50 @@ private:
         double lambda;  // wavelength (m)
         double width;   // width (eV)
     };
+    // Lines emitted by RS branching and FAC II
+    struct LineParam
+    {
+        int Z;
+        int N;
+        int lineIndex;
+        double vth;     // thermal velocity (m/s)
+        double lambda;  // wavelength (m)
+        double a;       // Voigt parameter
+        double naturalEnergyHwhm;  // natural energy half-width at half-maximum (eV)
+    };
     // Resonant scattering -> ResonantParam
     struct ResonantParam
     {
         int ionIndex;
-        int lineIndex;          // line index
-        double vth;             // thermal velocity (m/s)
-        double lambda;          // wavelength (m)
-        double a;               // Voigt parameter
-        double dipoleFraction;  // Probability for dipole phase function
-        Array cumBranchingv;    // normalized cumulative branching
+        int lineIndex;           // persistent FAC line index
+        int inputLinePosition;   // position of the absorbed transition in _lineParamv
+        double dipoleFraction;   // probability for dipole phase function
+        vector<int> branchLinePositionv;  // output-line positions in _lineParamv
+        Array cumBranchingv;             // normalized cumulative branching
+    };
+    // Line branching after one FAC photoionization event
+    struct InnerShellIonizationParam
+    {
+        int Z;
+        int parentN;
+        int eventIndex;
+        double scatterProb;                  // total probability of line re-emission
+        vector<int> branchLinePositionv;     // output-line positions in _lineParamv
+        Array cumBranchingv;                 // conditional cumulative branching
     };
 
     int _numIons{0};  // number of ions
     int _numElec{0};  // number of ions with electron scattering (either all or none)
     int _numFluo{0};  // number of fluorescence (+RR) transitions
     int _numLine{0};  // number of resonant scattering transitions
+    int _numII{0};  // FAC photoionization events with line re-emission
 
     // persistent data for scattering
     vector<IonParam> _ionParamv;
     vector<FluorescenceParam> _fluorescenceParamv;
+    vector<LineParam> _lineParamv;
     vector<ResonantParam> _resonantParamv;
+    vector<InnerShellIonizationParam> _innerShellIonizationParamv;
     vector<double> _vthermv;  // indexed on Z
 
     // wavelength grid (shifted to the left of the actually sampled points to approximate rounding)
@@ -653,7 +685,7 @@ private:
     // cross sections
     Array _sigmaextv;              // indexed on lambdav
     Array _sigmascav;              // indexed on lambdav
-    ArrayTable<2> _cumsigmascavv;  // indexed on lambdav, interaction (electron + fluorescence + resonant)
+    ArrayTable<2> _cumsigmascavv;  // indexed on lambdav, interaction (electron + fluorescence + resonant + II)
 
     // compton-electron scattering helpers depending on the configured implementation
     ElectronScatteringHelper::Helper* _com{nullptr};  // Compton scattering helper
