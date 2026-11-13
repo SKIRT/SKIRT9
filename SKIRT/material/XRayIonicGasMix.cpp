@@ -678,16 +678,17 @@ void XRayIonicGasMix::setupSelfBefore()
         branchResources =
             loadPresent<BranchResource, 5>(this, "Ionic_BR.txt", "resonant branching probabilities", ionSet);
 
-    // yields for recombination for each value of N
+    // Recombination line yields are supported for hydrogen-like and helium-like ions.
     std::map<int, StoredTable<3>> recoResources;
     for (int N : usedN)
     {
+        if (N != 1 && N != 2) continue;
         string rrFilename = branchRrFilename(N);
         if (FilePaths::hasResource(rrFilename))
             recoResources.emplace(N, StoredTable<3>(this, rrFilename, "Z(1),Index(1),T(K)", "Y(1)"));
+        else
+            find<Log>()->warning("Missing recombination resource: " + rrFilename);
     }
-
-    if (recoResources.size() == 0) find<Log>()->warning("No recombination resources found");
 
     // ------------ preprocess resources ------------
 
