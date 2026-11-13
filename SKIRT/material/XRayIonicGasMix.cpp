@@ -84,6 +84,7 @@ namespace
 
     // number of wavelengths per dex in high-resolution grid
     constexpr size_t numWavelengthsPerDex = 2500;
+    constexpr double minPiLevelFraction = 1e-4;
 
     // Return the dipole fraction of the angular redistribution matrix for an
     // electric-dipole transition J_l -> J_u.
@@ -877,7 +878,8 @@ void XRayIonicGasMix::setupSelfBefore()
     for (const auto& branch : iiBranchResources)
         iiBranchesByEvent[{branch.Z, branch.parentN, branch.targetN, branch.eventIndex}].push_back(&branch);
 
-    size_t storedIiBranches = 0;
+    size_t checkedIiEvents = 0;
+    size_t checkedIiBranches = 0;
     for (auto& piRes : piResources)
     {
         vector<double> branchingProbabilities;
@@ -903,9 +905,7 @@ void XRayIonicGasMix::setupSelfBefore()
 
         if (branchingProbabilities.empty()) continue;
 
-        piRes.iiParamIndex = static_cast<int>(_innerShellIonizationParamv.size());
-        _innerShellIonizationParamv.emplace_back();
-        auto& ii = _innerShellIonizationParamv.back();
+        InnerShellIonizationParam ii;
         ii.Z = piRes.Z;
         ii.parentN = piRes.parentN;
         ii.eventIndex = piRes.eventIndex;
@@ -918,13 +918,22 @@ void XRayIonicGasMix::setupSelfBefore()
         if (ii.scatterProb <= 0. || ii.scatterProb > 1. + 1e-6)
             throw FATALERROR("Invalid total FAC II branching probability");
 
-        storedIiBranches += branchingProbabilities.size();
+        ++checkedIiEvents;
+        checkedIiBranches += branchingProbabilities.size();
+
+        // Keep zero-contribution events out of the wavelength-dependent scattering CDFs.
+        if (piRes.levelFraction >= minPiLevelFraction)
+        {
+            piRes.iiParamIndex = static_cast<int>(_innerShellIonizationParamv.size());
+            _innerShellIonizationParamv.push_back(std::move(ii));
+        }
     }
-    if (_innerShellIonizationParamv.size() != iiBranchSums.size())
-        throw FATALERROR("FAC II event count is inconsistent after persistent branching setup");
-    if (storedIiBranches != iiBranchResources.size())
-        throw FATALERROR("FAC II branch count is inconsistent after persistent branching setup");
+    if (checkedIiEvents != iiBranchSums.size())
+        throw FATALERROR("FAC II event count is inconsistent after branching setup");
+    if (checkedIiBranches != iiBranchResources.size())
+        throw FATALERROR("FAC II branch count is inconsistent after branching setup");
     _numII = static_cast<int>(_innerShellIonizationParamv.size());
+    iiBranchesByEvent.clear();
 
     // Resonant scattering
     // Store each resonant input line and its explicit output-line positions in the common catalog.
@@ -1008,7 +1017,6 @@ void XRayIonicGasMix::setupSelfBefore()
         if (range.contains(lambda)) lambdav.push_back(lambda);
 
     // Ignore PI events from weakly populated levels without renormalizing the retained populations.
-    constexpr double minPiLevelFraction = 1e-4;
     vector<const PhotoIonizationResource*> activePiResources;
     for (const auto& piRes : piResources)
         if (piRes.levelFraction >= minPiLevelFraction) activePiResources.push_back(&piRes);
